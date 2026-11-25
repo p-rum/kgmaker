@@ -45,5 +45,20 @@ V oddělené kopii skutečného inventáře zůstal W03 blokovaný při
 se objevil mezi kandidáty. Otisk výsledku je
 `8294a2cf2f264006193484d108095776b0fa5c4924815a8052fc70839e5d67f7`.
 
+### Oprava parseru po nezávislém review
+
+V revizi `13e50c8` vyhodnocoval parser pouze první rozpoznaný řádek.
+Druhý řádek mohl skrýt neověřenou nebo nedeklarovanou závislost.
+Prázdná deklarace bez mezery za dvojtečkou se tiše ignorovala.
+Parser nyní povoluje v sekci jediný neprázdný řádek. Chybnou specifikaci
+odmítne před výběrem kandidátů. Ostatní závislosti mají původní rozsah.
+
+- RED — tři nové regresní varianty selhaly, jedna dříve odmítnutá
+  kontrola prošla. JUnit SHA-256
+  `6c91713320197418998cf73c1cac18c6724312ab3445728ee0e4fce04ccb1c69`.
+- GREEN — čtyři nové případy a související completion, handoff, workflow
+  a skills: **109 PASS / 0 SKIP**, exit 0. JUnit SHA-256
+  `5ba4b5d935f398d7813655e03a305c0a43bc9b2f573d59a82db9233fa0d116da`.
+
 W02-AC01 zůstává `PARTIAL`. Úplná sada, samostatný Windows běh, aktuální
 GitHub Actions a nezávislé review mají při lokálním předání samostatný stav.

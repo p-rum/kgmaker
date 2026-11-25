@@ -126,6 +126,35 @@ def test_explicit_verified_dependency_must_be_declared(tmp_path):
         plan(tmp_path)
 
 
+@pytest.mark.parametrize(
+    ("declaration", "diagnostic"),
+    [
+        ("- Verified dependencies:", "invalid verified dependencies for T003"),
+        ("- Povinně ověřené závislosti:   ", "invalid verified dependencies for T003"),
+        (
+            "- Verified dependencies: T001\n- Povinně ověřené závislosti: T002",
+            "duplicate verified dependency declarations for T003",
+        ),
+        (
+            "- Verified dependencies: T001\n- Verified dependencies: T099",
+            "duplicate verified dependency declarations for T003",
+        ),
+    ],
+)
+def test_explicit_verified_dependency_rejects_empty_or_duplicate_declarations(
+        tmp_path, declaration, diagnostic):
+    write_inventory(tmp_path, [
+        ("T001", "MERGED", "VERIFIED_IN_SCOPE", "baseline", "verified"),
+        ("T002", "MERGED", "PARTIAL", "baseline", "partial"),
+        ("T003", "PLANNED", "NOT_RUN", "T001 and T002", "blocked"),
+    ])
+    spec = tmp_path / "docs/tasks/T003.md"
+    with spec.open("a", encoding="utf-8") as stream:
+        stream.write(declaration + "\n")
+    with pytest.raises(ValueError, match=diagnostic):
+        plan(tmp_path)
+
+
 def test_cli_reports_invalid_inventory_without_payload(tmp_path, capsys):
     from types import SimpleNamespace
 

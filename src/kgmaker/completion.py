@@ -16,7 +16,7 @@ RANGE = re.compile(rf"\b({ITEM_ID})\s*(?:až|–)\s*({ITEM_ID})\b")
 MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\([^)]+\)")
 DEPENDENCY_LINE = re.compile(r"^- (?:Depends on|Závislosti): (.+)$", re.MULTILINE)
 VERIFICATION_DEPENDENCY_LINE = re.compile(
-    r"^- (?:Verified dependencies|Povinně ověřené závislosti): (.+)$", re.MULTILINE,
+    r"^- (?:Verified dependencies|Povinně ověřené závislosti):[ \t]*(.*)$", re.MULTILINE,
 )
 ROW = re.compile(rf"^\| \[({ITEM_ID})\]\((tasks/[^)]+\.md)\) \| (.+) \|$")
 DELIVERY = {"PLANNED", "IN_PROGRESS", "PR_OPEN", "MERGED", "DEFERRED", "BLOCKED"}
@@ -128,10 +128,12 @@ def _read_items(root: Path, inventory: str) -> dict[str, Item]:
                                     "T003-S11-W05 a T003-S11-W06")
             conditional = parts[1] if len(parts) == 2 else ""
         dependencies = _dependencies(text, ids, item_id) if text is not None else None
-        verified_line = VERIFICATION_DEPENDENCY_LINE.search(source)
+        verified_lines = VERIFICATION_DEPENDENCY_LINE.findall(source)
+        if len(verified_lines) > 1:
+            raise ValueError(f"duplicate verified dependency declarations for {item_id}")
         verification_dependencies = ()
-        if verified_line:
-            declared = MARKDOWN_LINK.sub(r"\1", verified_line[1].replace(chr(96), ""))
+        if verified_lines:
+            declared = MARKDOWN_LINK.sub(r"\1", verified_lines[0].replace(chr(96), ""))
             required = _dependencies(declared, ids, item_id)
             if not required or not set(required) <= set(dependencies or ()):
                 raise ValueError(f"invalid verified dependencies for {item_id}: use declared dependencies")

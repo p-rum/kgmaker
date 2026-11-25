@@ -6,7 +6,7 @@
 - Scope: production; omitted files: 587
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `ec9a41c9e1490196301e377e1fb5c2abd642088b01c8fce577f4fd3a34195bce`; content: `190785fe91fb4be3ccb71900f522e72740096cb792083dbefe6fecf2b2c6543c`; freshness: CONTENT_VERIFIED
+- Context: `ebca51ae7596d5528fdccafbc8085221b516f8a37fdd1d83b39ecf51f066ffc2`; content: `375c9693797027810993df075b9b19c380a560ced4a3eba402497593a4633827`; freshness: CONTENT_VERIFIED
 - Files indexed: 119
 - Symbols and sections: 1619
 - Internal imports: 502
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 404
+- Implementation episodes: 405
 - Inferred/ambiguous relationships: 8791/0
 
 ## Architecture diagram
@@ -930,11 +930,11 @@ flowchart LR
 - **function** `_dependencies` line 64 — `_dependencies(text: str, ids: set[str], current: str)`
 - **function** `expand` line 67 — `expand(match: re.Match[str])`
 - **function** `_read_items` line 86 — `_read_items(root: Path, inventory: str)`
-- **function** `_action` line 154 — `_action(item: Item)`
-- **function** `_indirect_failures` line 169 — `_indirect_failures(item_id: str, items: dict[str, Item])`
-- **function** `plan` line 188 — `plan(root: Path, jobs: int = 1)`
-- **function** `register` line 235 — `register(sub)`
-- **function** `run` line 248 — `run(args)`
+- **function** `_action` line 156 — `_action(item: Item)`
+- **function** `_indirect_failures` line 171 — `_indirect_failures(item_id: str, items: dict[str, Item])`
+- **function** `plan` line 190 — `plan(root: Path, jobs: int = 1)`
+- **function** `register` line 237 — `register(sub)`
+- **function** `run` line 250 — `run(args)`
 
 ### `src/kgmaker/completion_handoff.py`
 - **function** `_artifact` line 20 — `_artifact(task, phase, iteration)`
@@ -2641,6 +2641,7 @@ flowchart LR
 - **fix(worker): own initialization cleanup including unassigned Windows children** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/40_supportWindowsUserInstall.md, docs/compiler-inspection.md; validation: linux-transport-prerequisites=passed, native-corrected-startup=skipped
 - **Correct T046 inventory attribution to the tested increment** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/56_addDeliveryReferences.md, docs/delivery-workflow.md, docs/production-analysis-progress.md; validation: targeted-tests=passed
 - **Change BuildInputs, Distribuce Maven/Gradle exporterů s ověřením obsahu, Finální ověření integrovaného worktree** — current; files: docs/changes/37_packageBuildExporters.md, tests/test_exporter_distribution.py; validation: exporter-prerequisites=passed, exporter-runtime-unchanged=passed
+- **Change 175 — Povinně ověřené závislosti při plánování, Completion Orchestrator, Item** — current; files: docs/changes/175_requireVerifiedDependencies.md, docs/completion-orchestrator.md, src/kgmaker/completion.py, tests/test_completion.py; validation: focused-tests=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/127_crossAsyncProcessBoundary.md, docs/process-paths.md, docs/production-analysis-progress.md; validation: targeted=passed, semantic-preservation=passed, full-suite=skipped
 - **fix: preserve unknown HTTP control and configuration boundaries** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/63_classifyHttpClientExecution.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: focused_121=passed, full_654_skip10=passed, unchanged_k1_k2_runtime=passed, semantic=passed, remote_ci=unknown
 - **fix: preserve compiler dispatch proof and physical ABI boundaries** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/44_addDependencyDispatchHierarchy.md, docs/compiler-inspection.md; validation: full-current-source=passed, focus-realm-abi=passed, protocol-ci=passed, jvm-k1=passed, jvm-k2=passed
@@ -4795,18 +4796,18 @@ flowchart LR
 - `src/kgmaker/completion.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 110; src/kgmaker/completion.py:110; INFERRED 0.85)
 - `src/kgmaker/completion.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 114; src/kgmaker/completion.py:114; INFERRED 0.85)
 - `src/kgmaker/completion.py` may call `79 in `src/kgmaker/extraction_cache.py`` (name match at line 119; src/kgmaker/completion.py:119; INFERRED 0.85)
-- `src/kgmaker/completion.py` may call `79 in `src/kgmaker/extraction_cache.py`` (name match at line 194; src/kgmaker/completion.py:194; INFERRED 0.85)
-- `src/kgmaker/completion.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 217; src/kgmaker/completion.py:217; INFERRED 0.85)
+- `src/kgmaker/completion.py` may call `79 in `src/kgmaker/extraction_cache.py`` (name match at line 196; src/kgmaker/completion.py:196; INFERRED 0.85)
+- `src/kgmaker/completion.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 219; src/kgmaker/completion.py:219; INFERRED 0.85)
 - `src/kgmaker/completion.py` may call `186 in `src/kgmaker/schema_replay.py`` (name match at line 68; src/kgmaker/completion.py:68; INFERRED 0.85)
 - `src/kgmaker/completion.py` may call `186 in `src/kgmaker/schema_replay.py`` (name match at line 96; src/kgmaker/completion.py:96; INFERRED 0.85)
-- `src/kgmaker/completion.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 212; src/kgmaker/completion.py:212; INFERRED 0.85)
-- `src/kgmaker/completion.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 215; src/kgmaker/completion.py:215; INFERRED 0.85)
-- `src/kgmaker/completion.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 219; src/kgmaker/completion.py:219; INFERRED 0.85)
+- `src/kgmaker/completion.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 214; src/kgmaker/completion.py:214; INFERRED 0.85)
+- `src/kgmaker/completion.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 217; src/kgmaker/completion.py:217; INFERRED 0.85)
 - `src/kgmaker/completion.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 221; src/kgmaker/completion.py:221; INFERRED 0.85)
 - `src/kgmaker/completion.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 223; src/kgmaker/completion.py:223; INFERRED 0.85)
-- `src/kgmaker/completion.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 229; src/kgmaker/completion.py:229; INFERRED 0.85)
-- `src/kgmaker/completion.py` may call `33 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 147; src/kgmaker/completion.py:147; INFERRED 0.85)
-- `src/kgmaker/completion.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 191; src/kgmaker/completion.py:191; INFERRED 0.85)
+- `src/kgmaker/completion.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 225; src/kgmaker/completion.py:225; INFERRED 0.85)
+- `src/kgmaker/completion.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 231; src/kgmaker/completion.py:231; INFERRED 0.85)
+- `src/kgmaker/completion.py` may call `33 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 149; src/kgmaker/completion.py:149; INFERRED 0.85)
+- `src/kgmaker/completion.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 193; src/kgmaker/completion.py:193; INFERRED 0.85)
 - `src/kgmaker/completion_handoff.py` may call `62 in `src/kgmaker/workflow.py`` (name match at line 127; src/kgmaker/completion_handoff.py:127; INFERRED 0.85)
 - `src/kgmaker/completion_handoff.py` may call `62 in `src/kgmaker/workflow.py`` (name match at line 135; src/kgmaker/completion_handoff.py:135; INFERRED 0.85)
 - `src/kgmaker/completion_handoff.py` may call `62 in `src/kgmaker/workflow.py`` (name match at line 167; src/kgmaker/completion_handoff.py:167; INFERRED 0.85)

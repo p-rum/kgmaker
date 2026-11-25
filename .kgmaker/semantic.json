@@ -76,7 +76,7 @@
     "docs/changes/170_manageProjectInstallation.md": "1334b421beffac00feb45ce75f4df05373d06220d51778b2c1e03823fdddf18f",
     "docs/changes/171_addExcelMigration.md": "afc21c698991f950606ffb55d930dd6a99aaa26e80d75ba8164cd2f4af986aca",
     "docs/changes/172_automateExcelMigration.md": "0529e2835a682fefe02b5602b6ce9ffd507d931ebe35b735398f1c642919532e",
-    "docs/changes/175_requireVerifiedDependencies.md": "8ece2cc95b6e748f311e3d30af9649e3a3efd1046570c80bb034f9a6d40e82de",
+    "docs/changes/175_requireVerifiedDependencies.md": "116715f1a3a852d73769c739b7b5efbc61e33473143ff2dec810c8668ed74fab",
     "docs/changes/17_exportGradleIncludedBuilds.md": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b",
     "docs/changes/1_addProductionScope.md": "01d4001f03b21b1115d6461514f4b643d12cff3ae03bcaabfb6645bb3dd15113",
     "docs/changes/26_addCodeReviewAgent.md": "b3daa09ab9ec31c301fbaa1afe2101becde926ea5db35260c4ab7582f49a023d",
@@ -157,7 +157,7 @@
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "6e7d9a604fab80c14b54f59f4f3aa91d329077dfbde9aa8d2569c0c95e74e1c4",
     "docs/complete-analysis-report.md": "dcdbc01d104d078c12376845c84e84f735d3476dadada0fa156656ceb76a7ac9",
-    "docs/completion-orchestrator.md": "d008e8fc0d80e7d954a31151812320e8b978691940ed7eb2fcb35eaff0a53b22",
+    "docs/completion-orchestrator.md": "b0b8eb119536550a335de387605c5c7e5a28941081821a96a0a28023ddb7789e",
     "docs/delivery-workflow.md": "bb3e1ccae15d801e84017e527aa45f07a4caa1e983a1a6073a3687031ae9892a",
     "docs/evidence-ranking.md": "7b062d4aaf261999dcafb9050ec3e293575d13bfa968e44075f30755dbd2515f",
     "docs/excel-migration.md": "8de60563d9a3b5d0baea8d922c5265c3d0b0c406195ea96cfb03f8edf6c31d6e",
@@ -453,7 +453,7 @@
     "src/kgmaker/classification.py": "bf4be942e0af395e6092f84dc69be878a2aeaa72f9e031cf89acb4c2ced9bd1a",
     "src/kgmaker/cli.py": "a3d6f1bb536595f16096a5802a1a122dadf62550d4c0cf68702a87d75c8142ce",
     "src/kgmaker/compiler_sources.py": "0b55b18ad1d3927986c4832dcb2dedfa72417ff0fe38fe723fbb746dd8e11f68",
-    "src/kgmaker/completion.py": "62e6fb9ef9bf6d157fa903322c3c2417ce958966f42c8e91619f9ece40feab2e",
+    "src/kgmaker/completion.py": "47e85ed82230e28b753a3d8eb4a1c9789ee7729de1d85e207d545ce990b8fd22",
     "src/kgmaker/completion_handoff.py": "5abb119aefb6344a19afe478047e6762364598798cefe7da2b73a1af1aa38f9d",
     "src/kgmaker/completion_review.py": "2f35f32570bd74c6ec22fa55c46aac2a9c3c8f234ca9ebaa805e357c205d23e0",
     "src/kgmaker/confluence.py": "f45de9c5040502959f928c4bf127d53d1749151716c015d8788a055214c561b8",
@@ -568,7 +568,7 @@
     "tests/test_compiler_workers.py": "f984c498491399dfc522ccb6974a7aa85242dc1bb4e91b41ec5d8c269f1990d7",
     "tests/test_complete_analysis_report.py": "324eafd882506d320da46f291bf3c4375c347e1a2be30924f91991debd572e62",
     "tests/test_complete_analysis_report_actual.py": "1b3425972384e8f85325254592ab82f280c783eeea68146318dcd012e0074f86",
-    "tests/test_completion.py": "da326d63ac8e69aa63405bc3c6bfbbf21f8181bdfd0e1b92acd5c1490c594f67",
+    "tests/test_completion.py": "6b30ca72cb0cc939e1164c09e97e0b3b6528420225625875041a8dd7b05fa45f",
     "tests/test_completion_handoff.py": "621ca383fb682c598920694b685dd5133aa3151e6753b1fb9366b1dd38da11fa",
     "tests/test_confluence_configuration.py": "d1a198d7d454eba67b1940d45300bea20894c95e8ad1b364a781e2e10d0d1c0e",
     "tests/test_confluence_sync.py": "58e974aa91821f12890afea797aa50d3083ecdef5137e4f16bf379365e785d83",
@@ -1081,18 +1081,18 @@
       "summary": "Consuming bounded JPQL/HQL grammar validates complete clauses and scalar/predicate expressions, uses lexical query-block alias scopes, and publishes only compiler-owned static persistence intent; invalid bindings are UNKNOWN and unsupported syntax is localized PARTIAL."
     },
     {
-      "id": "concept:docs/completion-orchestrator.md:repository_completion_workflow",
-      "name": "Repository completion workflow",
-      "source_file": "docs/completion-orchestrator.md",
-      "source_line": 3,
-      "summary": "T052 plans repository completion from the delivery inventory and uses standard profiled task and provenance artifacts."
-    },
-    {
       "id": "concept:README.md:optional_agent_authored_semantic_layer",
       "name": "Optional agent-authored semantic layer",
       "source_file": "README.md",
       "source_line": 226,
       "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
+    },
+    {
+      "id": "concept:docs/completion-orchestrator.md:repository_completion_workflow",
+      "name": "Repository completion workflow",
+      "source_file": "docs/completion-orchestrator.md",
+      "source_line": 3,
+      "summary": "T052 plans repository completion from the delivery inventory and uses standard profiled task and provenance artifacts."
     }
   ],
   "edges": [
@@ -3037,16 +3037,6 @@
       "evidence": "Framework projection resolves parsed roots, joins, constructor DTOs and clause-specific paths only against exact compiler-owned JPA identities."
     },
     {
-      "source": "concept:docs/completion-orchestrator.md:repository_completion_workflow",
-      "target": "function:src/kgmaker/completion.py:plan::188",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/completion-orchestrator.md",
-      "source_line": 3,
-      "evidence": "The completion plan uses existing delivery inventory and task links."
-    },
-    {
       "source": "concept:README.md:optional_agent_authored_semantic_layer",
       "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
       "kind": "part_of",
@@ -3085,6 +3075,16 @@
       "source_file": "README.md",
       "source_line": 228,
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
+    },
+    {
+      "source": "concept:docs/completion-orchestrator.md:repository_completion_workflow",
+      "target": "function:src/kgmaker/completion.py:plan::190",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/completion-orchestrator.md",
+      "source_line": 3,
+      "evidence": "The completion plan uses existing delivery inventory and task links."
     }
   ],
   "episodes": [
@@ -217435,6 +217435,111 @@
         }
       ],
       "id": "episode:b792a680a1535e4759fca2addd18899321ba874003a2e4f5c0abb18c88795739"
+    },
+    {
+      "base_commit": "13e50c8afde0d9709b3fae4d07c61511d9bdb64c",
+      "head_commit": "13e50c8afde0d9709b3fae4d07c61511d9bdb64c",
+      "worktree_fingerprint": "e819c64847cc078e05a29d3aa4022397277b1e58bae700516c12f991c946e0cf",
+      "title": "Change 175 — Povinně ověřené závislosti při plánování, Completion Orchestrator, Item",
+      "changed_files": [
+        {
+          "path": "docs/changes/175_requireVerifiedDependencies.md",
+          "status": "M",
+          "sha256": "116715f1a3a852d73769c739b7b5efbc61e33473143ff2dec810c8668ed74fab"
+        },
+        {
+          "path": "docs/completion-orchestrator.md",
+          "status": "M",
+          "sha256": "b0b8eb119536550a335de387605c5c7e5a28941081821a96a0a28023ddb7789e"
+        },
+        {
+          "path": "src/kgmaker/completion.py",
+          "status": "M",
+          "sha256": "47e85ed82230e28b753a3d8eb4a1c9789ee7729de1d85e207d545ce990b8fd22"
+        },
+        {
+          "path": "tests/test_completion.py",
+          "status": "M",
+          "sha256": "6b30ca72cb0cc939e1164c09e97e0b3b6528420225625875041a8dd7b05fa45f"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/completion.py:Item::28",
+        "concept:docs/completion-orchestrator.md:repository_completion_workflow",
+        "file:docs/changes/175_requireVerifiedDependencies.md:175_requireVerifiedDependencies.md",
+        "file:docs/completion-orchestrator.md:completion-orchestrator.md",
+        "file:src/kgmaker/completion.py:completion.py",
+        "file:tests/test_completion.py:test_completion.py",
+        "function:src/kgmaker/completion.py:_action::154",
+        "function:src/kgmaker/completion.py:_action::156",
+        "function:src/kgmaker/completion.py:_dependencies::64",
+        "function:src/kgmaker/completion.py:_dependency_text::48",
+        "function:src/kgmaker/completion.py:_indirect_failures::169",
+        "function:src/kgmaker/completion.py:_indirect_failures::171",
+        "function:src/kgmaker/completion.py:_read_items::86",
+        "function:src/kgmaker/completion.py:_specification_step::39",
+        "function:src/kgmaker/completion.py:expand::67",
+        "function:src/kgmaker/completion.py:plan::188",
+        "function:src/kgmaker/completion.py:plan::190",
+        "function:src/kgmaker/completion.py:register::235",
+        "function:src/kgmaker/completion.py:register::237",
+        "function:src/kgmaker/completion.py:run::248",
+        "function:src/kgmaker/completion.py:run::250",
+        "function:tests/test_completion.py:inventory::94",
+        "function:tests/test_completion.py:test_cli_emits_json::137",
+        "function:tests/test_completion.py:test_cli_emits_json::166",
+        "function:tests/test_completion.py:test_cli_reports_invalid_inventory_without_payload::127",
+        "function:tests/test_completion.py:test_cli_reports_invalid_inventory_without_payload::156",
+        "function:tests/test_completion.py:test_cycle_rejected_without_dispatch::47",
+        "function:tests/test_completion.py:test_explicit_verified_dependency_blocks_only_when_proof_is_missing::91",
+        "function:tests/test_completion.py:test_explicit_verified_dependency_must_be_declared::115",
+        "function:tests/test_completion.py:test_failed_offline_boundary_is_reviewable_without_a_self_cycle::145",
+        "function:tests/test_completion.py:test_failed_offline_boundary_is_reviewable_without_a_self_cycle::174",
+        "function:tests/test_completion.py:test_priority_ready_and_blocked_work::20",
+        "function:tests/test_completion.py:test_real_inventory_is_readable_without_a_network_or_a_graph::56",
+        "function:tests/test_completion.py:test_t003_umbrella_blocks_only_until_all_documented_packages_are_delivered::77",
+        "function:tests/test_completion.py:write_inventory::7",
+        "section:docs/changes/175_requireVerifiedDependencies.md:175 — Povinně ověřené závislosti při plánování::1",
+        "section:docs/changes/175_requireVerifiedDependencies.md:Oprava parseru po nezávislém review::48",
+        "section:docs/completion-orchestrator.md:Completion Orchestrator::1",
+        "workbook:fixtures/excel-migration/Rates.xlsx:Rates.xlsx",
+        "workbook_cell:fixtures/excel-migration/Rates.xlsx:Rates!B2",
+        "workbook_sheet:fixtures/excel-migration/Rates.xlsx:Rates"
+      ],
+      "graph_delta": {
+        "added": [
+          "function:src/kgmaker/completion.py:_action::156",
+          "function:src/kgmaker/completion.py:_indirect_failures::171",
+          "function:src/kgmaker/completion.py:plan::190",
+          "function:src/kgmaker/completion.py:register::237",
+          "function:src/kgmaker/completion.py:run::250",
+          "function:tests/test_completion.py:test_cli_emits_json::166",
+          "function:tests/test_completion.py:test_cli_reports_invalid_inventory_without_payload::156",
+          "function:tests/test_completion.py:test_failed_offline_boundary_is_reviewable_without_a_self_cycle::174",
+          "section:docs/changes/175_requireVerifiedDependencies.md:Oprava parseru po nezávislém review::48"
+        ],
+        "removed": [
+          "function:src/kgmaker/completion.py:_action::154",
+          "function:src/kgmaker/completion.py:_indirect_failures::169",
+          "function:src/kgmaker/completion.py:plan::188",
+          "function:src/kgmaker/completion.py:register::235",
+          "function:src/kgmaker/completion.py:run::248",
+          "function:tests/test_completion.py:test_cli_emits_json::137",
+          "function:tests/test_completion.py:test_cli_reports_invalid_inventory_without_payload::127",
+          "function:tests/test_completion.py:test_failed_offline_boundary_is_reviewable_without_a_self_cycle::145",
+          "workbook:fixtures/excel-migration/Rates.xlsx:Rates.xlsx",
+          "workbook_cell:fixtures/excel-migration/Rates.xlsx:Rates!B2",
+          "workbook_sheet:fixtures/excel-migration/Rates.xlsx:Rates"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "focused-tests",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:4b63ffe68e16fa7c2ce69640b5045779645d057f0f31cfd287fc1005398b13aa"
     }
   ]
 }
