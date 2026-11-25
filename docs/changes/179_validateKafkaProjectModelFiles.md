@@ -116,3 +116,28 @@ Sémantická aktualizace zachovala 431 historických epizod obou rodičů,
 56 konceptů a 206 vztahů. T012 zůstává PARTIAL. Úplná standardní sada,
 Windows, GitHub Actions a nezávislé review tohoto stromu mají při
 lokálním předání stav NOT_RUN.
+
+## Přenos po #158
+
+První rodič `1bb99abbe848c0a9e980f94e964a15843991580b` nese opravu bajtové
+kontroly Kafka katalogu. Druhý rodič `e55bff02774aeee8f10d43c9e59895915311376e`
+je sloučený [#158](https://github.com/p-rum/kgmaker/pull/158). Zachovává
+[ověřené záznamy o dodání](174_reconcileMergedDelivery.md)
+a jejich stavovou a acceptance matici. Produktové a testovací soubory
+mají stejné bajty jako v prvním rodiči. Výsledky 242 a 76 testů výše jsou
+důkazy jejich tehdejších revizí.
+
+Na společném stromu prošly 2 cílené testy bez přeskočení, exit 0. Skutečný
+K1 ověřil opravenou regresi LF→CRLF, odmítnutí pozměněných uzlů i repo alias.
+Samostatná kontrola platného CRLF souboru s explicitním modelem v K1 i K2
+potvrdila obě skupiny `VERIFIED_STATIC` a nezměněné soubory. SHA-256
+JUnit je `e96e4470915dac4dc9d816cf242c855c785bfcdf855f32e6912696c1536b374b`.
+SHA-256 JSON kontroly CRLF je
+`45c8a533ddcce3a4f43609b52be873461e320d4feff90ab4fcce1f0e4635d489`.
+
+`kgmaker completion plan --root . --jobs 3` zachoval W01, W02 a T047-S02
+ve stavu `MERGED/PARTIAL`. W03 čeká na `VERIFIED_IN_SCOPE` u W02.
+Plánování zachovalo vstupní soubory. Sémantická aktualizace zachovala
+438 historických epizod obou rodičů. T012 zůstává PARTIAL. Úplná
+standardní sada a nezávislé review tohoto stromu mají při lokálním
+předání stav NOT_RUN.

@@ -1,0 +1,274 @@
+# 174 — Doručení runtime importu, instalace a migrace Excelu
+
+Výchozí `main` `5809e84932b1910bfc3f17c72e2a2005283389b1`.
+Stavová matice a acceptance inventář evidovaly některé sloučené změny jako
+otevřená PR. V [matici](../production-analysis-progress.md) a
+[inventáři](../acceptance-inventory.md) je nyní skutečná revize dodání
+oddělená od ověřeného rozsahu. Historické change notes zůstávají zachované.
+
+## T003-S13-W02, kroky 2–5 a AC01–AC04
+
+[#136](https://github.com/p-rum/kgmaker/pull/136) je sloučené jako
+`5809e84932b1910bfc3f17c72e2a2005283389b1` se shodným stromem
+`83becb8cf202fd89cc6e31d9e5e53772934b710b` proti schválenému headu
+`3d4860136ded9be86d171de2ecdc653b9facc49b`. Nezávislé T045 schválilo tuto
+dvojici před sloučením. Výsledek W02 je `MERGED / PARTIAL`. Uložené
+pozorování dokládá ověřené dodané hodnoty v kontextu a variantě služby.
+Přesné místo volání, původní typ receiveru a širší T003-AC13 zůstávají
+neuzavřené. [Import a hranice](../runtime-trace.md) ·
+[Záznam implementace](151_preserveRuntimeObservationEvidence.md) ·
+[Schválení T045](https://github.com/p-rum/kgmaker/pull/136#issuecomment-7162583059)
+
+Ověření schváleného stromu se skutečným JDK 21, Mavenem a workery Kotlin
+K1/K2 mělo **173 PASS / 0 SKIP**. Standardní CPython 3.13.18 měl
+**2 561 PASS / 1 332 SKIP / 1 očekávaný strict XFAIL**, exit 0.
+Po ověření sloučeného `main` prošlo **104 PASS / 0 SKIP**, exit 0,
+v níže uvedených modulech se skutečným JDK 21 a Mavenem. Shodný manifest
+892 sledovaných cest má SHA-256
+`09428f40b5e5a703f97b4f67240452dc16aed291efd208301f53678b711cdc7e`,
+JUnit SHA-256
+`115547ab360be40daa1e76ecf1cd0b751e081602d30c42221faa6d3d177045a1`.
+Hostovaný compiler job ještě běžel při sloučení. Rozsah receiveru ani
+přesné vazby na call site se tím neověřily.
+
+```bash
+KGMAKER_REQUIRE_WORKERS=1 python -m pytest -n 2 -p no:cacheprovider -q \
+  tests/test_runtime_trace_producer.py tests/test_graph_publication_concurrency.py
+```
+
+## T053-S01–S04, AC01–AC04
+
+[#154](https://github.com/p-rum/kgmaker/pull/154) je sloučené jako
+`1e782a119e5ae54d22bfc8d7c22c565ed651815a`. Doložený lokální rozsah
+zůstává `VERIFIED_IN_SCOPE`. Opravená větev a nezávislé T045 evidují
+**133 PASS / 0 SKIP** včetně reálného instalovaného Linux wheelu.
+Windows upgrade a uninstall, živý reload hostitelů a výpadek v průběhu
+publikace souborů zůstávají NOT_RUN. Obecný Windows instalační smoke
+pokrývá svůj vlastní rozsah.
+[Instalační návod](../project-installation.md) ·
+[Záznam implementace](170_manageProjectInstallation.md) ·
+[Schválení T045](https://github.com/p-rum/kgmaker/pull/154#issuecomment-7141212040)
+
+## T054-S01–S04, AC01–AC05
+
+[#155](https://github.com/p-rum/kgmaker/pull/155) je sloučené jako
+`782ac6ac0287550084e9afadbd6182756fdd2730`. Ověření před sloučením
+zahrnovalo **137 cílených PASS** a skutečný Linux wheel s JDK 17.
+Živé Jira Cloud a Windows v tomto ověření zůstaly NOT_RUN. Na následném
+headu #136 `3d4860136ded9be86d171de2ecdc653b9facc49b` jsou workflow,
+zdroje, testy, fixture a worker Excelu shodné s merge #155. Hostovaný
+Windows job s povinným workerem a wheelem úspěšně sestavil worker Mavenem,
+ověřil distribuci a dokončil `tests/test_excel_migration.py`.
+T054-AC04 a AC05 zůstávají `PARTIAL`. Živé Jira Cloud je stále NOT_RUN a
+Windows PASS dokládá testované fixture a distribuci.
+[Návod k migraci](../excel-migration.md) ·
+[Záznam implementace](171_addExcelMigration.md) ·
+[Schválení T045](https://github.com/p-rum/kgmaker/pull/155#issuecomment-7161936197) ·
+[Windows CI](https://github.com/p-rum/kgmaker/actions/runs/45613808138/job/139203894219)
+
+## T003-S10-W01, AC01 a AC03
+
+Dílčí oprava otisku Java launcheru a ochrany před jeho změnou je
+sloučena v [#149](https://github.com/p-rum/kgmaker/pull/149) jako
+`16f2ba8c4d109957edc295feea80db86da7093f1`. Ověřený POSIX běh zahrnuje
+locale, `ct.sym` a zachování publikovaných výstupů při zjištěné změně.
+W01 zachovává `PARTIAL`. Výkonový warm HIT zůstává otevřený v
+[#116](https://github.com/p-rum/kgmaker/issues/116).
+[Chování cache](../stage-content-cache.md) ·
+[Oprava a testy](164_bindJavaLaunchInputs.md)
+
+## T003 — historický inkrement P1/P8/P9
+
+Úprava úvodu [production scope](../production-scope.md) potvrzuje, že
+zdrojové commity [#4](https://github.com/p-rum/kgmaker/pull/4) jsou v
+historii `main`. Dva navazující merge commity na historické větvi mají
+shodný strom `0e999bbaf7390dd69bc3e63f879f8fb2165b77d7` s dostupným
+`d9a89fe951157fe58d2592fa96631b21f3698301`.
+Na `5809e84` prošlo **45 cílených PASS / 0 SKIP**, exit 0, pro produkční
+klasifikaci a důkazní vrstvy. JUnit SHA-256
+`bba85dd3ebe1ff3f3a91f6e615647bafdb5d105f3285751470b2d81e264a3043`.
+Širší acceptance P1/P8/P9 sleduje aktuální zadání T003 a stavová matice.
+[Historický záznam implementace](1_addProductionScope.md)
+
+## T051-S02 a T052-S02, zdrojová čerstvost role packetu
+
+Dopředný přenos inventáře vychází z `main`
+`b04d064a6147436adc751f5fffa4a219b8f8c16e`. [#151](https://github.com/p-rum/kgmaker/pull/151)
+je v něm skutečně sloučené se schváleným headem
+`473841773a708e259bda33e93568581b5d03464d` a výsledným stromem
+`b60ff57a1ae03ed7920bf4a23b3e88dcd54a5273`. Schválený strom má
+**208 cílených PASS / 0 SKIP**, JUnit SHA-256
+`5e4f31eea01523d8004711865704472a77ccfb7ddb31f49694f40048feee3ee0`.
+Kontrola doložila stejnou zdrojovou inventuru i reakci na změnu bajtů
+skutečných XLSX, šifrovaných XLSX a legacy XLS. Ověření proběhlo bez
+parsování sešitů, spuštění procesu či přepsání grafu. Explicitní XLSM
+má vlastní workflow T054. Ostatní ověřovací stavy T051 a T052 zůstávají
+v dosavadním rozsahu.
+[Návod a příklad packetu](../project-workflows.md#role-context-freshness) ·
+[Záznam implementace](167_useCanonicalPacketSourceSnapshot.md)
+
+## T055-S01–S03 a AC01–AC03
+
+Dopředný přenos inventáře po [#156](https://github.com/p-rum/kgmaker/pull/156)
+vychází z `main` `3a6b97fc9c44941e68bb390772a5eb13906bf1ff`. Merge má stejný
+strom `d0398fbb8b41c72e09f5fc242e1b7f255a4eecb8` jako head
+`3aae558631ac0f2e994b98b3b4a917dd2a20ef8b`. Change174 používá nové číslo,
+protože publikovaný #157 již používá Change173.
+
+Doručený rozsah je lokální příprava ze sešitů, výstup Markdown a Jira CSV
+a distribuovaný skill. Opravené zdroje a testy T055 jsou ve sloučeném stromu
+shodné s dříve ověřeným `1ab93541d89f1cfce3e873fab4fe26230e07fd1a`.
+V místním scope je doloženo **172 cílených PASS** se skutečným Java 17
+workerem a instalovaným Linux wheelem. Živý Copilot a živý Jira Cloud
+import zůstávají NOT_RUN. Na dřívějším běhu #156 uspěly samostatné
+Excel joby na Linuxu a Windows včetně balení workeru, ověření distribuce
+a Excel pytest. Tento běh měl současně zelený pytest a selhání následného
+`kgmaker check` v Python jobu 3.13. Souhrnný CI PASS pro #156 se nedokládá.
+[Záznam implementace](172_automateExcelMigration.md) ·
+[Excel Linux](https://github.com/p-rum/kgmaker/actions/runs/45617722148/job/139217362508) ·
+[Excel Windows](https://github.com/p-rum/kgmaker/actions/runs/45617722148/job/139217362452) ·
+[Python 3.13](https://github.com/p-rum/kgmaker/actions/runs/45617722148/job/139217362565)
+
+## T003-S10-W02, kroky 3–5 a AC01–AC04
+
+Dopředný přenos inventáře po [#130](https://github.com/p-rum/kgmaker/pull/130)
+vychází z `main` `0c834c8b2c06ca80d76f1aaf09f6f49b968e8aa3`. Merge
+má stejný strom `c59ea8c3cb12112c806f907e8a91f37d60300795` jako
+schválený head `936a3d7434bffbaaa3d36fec403d6cbe5132717b`. Čtecí report
+vrací přímé i tranzitivní závislosti doložené uloženým grafem. Neplatný
+otisk vyřadí dotčený compiler kontext. Oprava T045 odmítne kombinaci
+`--workspace` a `--evidence-only` před načtením workspace. Následuje
+selektivní publikace do grafu a dotčených revizí. W02-AC01 zůstává
+`PARTIAL` a negativní vyhledání patří k W03.
+
+- Schválený rozsah má **44 PASS / 0 SKIP** na skutečném JDK 21, exit 0.
+  Úplná CPython 3.13.18 sada má **2 586 PASS / 1 345 SKIP /
+  1 očekávaný strict XFAIL**, exit 0. JUnit nativní sady
+  `f36672caaa321507353b7d8666d90c5e37b74add2a55069dfd9f235b8425ab6a`
+  a standardní sady
+  `15fb9001579340e14d5bef93fa30a09d3e44f1e502ce7c8f3e730db7f9780ae5`.
+- Nezávislé T052 kontroly mají **18** a **3 PASS**, bez přeskočení.
+  Projektový T045 má na přesném stromu **13 PASS / 0 SKIP** se skutečným
+  JDK 21 a Javacem. JUnit
+  `e1162751e80d9bd35329fb8570fe1064fe01b37a403ea13244dcbb2bc42810fb`.
+- Po sloučení tohoto stromu prošlo na skutečném JDK 21 s Mavenem
+  **53 PASS / 0 SKIP**, exit 0. Výběr zahrnoval
+  `test_reverse_dependency_index.py`, `test_workspace.py` a
+  `test_stage_content_cache_actual.py`. Shodný otisk manifestu zdrojů
+  před a po je
+  `1597736cdd0708786d5e827433ce8cbbd264523642ac35c202b0e53c32c98eb7`,
+  JUnit `a004ba67c72261eea3e4214dddffaf295789c2a71417a02cb06583b61635bb26`.
+- GitHub Actions zůstávají pro schválený head neověřené. Nový lokální
+  build Excel workeru blokoval přístup ke Maven Central.
+
+[Příklady reportu](../stage-content-cache.md#selektivní-dopad-změn) ·
+[Záznam implementace](145_buildReverseDependencyIndexes.md) ·
+[Schválení T045](https://github.com/p-rum/kgmaker/pull/130#issuecomment-7169443480)
+
+## T052-S01, T052-R01 a T052-AC01 — ověřená závislost W03
+
+[#160](https://github.com/p-rum/kgmaker/pull/160) je sloučené jako
+`61cd97d90d7a342396da79e7c3c7401c3df2560e`. Merge a schválený head
+`46cedec5e07ae9612fcf0e590bfc30bd4cd3c77c` mají shodný strom
+`1b64d5e3e7f730582d5fab38920b6bfa4d042dbe`. Plánovač požaduje pro W03
+ověřený W02. Skutečný W02 je `MERGED/PARTIAL`; W03 je `PLANNED/NOT_RUN`
+a zůstává mimo `dispatch` s důvodem
+`T003-S10-W02: MERGED/PARTIAL; VERIFIED_IN_SCOPE required`.
+
+- Na schváleném stromu prošlo **109 PASS / 0 SKIP** v cílené autorské sadě
+  a **44 PASS / 0 SKIP** pro převzatý rozsah #130 se skutečným JDK 21.
+  Nezávislé T052 kontroly měly **42** a **109 PASS**, bez přeskočení.
+  T045 zopakovalo cílenou sadu s **109 PASS / 0 SKIP**.
+- Po sloučení proběhlo **109 PASS / 0 SKIP**, exit 0, v sadě plánovače,
+  workflow, předávání a skills. Shodný manifest 900 sledovaných cest má
+  SHA-256 `ee408ca0dda043fe589a45dde7374f4deadcf7f0c18145d582d9fd0fbbec59ac`.
+  JUnit SHA-256 `fe8fdb0d5ee676071a5ffd9fbbf19968533ea340226475e50778123f22a42ce9`.
+  GitHub Actions po sloučení zůstávají neověřené.
+
+[Záznam implementace](175_requireVerifiedDependencies.md) ·
+[Schválení T045](https://github.com/p-rum/kgmaker/pull/160#issuecomment-7169793956).
+
+## T047-S02, T047-R02 a T047-AC02
+
+[#150](https://github.com/p-rum/kgmaker/pull/150) je sloučené jako
+`9f07bf742a85204760b61bbaf1ae4c360437ead9`, se shodným stromem
+`8e1f6e5fe41ff0883b615f5db4ab08fe43f77b91` oproti schválenému headu
+`d75c20d821486129493e5b6d523cfcfcc9b37d53`. T047-S02 je `MERGED/PARTIAL`.
+Skutečné K1 a K2 dokládají logické klíče pojmenovaných funkcí Kotlinu
+v úplném source setu a zadržení klíče při opomenutém vybraném souboru.
+Doklad vyžaduje shodu repozitáře a členství v modulu a source setu.
+Další signatury, TypeScript, Windows a explicitní legacy reindex mají
+zvláštní rozsah ověření a zůstávají nedoložené.
+
+Na sloučené revizi prošlo **29 PASS / 0 SKIP**, exit 0, s připnutými
+K1 a K2. Výběr zahrnoval identitu, Kafka alias a plánovač. Otisky obou
+JARů a manifest zdrojů se během běhu shodovaly. JUnit SHA-256
+`bca730d3cce673885a2bac28bf243790ee1e6f707fc07794914982a436f3ef53`.
+[Doložené signatury a omezení](166_addKotlinLogicalSymbolKeys.md).
+
+## T055-S03 a T055-AC03 — ověření cílové instalace po #157
+
+[#157](https://github.com/p-rum/kgmaker/pull/157) je sloučené jako
+`5d067f152522442fa4cff22c2e69e1b9b6fcef86`. Strom integrace
+`449db27267880bf61a44518f4e5abe0c2921540a` zachovává změny CI a skills z headu
+`7d929242a70f086e051802b1156f41c6a94f820c` i společný základ po #150.
+Odstranilo krok `kgmaker check`
+nad vlastním checkoutem v CI a vývojovou kopii Excel skillu. Cílový projekt
+dostává stejný skill z distribuované šablony při `kgmaker init` i při
+`kgmaker upgrade`. Po sloučení prošlo **84 PASS / 0 SKIP**, exit 0,
+v samostatné sadě instalace, skills a init. JUnit SHA-256
+`9a3821650a2934cd1b939366aa0155308a79bbe68749db709ed240dd63525408`.
+Živý Copilot a import do Jira Cloud zůstávají NOT_RUN.
+[Repozitářové CI a cílové projekty](173_removeRepositorySelfCheck.md).
+
+## T003-S10-W01 a AC01–AC04
+
+[#162](https://github.com/p-rum/kgmaker/pull/162) je sloučené jako
+`ec95f1ee1c3400cf90e79c45950a4da339a4998a`. Merge a schválený head
+`550fb1bfb4af8f18f5b6b927571c0690ab6bb863` mají shodný strom
+`a767ab574f191495117104623894edfe38e54b77`. Průběžný výpočet otisku launcheru
+a jedna validace každého živého grafového stupně snižují režii explicitní
+živé inspekce. Obsahově neplatný výstup a souběžná změna vstupů zachovávají
+odmítnutí a ochranu publikovaného grafu. W01 je `MERGED/PARTIAL`.
+Persistentní compiler warm HIT zůstává otevřený v [#116](https://github.com/p-rum/kgmaker/issues/116).
+
+- Autorská cílená sada schváleného stromu má **34 PASS / 0 SKIP** se
+  skutečným Javacem, K1/K2 a TypeScriptem. Úplná standardní sada CPython
+  3.13 na stejném stromu má **2 597 PASS / 1 358 SKIP / 1 očekávaný strict
+  XFAIL**, exit 0, JUnit SHA-256
+  `361c148249c419df1ac8059cb5446d8de39cfae56da7f700990a440912741aef`.
+- Nezávislá sada T045 na přesném stromu má **17 PASS / 0 SKIP**,
+  exit 0. Při sloučení uspěly pozorované ostatní CI joby a nativní
+  `compiler-workers` ještě běžel.
+- Po sloučení prošlo **23 PASS / 0 SKIP**, exit 0, v nativním výběru
+  plánovače, cache a Kotlin identity se skutečným JDK 21, K1/K2 a TypeScriptem.
+  Shodný manifest 905 sledovaných cest má SHA-256
+  `2550d488cd04e301a4e0f40b2821a81aaf001730542eb2d3cae5344983b2053a`,
+  JUnit SHA-256 `9c76ccde82d0787357e0eb05776a6342d34b3e4c2d89cdb6fcd222f9f2198b8b`.
+
+[Záznam implementace](178_reduceLiveInspectionOverhead.md) ·
+[Schválení T045](https://github.com/p-rum/kgmaker/pull/162#issuecomment-7170688915).
+
+## Ověření inventáře a kompatibilita
+
+```bash
+PYTHONPATH=src python -m pytest -p no:cacheprovider -q tests/test_completion.py
+PYTHONPATH=src python -m kgmaker.cli completion plan --root . --jobs 32
+```
+
+- Před sloučením #160 měly cílené testy plánovače **7 PASS / 0 SKIP**,
+  exit 0. JUnit SHA-256
+  `6b61c3c3aa108bb86770ca04b0dce1b8bc30db5b962a45b6679ee8968561c469`.
+- Při přenosu po #160 prošlo **13 PASS / 0 SKIP**, exit 0, v
+  `tests/test_completion.py`.
+- Po přenosu na `ec95f1ee1c3400cf90e79c45950a4da339a4998a` stejná sada
+  znovu prošla s **13 PASS / 0 SKIP**, exit 0. JUnit SHA-256
+  `9cba550ab67c06e9a3d37b4cb4052d67ad8275c3230297ed436dbc0072f11d2c`.
+- Přímý běh plánovače načetl všech 119 existujících řádků. Matice má
+  90 MERGED a 29 PLANNED. T003-S13-W02 zůstává dostupné pro další
+  ověření. U T003-S10-W02 navazuje selektivní publikace. Podmínka ověření
+  drží W03 mimo `dispatch` i při `--jobs 32`.
+- Úplná testovací sada a GitHub Actions pro tuto dokumentační změnu jsou
+  NOT_RUN. Veřejné API, příklady CLI, README, ostatní capability návody a registr
+  zadání mají nulový dopad, protože publikované chování, schémata a
+  identita zadání zůstávají stejné.
