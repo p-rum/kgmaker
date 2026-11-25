@@ -4,7 +4,7 @@
 - **Revision** 1
 - **Datum** 2026-11-25
 - **Stav** SPECIFICATION
-- **Baseline** `main` `3a6b97fc9c44941e68bb390772a5eb13906bf1ff`
+- **Baseline** `main` `0c834c8b2c06ca80d76f1aaf09f6f49b968e8aa3`
 - **Závislosti** T054 statický inventář a T055 příprava migračního balíku. Oprava VML z PR #159 umožňuje načíst také dříve odmítnuté XLSM s párovým `<br></br>`.
 
 ## Rozsah a požadavky

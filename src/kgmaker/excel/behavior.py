@@ -13,6 +13,7 @@ OUTPUT_TRACE_LIMIT = 200
 OPERATION_LABELS = {
     "assignment": "Assignment", "condition": "Control-flow condition", "display-write": "Display property write",
     "message": "Possible VBA message", "http-open": "Prepare HTTP request", "http-send": "Send HTTP request",
+    "unresolved-operation": "Operation with unresolved effects",
 }
 BRANCH_NOTES = {
     "IF": "Either branch can supply the result, depending on the test.",
@@ -72,6 +73,7 @@ class WorkbookBehavior:
         self.visible = set()
         self.range_writers = defaultdict(list)
         self.site_gaps = defaultdict(list)
+        self.traced = set()
         for row in sorted(self.rows.values(), key=_sort):
             self.by_kind[row["kind"]].append(row)
             place = row["locator"]
@@ -109,6 +111,9 @@ class WorkbookBehavior:
         locator = row["locator"]
         return ((self.book is None or locator.get("workbook") == self.book)
                 and (self.sheet is None or locator.get("sheet") == self.sheet))
+
+    def relevant(self, row):
+        return row["id"] in self.traced or self.in_scope(row)
 
     def members(self, row, maximum):
         place = row["locator"]
@@ -207,7 +212,7 @@ class WorkbookBehavior:
         lines.extend(("", "## Calculations and VBA steps", ""))
         for kind in ("cell", "defined-name"):
             for row in self.by_kind[kind]:
-                if not self.in_scope(row) or (
+                if not self.relevant(row) or (
                     row.get("type") != "FORMULA" and (kind != "defined-name" or not row.get("formula"))
                 ):
                     continue
@@ -223,10 +228,10 @@ class WorkbookBehavior:
                     if name in BRANCH_NOTES:
                         lines.append(f"  - **Conditional result** · {name}. {BRANCH_NOTES[name]}")
         for proc in self.by_kind["vba-procedure"]:
-            if not self.in_scope(proc):
-                continue
             actions = [self.rows[key] for key in self.connections(proc, "contains")
-                       if self.rows[key]["kind"] == "vba-operation"]
+                       if self.rows[key]["kind"] == "vba-operation" and self.relevant(self.rows[key])]
+            if not self.relevant(proc) and not actions:
+                continue
             calls = self.connections(proc, "calls")
             lines.append(f"- **VBA procedure in source** · {_anchor(proc)}")
             if calls:
@@ -260,6 +265,7 @@ class WorkbookBehavior:
             if index >= OUTPUT_TRACE_LIMIT:
                 continue
             observed, paths, limited = self.lineage(row)
+            self.traced.update(item["id"] for item in observed)
             rules = [item["id"] for item in observed if item["kind"] not in {"external-source"}]
             if rules:
                 lines.append(f"  - Statically connected inputs and steps {self.refs(rules)}")
@@ -288,7 +294,7 @@ class WorkbookBehavior:
         self.declared_sources(lines)
         self.displays(lines)
         referenced = [row for row in self.by_kind["cell"]
-                      if self.in_scope(row) and row["id"] in self.used and row.get("type") != "FORMULA"]
+                      if self.relevant(row) and row["id"] in self.used and row.get("type") != "FORMULA"]
         if referenced:
             lines.extend(("", "## Values stored in referenced cells", "",
                           "A stored value may come from manual entry, an import, or a prior refresh."))

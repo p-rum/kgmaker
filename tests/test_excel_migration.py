@@ -12,7 +12,7 @@ from xml.sax.saxutils import escape
 
 import pytest
 
-from kgmaker.analysis_model import AnalysisError, canonical
+from kgmaker.analysis_model import AnalysisError, canonical, digest
 from kgmaker.excel import inventory, jira, plan
 from kgmaker.excel.source import preflight, worker_command
 from kgmaker.worker_protocol import WorkerError
@@ -247,6 +247,7 @@ def test_currency_behavior_reports_three_sources_across_fifteen_sheets(tmp_path,
     assert workbook.read_bytes() == original
     observed = plan.load_inventory(bundle / "inventory.json")
     assert len(observed["relations"]) > 200
+    assert evidence_at(observed, "address", sheet="ECB", range="A2:A2")
     names = {item["reference"]: item["id"] for item in observed["evidence"] if item["kind"] == "external-source"}
     assert len(names) == 3
     report = (bundle / "behavior.md").read_text(encoding="utf-8")
@@ -267,7 +268,12 @@ def test_currency_behavior_reports_three_sources_across_fifteen_sheets(tmp_path,
     assert scoped.returncode == 0, scoped.stderr
     assert sum("source-to-output" in line for line in scoped.stdout.splitlines()) == 3
     assert "Formula in source** · ` main / Display / A1 " in scoped.stdout
+    assert "Formula in source** · ` main / CrossRate / A1 " in scoped.stdout
+    assert "Conditional result** · IFERROR" in scoped.stdout
     assert "Formula in source** · ` main / Audit" not in scoped.stdout
+    legacy = {**observed, "worker": "excel-poi-6.0.0-2"}
+    legacy["inventory_id"] = digest({key: val for key, val in legacy.items() if key != "inventory_id"})
+    assert plan.load_inventory(write_json(tmp_path / "legacy-inventory.json", legacy)) == legacy
 
 
 def test_unmapped_and_missing_book_are_explicit(tmp_path, sample, actual_worker):
@@ -443,6 +449,9 @@ Public Sub ChooseRate(ByVal usePrimary As Boolean)
         rate = 201.50
     End If
     MsgBox rate
+End Sub
+Public Sub PublishDynamic(ByVal rowNumber As Long)
+    ThisWorkbook.Worksheets("Sheet1").Cells(rowNumber, 2).Value = 2 * rowNumber
 End Sub'''
     _register_source(builder, selection.books[0], source=source)
     value = builder.document()
@@ -463,6 +472,9 @@ End Sub'''
     full = behavior.markdown(value, include_source=True)
     assert "CDbl(http.ResponseText)" in full and "total = rate * 100" in full
     assert "101.25" in full and "201.50" in full
+    assert ".Cells(rowNumber, 2).Value = 2 * rowNumber" in full
+    dynamic = evidence_at(value, "vba-operation", procedure="PublishDynamic")
+    assert not any(edge["source"] == dynamic["id"] and edge["kind"] == "writes" for edge in value["relations"])
     redacted = plan.packet(value)
     assert any(row["kind"] == "vba-operation" for row in redacted["evidence"])
     assert not any(set(row) & plan.SOURCE_FIELDS for row in redacted["evidence"])

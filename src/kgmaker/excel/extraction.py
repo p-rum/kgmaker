@@ -18,6 +18,7 @@ INLINE_IF = re.compile(r"^\s*If\b.*?\bThen\s+(?=\S)", re.I)
 ASSIGN = re.compile(r"^\s*(?:(Set|Let)\s+)?(.+?)\s*(?<![:<>=])=(?!=)", re.I)
 SYMBOL = re.compile(vba.IDENTIFIER)
 MEMBER = re.compile(rf"{vba.IDENTIFIER}(?:\s*\.\s*{vba.IDENTIFIER})+", re.I)
+RANGE_TARGET = re.compile(r"(?:^|\.)\s*(?:Range|Cells)\s*\(", re.I)
 VALUE_TOKEN = re.compile(rf"(?<![.\w])({vba.IDENTIFIER})\b(?!\s*[.(])", re.I)
 CREATE = re.compile(rf"^\s*CreateObject\s*\(\s*{vba.STRING}\s*\)\s*$", re.I)
 NEW_CLIENT = re.compile(rf"^\s*(?:Dim\s+({vba.IDENTIFIER})\s+As\s+)?New\s+([\w.]+)\s*$", re.I)
@@ -69,7 +70,9 @@ def _assignment(text, statement):
     # The mask preserves offsets but can erase an entire literal right-hand side.
     target = statement[match.start(2):match.end(2)].strip()
     value = statement[match.end():].strip()
-    if value and (SYMBOL.fullmatch(target) or MEMBER.fullmatch(target) or vba.RANGE.fullmatch(target)):
+    if value and not vba.BARE_CONTROL.match(target) and (
+        SYMBOL.fullmatch(target) or MEMBER.fullmatch(target) or RANGE_TARGET.search(vba.mask(target))
+    ):
         return match[1], target, value
     return None
 
@@ -126,6 +129,8 @@ def vba_observations(inventory, owner, proc):
             role = "message"
         elif conditional:
             role = "condition"
+        elif vba.dynamic_flags(action, raw):
+            role = "unresolved-operation"
 
         # Ordinary declarations and comments are not functional evidence. The
         # inventory still retains the original module and call/reference edges.
