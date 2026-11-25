@@ -7,6 +7,7 @@ be verified independently of the cached payload.
 from __future__ import annotations
 
 from copy import deepcopy
+from hashlib import file_digest
 import os
 from pathlib import Path
 import time
@@ -116,6 +117,11 @@ def engine_fingerprint():
     return digest({p.name: file_hash(p) for p in sorted(package.glob('*.py'))})
 
 
+def _launch_file_hash(path):
+    with path.open('rb') as stream:
+        return file_digest(stream, 'sha256').hexdigest()
+
+
 def launch_inputs(argv):
     """Capture the selected executable/platform, without starting a process."""
     launcher = Path(argv[0])
@@ -125,7 +131,7 @@ def launch_inputs(argv):
         # Python 3.12 pathlib reports symlink loops as RuntimeError.
         return None
     try:
-        files = {str(executable): file_hash(executable)}
+        files = {str(executable): _launch_file_hash(executable)}
     except OSError:
         return None
     java_names = {'java', 'java.exe'}
@@ -137,7 +143,7 @@ def launch_inputs(argv):
                 target = executable.parent.parent / relative
                 if not target.is_file():
                     return None
-                files[str(target)] = file_hash(target)
+                files[str(target)] = _launch_file_hash(target)
         except OSError:
             return None
     environment = {name: os.environ.get(name) for name in
@@ -191,6 +197,7 @@ class InspectionStages:
             raise WorkerError('Extraction engine/launcher changed during inspection', 'STALE')
 
     def run(self, stage, builder, validator, *, base=None, upstream=None):
+        """Return the validated live result and retain its serialized candidate."""
         self.guard()
         key = {'version': VERSION, 'stage': stage,
                'root': str(self.root.resolve()), 'context': self.selected,
@@ -202,7 +209,7 @@ class InspectionStages:
         # alone cannot authenticate a concrete worker or graph claim from them.
         reason = 'UNVERIFIED_REPLAY' if self.eligible else 'INCOMPLETE_INPUT_CLOSURE'
         payload = builder()
-        validator(payload)
+        validated = validator(payload)
         self.guard()
         entry = {'key': key, 'key_sha256': identity,
                  'payload': payload, 'payload_sha256': digest(payload)}
@@ -211,7 +218,7 @@ class InspectionStages:
         elif self.eligible:
             reason = 'CACHE_SIZE_LIMIT'
         self.statistics.append({'stage': stage, 'status': 'BYPASS', 'reason': reason})
-        return payload
+        return validated
 
     def attach(self, graph):
         self.guard()

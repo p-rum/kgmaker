@@ -7,7 +7,7 @@
 |---|---|---|
 | T055-AC01 | VERIFIED_IN_SCOPE | Výběr dvou skutečných sešitů, omezený packet a úplný seznam subjektů. Kolize názvů zůstává bez vazby. |
 | T055-AC02 | VERIFIED_IN_SCOPE | Export Markdown a Jira CSV s vlastním polem, mapování, ochrana před nevalidním kandidátem, změnou sešitu, přepsáním výstupu a výměnou cesty při úklidu. |
-| T055-AC03 | VERIFIED_IN_SCOPE | Instalace, upgrade, parita a pravidla předání dat ve skillu, skutečný Java 17 worker. Trasování 0 IP spojení, makra se nespustila. Živý Copilot NOT_RUN. |
+| T055-AC03 | VERIFIED_IN_SCOPE | Instalace a upgrade v dočasných cílových projektech, shoda s distribuovanou šablonou a pravidla předání dat. Excel CI se skutečným Java 17 workerem a wheelem, 26 PASS na Linuxu i Windows. Trasování 0 IP spojení, makra se nespustila. Živý Copilot NOT_RUN. [Oprava CI](changes/173_removeRepositorySelfCheck.md). |
 
 Dodání MERGED v [#156](https://github.com/p-rum/kgmaker/pull/156) jako
 `3a6b97fc9c44941e68bb390772a5eb13906bf1ff`. Živý Copilot a import do Jira
@@ -82,6 +82,16 @@ AC02 zachovává graph v1/v2/v3 a interní envelope v1. AC04 vymezuje přesný
 rozsah v [change164](changes/164_bindJavaLaunchInputs.md). Oprava byla sloučena v [#149](https://github.com/p-rum/kgmaker/pull/149)
 jako `16f2ba8c4d109957edc295feea80db86da7093f1`. W01/AC01 zůstává
 PARTIAL a persistentní warm HIT je otevřený.
+
+Dílčí oprava živé inspekce z [#162](https://github.com/p-rum/kgmaker/pull/162)
+je MERGED jako `ec95f1ee1c3400cf90e79c45950a4da339a4998a`. Zachovává
+otisk při průběžném čtení launcheru a jednou validuje každý živý grafový
+stupeň. Testy s Javacem, K1, K2 a TypeScriptem počítají i skutečné worker
+operace. Negativní kontroly pokrývají nevhodný živý výstup a závody při
+publikaci. W01-AC01 zůstává `PARTIAL` a persistentní warm HIT sleduje
+[#116](https://github.com/p-rum/kgmaker/issues/116).
+[Přesná evidence a hranice](changes/178_reduceLiveInspectionOverhead.md) ·
+[Sloučení a ověření](changes/174_reconcileMergedDelivery.md#t003-s10-w01-a-ac01ac04).
 
 ## T003-S10-W02 — reverse dependency indexy
 
@@ -258,6 +268,39 @@ pouze těla `score(Int)`. Nový kontext váže stejný `Caller.kt` na přesné d
 signatury bez publikace grafu. Otevřené zůstávají inkrementální přepočet
 body-dependent důkazů, scénáře Windows a úplná matice §7.
 [Ověření a omezení](changes/137_prepareIncrementalMutationOracle.md).
+
+T047-S02 / T047-R02 a T047-AC02 — `MERGED / PARTIAL` po
+[#150](https://github.com/p-rum/kgmaker/pull/150) jako
+`9f07bf742a85204760b61bbaf1ae4c360437ead9`.
+Skutečné K1 a K2 dokládají logické klíče přetížení `score(Int)` a
+`score(String)` s neměnným klíčem a novým ID výskytu po komentáři. Výslovně
+vybrané produkční a testovací source sety a různé repozitáře mají vlastní
+klíče. Kontroly vyžadují úplný zachycený výběr Kotlin souborů a ověřují
+strukturované členství deklarace i při shodném textovém označení dvou source setů.
+Přechod z předchozí inspekce na raw workspace po #145 i jeho opakované načtení
+ověřily oba workery s neměnným logickým klíčem.
+Doklad deklarace po kontrole kolizí zahrnuje i stejnojmenné zdrojové protějšky
+bez doložitelného JVM symbolu. Při neznámém vstupním typu protějšku se klíč
+zadrží pro stejné jméno a package. Kafka katalog při repo aliasu používá
+stejnou kvalifikaci jako snímek workspace.
+Po přenosu na `5809e849` prošlo 106 cílených testů se skutečnými K1 a K2
+bez přeskočení včetně raw JVM, workspace, cache a Kafka katalogu.
+Následující přenos na `b04d064a` zachoval compiler zdroje. Pět cílených
+testů porovnalo otisky sešitů a čtení grafů v1–v3, nový nativní běh je
+pro tuto revizi NOT_RUN. Přenos na `3a6b97fc` převzal T055, zachoval stejné
+compiler zdroje a ověřil 12 cílených případů instalace, migrace a čtení
+starších grafů.
+Pokud skener hlásí `SOURCE_NOT_ANALYZED` u vybraného souboru Kotlinu,
+chybí důkaz úplnosti source setu. Přímá inspekce, offline čtení a opakované
+načtení workspace v takovém případě zadrží volitelný klíč. Ostatní platné
+compiler údaje a klíče v jiném repozitáři nebo source setu zůstávají dostupné.
+Po přenosu na `61cd97d9` prošlo 57 cílených testů se skutečnými K1, K2
+a Javacem bez přeskočení. Po sloučení prošlo 29 testů s připnutými K1 a K2
+bez přeskočení. Další signatury, TypeScript, Windows a explicitní legacy
+reindex zůstávají nedoložené.
+Podporované signatury, nejednoznačné deklarace, grafy v1–v3 a zbývající
+rozsah popisuje [záznam ověření](changes/166_addKotlinLogicalSymbolKeys.md) ·
+[Sloučení a ověření](changes/174_reconcileMergedDelivery.md#t047-s02-t047-r02-a-t047-ac02).
 
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
 původní SHA a výsledky. Již proběhlý merge není čekající gate: T020 PR87,

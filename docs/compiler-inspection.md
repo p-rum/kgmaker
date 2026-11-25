@@ -1572,6 +1572,8 @@ for context/proof guards, atomic output and exact bounded native verification.
 
 Explicitní JVM/TS inspekce vrací `cache.stages` s důvodem BYPASS.
 Každá fáze používá aktuální výpočet a znovu ověří zdroj/worker před publikací.
+Grafová fáze vrací svůj validovaný objekt a otisk launcheru čte soubory
+průběžně při každé kontrole.
 Otisk spuštění Java zahrnuje `lib/ct.sym`, který Javac používá pro starší
 `--java-release`, a na POSIX přesné hodnoty `LANG`, `LC_ALL` a `LC_CTYPE`.
 Při výběru přes `bin/java` jako symbolický odkaz vychází otisk z cílové
@@ -1591,7 +1593,8 @@ there is no store. A Confluence-enabled scan keeps the report and validation ind
 in the graph publication rollback scope.
 [Detaily, příklady a hranice souběhu](stage-content-cache.md),
 [ověření #116](changes/135_bindCachedCompilerEvidence.md),
-[regrese locale a platformních symbolů](changes/164_bindJavaLaunchInputs.md).
+[regrese locale a platformních symbolů](changes/164_bindJavaLaunchInputs.md),
+[ověření nákladů živé inspekce](changes/178_reduceLiveInspectionOverhead.md).
 
 Runtime import ověří obálku před publikací. Pod zámkem store hlídá
 očekávanou generaci a import před každým nahrazením výstupu znovu kontroluje
@@ -1665,3 +1668,50 @@ při publikaci grafu. Původ dokladů opakovaného importu uvádí
 kgmaker callgraph callers --root PROJECT --context CONTEXT_ID --symbol TARGET_ID
 kgmaker callgraph path --root PROJECT --context CONTEXT_ID --from CALLER_ID --to TARGET_ID
 ```
+
+## Logické klíče deklarací Kotlinu
+
+Výstup `graph.symbols` může obsahovat `logical_key` s prefixem
+`logical:kotlin-function-v1:`. Klíč spojuje výskyty mezi snapshoty a zahrnuje
+repozitář, jazyk, modul, source set, scope, Kotlin package, druh deklarace,
+jméno, typy parametrů a návratový typ. Pro volání a evidenci používejte konkrétní
+`id` a `context_id`, které označují výskyt v jeho snapshotu.
+
+Podporovaný rozsah vyžaduje dohledatelný ručně psaný `.kt` zdroj ve výslovně
+vybraném produkčním nebo testovacím source setu. Workery K1 a K2 ověřují
+veřejnou pojmenovanou funkci na úrovni souboru v package s konkrétní JVM deklarací a
+s konkrétními ne-null typy `Int`, `String` nebo `Boolean`. Verze 1 vyžaduje
+explicitní návratový typ a aktuální lokální compiler kontext nebo kontext z
+doloženého buildu. Výběr musí být bez specifického build nebo Spring profilu.
+Kompilátor musí dostat všechny zachycené Kotlin soubory zvoleného source setu
+včetně zachycených vstupů jeho generované varianty. Členství každé deklarace
+se ověřuje proti samostatným hodnotám modulu, source setu a scope z modelu
+buildu. Při částečném výběru souborů nebo nejednoznačném členství graf dál
+poskytuje výskyt a jeho compiler doklad.
+Při `SOURCE_NOT_ANALYZED` u vybraného souboru `.kt` nelze doložit úplnost
+source setu. Klíče se zadrží pro jeho Kotlin kontext včetně deklarované
+generované varianty. Inspekce znovu nečte soubor odmítnutý kvůli limitu.
+Offline graf i workspace odeberou pouze volitelný klíč dříve uloženého
+výskytu, pokud je zbytek compiler snímku nadále aktuální. Ostatní
+repozitáře a source sety si doložené klíče ponechají.
+Oba workery kontrolují kolize zdrojových deklarací ve stejném běhu analýzy.
+Při konfliktu klíč nevzniká ani v případě, kdy kompilátor pro druhou deklaraci
+nevydá JVM symbol. Při neověřeném podpisu stejnojmenné deklarace v témže
+package zůstávají k dispozici výskyty. Chyby v těle nesouvisející funkce
+samostatně doložený klíč nezablokují.
+Další typy, generické, anotované, lokální, anonymní a nejednoznačné deklarace
+vracejí původní informace o výskytu bez logického klíče. SOURCE_ONLY grafy
+dodávají pouze syntaktické výskyty. Workspace klíč přebírá od compiler kontextu se
+stejným repozitářem jako v manifestu; náhradní repo označení stačí pro kvalifikaci
+výskytu, ale neposkytuje důkaz jeho logické identity.
+Ověření kolizí vyžaduje doklad `kotlin_declaration.schema_version` 2.
+Dřívější vývojové snapshoty s verzí 1 poskytují výskyt; pro doložení klíče
+znovu spusťte inspekci s aktuálním workerem. Formát a hash ověřeného klíče se
+zachovávají.
+
+```bash
+kgmaker inspect code --root ./service --build-id BUILD_ID --context CONTEXT_ID \
+  --scope production --format json
+```
+
+[Přesný rozsah a skutečná ověření](changes/166_addKotlinLogicalSymbolKeys.md).

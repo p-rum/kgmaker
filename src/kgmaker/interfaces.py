@@ -857,9 +857,10 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
     from .kafka_code import VERSION as CODE_VERSION, validate_code_fact
     from .kafka_bindings import VERSION as BINDING_VERSION, build_links
     from .store import load_graph
+    from .symbol_identity import kotlin_source_omissions
     from .views import _summarize_view_evidence, ContextSelectionError, ServiceInventoryError
     from .workspace import (qualified, _qualified_node, _qualified_kafka_metadata, _qualified_evidence,
-                            _qualified_symbol, _qualified_call_site)
+                            _qualified_compiler_symbol, _qualified_call_site)
 
     def fail(message):
         _fail('INVALID_KAFKA_INTERFACE', message)
@@ -1008,10 +1009,13 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
                 fail('Original public compiler Node is missing or changed')
         check_original_node(authority.metadata['origin_id'])
         # Relevant original compiler declarations/sites must survive qualification.
+        public_context=full_contexts.get(qualified(repo,context['id']),{})
+        omit_logical_key=bool(kotlin_source_omissions(public_context,graph.diagnostics))
         for symbol in local.symbols:
             if symbol.get('context_id')==context['id']:
                 check_original_node(symbol['id'])
-                expected_symbol=_qualified_symbol(repo,symbol)
+                expected_symbol=_qualified_compiler_symbol(repo,symbol,context.get('repo_id'),
+                                                           omit_logical_key=omit_logical_key)
                 if public_symbols.get(expected_symbol['id'])!=expected_symbol:
                     fail('Original compiler declaration tuple is changed')
         for site in local.call_sites:

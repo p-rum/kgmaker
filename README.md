@@ -329,6 +329,16 @@ checksum and release. An explicit offline Gradle build and JVM verifier check
 that workspace release mapping requires matching JAR bytes and a current consumer
 context. The fixture records the remaining integrity gaps.
 
+K1 and K2 also expose a `logical_key` for supported top-level Kotlin declarations
+when the compiler receives the complete captured Kotlin namespace for an explicitly
+declared source set. A compiler-reported source declaration conflict or an unknown
+signature for a competing declaration can withhold the key. A scanner omission
+within the selected Kotlin source set can also withhold keys during inspection
+and offline projection. An attested key can join occurrences across snapshots
+after line movement.
+A call site still resolves through its compiler context and
+occurrence ID. [Supported types and source-set requirements](docs/compiler-inspection.md#logické-klíče-deklarací-kotlinu).
+
 ## Implementation memory and workflow
 
 Configurable profiles connect analysis, planning, implementation, testing and review:
@@ -1305,6 +1315,8 @@ and [change128](docs/changes/128_unifiedFlowViews.md).
 Při opakované explicitní JVM/TS inspekci worker i projekce vypočítají aktuální
 compiler evidence znovu. JSON hlásí `cache.stages`
 se stavem BYPASS. Offline scan/hook/feature zachovávají stávající chování.
+Otisk launcheru a platformních souborů se počítá průběžným čtením.
+Každá grafová fáze předá výsledek své živé validace přímo dalšímu kroku.
 Java launcher váže také `lib/ct.sym` a na POSIX přesné locale vstupy
 `LANG`, `LC_ALL`, `LC_CTYPE`. Změna zaznamenaného vstupu během inspekce
 vrátí `STALE` a zachová poslední uložený graf.
@@ -1317,7 +1329,8 @@ A failed graph replacement restores both outputs. A runtime import with an
 explicit graph object requires it to match the stored generation, when present.
 Retry the original command after the other writer finishes.
 [Příkazy a omezení](docs/stage-content-cache.md),
-[ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md).
+[ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md),
+[ověření nákladů živé inspekce](docs/changes/178_reduceLiveInspectionOverhead.md).
 
 ### Selektivní dopad změněných souborů (T003-S10-W02)
 
