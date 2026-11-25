@@ -280,6 +280,34 @@ def test_currency_behavior_reports_three_sources_across_fifteen_sheets(tmp_path,
     assert plan.load_inventory(write_json(tmp_path / "legacy-inventory.json", legacy)) == legacy
 
 
+def test_query_destination_connects_to_formula_read_without_cell_evidence(tmp_path):
+    from kgmaker.excel import behavior
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    builder.register(selection.books[0], "test-sha", 0, {
+        "links": {}, "builtin_functions": [],
+        "sheets": [{"name": "Sheet1", "visibility": "VISIBLE"}],
+        "cells": [{"sheet": "Sheet1", "cell": "B1", "type": "FORMULA", "formula": "=A2"}],
+        "names": [], "tables": [],
+        "connections": [{"part": "xl/connections.xml", "id": "1", "index": 1,
+                         "mechanism": "ODBC", "reference": "rates"}],
+        "query_tables": [{"part": "xl/queryTables/queryTable1.xml", "sheet": "Sheet1",
+                          "id": "1", "range": "A2:A2"}],
+        "modules": [],
+    }, [])
+
+    value = builder.document()
+    report = behavior.markdown(value, sheet="Sheet1")
+
+    assert not any(row["kind"] == "cell" and row["locator"].get("cell") == "A2"
+                   for row in value["evidence"])
+    paths = [line for line in report.splitlines() if "source-to-output path" in line]
+    source = next(row for row in value["evidence"] if row["kind"] == "external-source")
+    assert any(source["id"] in path and "Sheet1 / B1" in path for path in paths), report
+
+
 def test_unmapped_and_missing_book_are_explicit(tmp_path, sample, actual_worker):
     write_json(sample, config(linked=False))
     observed = inventory.analyze(sample)
@@ -498,6 +526,16 @@ def test_vba_function_lineage_follows_returns_instead_of_unrelated_effects(tmp_p
     Fixed = CDbl(unrelated)
     Fixed = 42
 End Function
+Public Function FixedAfterBranch()
+    Set client = CreateObject("MSXML2.XMLHTTP")
+    client.Open "GET", "https://branch.example.invalid/"
+    client.Send
+    FixedAfterBranch = CDbl(client.ResponseText)
+    If flag Then
+        unrelated = True
+    End If
+    FixedAfterBranch = 42
+End Function
 Public Function Quote()
     Set client = CreateObject("MSXML2.XMLHTTP")
     client.Open "GET", "https://quote.example.invalid/"
@@ -507,13 +545,37 @@ End Function
 Public Function Adjusted()
     Adjusted = Quote() * 2
 End Function'''
-    _register_source(builder, selection.books[0], source=source, formulas=("Fixed()", "Adjusted()"))
+    _register_source(builder, selection.books[0], source=source,
+                     formulas=("Fixed()", "Adjusted()", "FixedAfterBranch()"))
     value = builder.document()
     report = behavior.markdown(value)
     paths = [line for line in report.splitlines() if "source-to-output path" in line]
     assert len(paths) == 1, report
     assert "Sheet1 / B2" in paths[0] and "Adjusted" in paths[0] and "Quote" in paths[0]
     assert "Fixed" not in paths[0] and "Sheet1 / B1" not in paths[0]
+
+
+def test_vba_non_mutating_intrinsic_preserves_definition_for_later_write(tmp_path):
+    from kgmaker.excel import behavior
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    source = '''Public Sub Fetch()
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    http.Open "GET", "https://rates.example.invalid/"
+    http.Send
+    rate = CDbl(http.ResponseText)
+    Format(rate, "0.00")
+    ThisWorkbook.Worksheets("Sheet1").Range("A1").Value = rate
+End Sub'''
+    _register_source(builder, selection.books[0], source=source)
+
+    value = builder.document()
+    report = behavior.markdown(value, sheet="Sheet1")
+    source = evidence_at(value, "external-source", procedure="Fetch", line=3)
+    paths = [line for line in report.splitlines() if "source-to-output path" in line]
+    assert any(source["id"] in path and "line 7" in path for path in paths), report
 
 
 def test_vba_keeps_endpoint_unresolved_after_opaque_call(tmp_path):

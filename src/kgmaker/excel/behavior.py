@@ -93,15 +93,29 @@ class WorkbookBehavior:
         # Expand only ranges that can contribute to output lineage. Larger
         # ranges stay in the report as cited range endpoints.
         range_budget = 50_000
+        expanded = {}
         for key in sorted(self.writers.keys() | self.used):
             if self.rows[key]["kind"] != "address" or range_budget <= 0:
                 continue
-            members, inspected = self.members(self.rows[key], min(range_budget, 1_000))
+            addresses = self.range_addresses(self.rows[key], min(range_budget, 1_000))
+            inspected = len(addresses)
             range_budget -= inspected
+            place = self.rows[key]["locator"]
+            expanded[key] = [(place["workbook"], place["sheet"], address) for address in addresses]
+            members = [self.cells[cell] for cell in expanded[key] if cell in self.cells]
             for cell in members:
                 if key in self.used:
                     self.used.add(cell)
                 self.range_writers[cell].extend(self.writers.get(key, ()))
+        writers_by_cell = defaultdict(list)
+        for key in self.writers:
+            for cell in expanded.get(key, ()):
+                writers_by_cell[cell].extend(self.writers[key])
+        for key in self.used:
+            if self.rows[key]["kind"] != "address":
+                continue
+            for cell in expanded.get(key, ()):
+                self.range_writers[key].extend(writers_by_cell.get(cell, ()))
         if book and not any(item["id"] == book for item in inventory["workbooks"]):
             raise AnalysisError("Unknown workbook selector")
         if sheet and not any(self.in_scope(row) for row in self.by_kind["sheet"]):
@@ -115,10 +129,14 @@ class WorkbookBehavior:
     def relevant(self, row):
         return row["id"] in self.traced or self.in_scope(row)
 
-    def members(self, row, maximum):
+    def range_addresses(self, row, maximum):
         place = row["locator"]
         first, colon, last = place["range"].partition(":")
-        addresses = _range_cells(first, last if colon else None, maximum=maximum)
+        return _range_cells(first, last if colon else None, maximum=maximum)
+
+    def members(self, row, maximum):
+        place = row["locator"]
+        addresses = self.range_addresses(row, maximum)
         return [key for address in addresses
                 if (key := self.cells.get((place["workbook"], place["sheet"], address)))], len(addresses)
 

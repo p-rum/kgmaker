@@ -15,6 +15,7 @@ OPERATORS = {"+": "addition", "-": "subtraction or negation", "*": "multiplicati
              "/": "division", "\\": "integer division", "^": "power", "&": "concatenation"}
 CONTROL_FLOW = re.compile(r"^\s*(?:If|ElseIf|Else|Select|Case|For|Do|While|GoTo|GoSub|Resume|Exit|On Error)\b", re.I)
 INLINE_IF = re.compile(r"^\s*If\b.*?\bThen\s+(?=\S)", re.I)
+BLOCK_END = re.compile(r"^\s*(End\s+If|End\s+Select|Next|Loop|Wend)\b", re.I)
 ASSIGN = re.compile(r"^\s*(?:(Set|Let)\s+)?(.+?)\s*(?<![:<>=])=(?!=)", re.I)
 SYMBOL = re.compile(vba.IDENTIFIER)
 MEMBER = re.compile(rf"{vba.IDENTIFIER}(?:\s*\.\s*{vba.IDENTIFIER})+", re.I)
@@ -33,6 +34,16 @@ HTTP_URL = re.compile(r"https?://[^\s]+", re.I)
 MAX_ALTERNATIVES = 8
 DISPLAY_MEMBER = re.compile(r"\.\s*(?:Caption|Text|Visible)\s*$", re.I)
 MESSAGE = re.compile(r"^\s*(?:Call\s+)?MsgBox\b", re.I)
+NON_MUTATING_INTRINSICS = {
+    "abs", "asc", "atn", "cbool", "cbyte", "ccur", "cdate", "cdbl", "cdec", "cint", "clng",
+    "csng", "cstr", "cvar", "dateadd", "datediff", "datepart", "dateserial", "datevalue", "day",
+    "exp", "fix", "format", "formatcurrency", "formatdatetime", "formatnumber", "formatpercent",
+    "hour", "instr", "instrrev", "int", "isarray", "isdate", "isempty", "iserror", "ismissing",
+    "isnull", "isnumeric", "isobject", "lcase", "left", "len", "log", "ltrim", "mid", "minute",
+    "month", "monthname", "now", "replace", "right", "rnd", "second", "sgn", "sin", "space",
+    "sqr", "strcomp", "string", "strreverse", "time", "timer", "timeserial", "timevalue", "trim",
+    "typename", "ucase", "val", "vartype", "weekday", "year",
+}
 
 
 def operators(masked, *, excel=False):
@@ -89,21 +100,65 @@ def _forget_opaque_writes(tokens, variables, clients, requests):
         requests.pop(token, None)
 
 
+def _non_mutating_calls(expression, inventory, owner, proc):
+    functions = [match[1].casefold() for match in vba.FUNCTION_CALL.finditer(expression)]
+    if not functions:
+        return False
+    locator = inventory.evidence[owner]["locator"]
+    shadowed = proc.shadowed_names()
+    return all(name in NON_MUTATING_INTRINSICS and name not in shadowed
+               and not inventory.lookup(locator["workbook"], locator["module"], name, kinds={"function"})
+               for name in functions)
+
+
+def _block_start(text, inline):
+    if inline:
+        return None
+    if re.match(r"^\s*If\b", text, re.I) and re.search(r"\bThen\s*$", text, re.I):
+        return "if"
+    if re.match(r"^\s*Select\s+Case\b", text, re.I):
+        return "select"
+    if re.match(r"^\s*For\b", text, re.I):
+        return "for"
+    if re.match(r"^\s*Do\b", text, re.I):
+        return "loop"
+    if re.match(r"^\s*While\b", text, re.I):
+        return "while"
+    return None
+
+
+def _close_block(blocks, text):
+    match = BLOCK_END.match(text)
+    if not match:
+        return
+    kind = match[1].casefold()
+    kind = "if" if kind == "end if" else "select" if kind == "end select" else (
+        "for" if kind == "next" else "loop" if kind == "loop" else "while"
+    )
+    for index in range(len(blocks) - 1, -1, -1):
+        if blocks[index] == kind:
+            del blocks[index:]
+            return
+
+
 def vba_observations(inventory, owner, proc):
     """Record textual operations and possible local definitions without executing VBA."""
     definition = inventory.evidence[owner]["locator"]
-    flow = any(CONTROL_FLOW.match(vba.mask(statement)) for _, statement in proc.statements)
     local_names = proc.shadowed_names()
     variables = defaultdict(list)
     literals = {}
     clients = set()
     requests = defaultdict(list)
     operations = {}
+    blocks = []
     for index, (line, statement) in enumerate(proc.statements, 1):
         text = vba.mask(statement)
         locator = {**definition, "line": line, "end_line": line, "statement": index}
-        conditional = bool(CONTROL_FLOW.match(text))
+        control = bool(CONTROL_FLOW.match(text))
         inline = INLINE_IF.match(text)
+        _close_block(blocks, text)
+        branch_flow = bool(blocks) or control or bool(inline)
+        block_start = _block_start(text, inline)
         offset = inline.end() if inline else 0
         action = text[offset:]
         raw = statement[offset:]
@@ -140,23 +195,29 @@ def vba_observations(inventory, owner, proc):
             role = "http-send"
         elif MESSAGE.match(action):
             role = "message"
-        elif conditional:
+        elif control:
             role = "condition"
         elif vba.dynamic_flags(action, raw):
             role = "unresolved-operation"
 
         # Ordinary declarations and comments are not functional evidence. The
         # inventory still retains the original module and call/reference edges.
+        non_mutating = _non_mutating_calls(action, inventory, owner, proc)
         if role == "statement":
             if not initializes_http:
-                literals.clear()
+                if not non_mutating:
+                    literals.clear()
                 tokens = {match[1].casefold() for match in VALUE_TOKEN.finditer(action)}
-                _forget_opaque_writes(tokens, variables, clients, requests)
+                if not non_mutating:
+                    _forget_opaque_writes(tokens, variables, clients, requests)
+            if block_start:
+                blocks.append(block_start)
             continue
         rhs = vba.mask(expression)
         functions = sorted({match[1] for match in vba.FUNCTION_CALL.finditer(rhs)}, key=str.casefold)
+        non_mutating = _non_mutating_calls(rhs, inventory, owner, proc)
         item = inventory.add("vba-operation", locator, operation=role, source=statement.strip(),
-                             operators=operators(rhs), functions=functions, conditional=flow)
+                             operators=operators(rhs), functions=functions, conditional=branch_flow)
         operations[index] = item
         inventory.link(owner, item, "contains")
         alternatives = {}
@@ -188,26 +249,34 @@ def vba_observations(inventory, owner, proc):
                                 method=method if method in HTTP_METHODS else None)
             if binding is not None:
                 inventory.link(source, binding, "depends-on")
-            if not flow:
+            if not branch_flow:
                 requests[receiver].clear()
             requests[receiver].append(source)
         elif role == "http-send":
             for source in requests.get(send[1].casefold(), ())[-MAX_ALTERNATIVES:]:
                 inventory.link(item, source, "source")
-        elif not initializes_http and (functions or role == "unresolved-operation"):
+        elif not initializes_http and (
+            role == "unresolved-operation"
+            or (functions and not _non_mutating_calls(rhs, inventory, owner, proc))
+        ):
             _forget_opaque_writes(tokens, variables, clients, requests)
         if symbol:
-            if not flow:
+            if not branch_flow:
                 variables[symbol].clear()
             variables[symbol].append(item)
         # Only use literal bindings across statements that cannot pass a local
         # string ByRef. An opaque call, property write, or other expression can
         # change it. Keep the request declaration but leave its endpoint open.
-        value = _literal(expression) if not flow and symbol in local_names else None
+        value = _literal(expression) if not branch_flow and symbol in local_names else None
         if value is not None:
             literals[symbol] = (value, item)
         elif not initializes_http:
-            literals.clear()
+            if non_mutating and symbol:
+                literals.pop(symbol, None)
+            elif not non_mutating:
+                literals.clear()
+        if block_start:
+            blocks.append(block_start)
     if proc.kind == "function":
         for result in variables.get(proc.name.casefold(), ())[-MAX_ALTERNATIVES:]:
             inventory.link(owner, result, "returns")
