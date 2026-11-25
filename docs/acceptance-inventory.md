@@ -1,5 +1,16 @@
 # Inventář acceptance T001 a T002
 
+
+## T055 — Copilot skill pro migraci Excelu, 2026-11-25
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T055-AC01 | VERIFIED_IN_SCOPE | Výběr dvou skutečných sešitů, omezený packet a úplný seznam subjektů. Kolize názvů zůstává bez vazby. |
+| T055-AC02 | VERIFIED_IN_SCOPE | Export Markdown a Jira CSV s vlastním polem, mapování, ochrana před nevalidním kandidátem, změnou sešitu, přepsáním výstupu a výměnou cesty při úklidu. |
+| T055-AC03 | VERIFIED_IN_SCOPE | Instalace, upgrade, parita a pravidla předání dat ve skillu, skutečný Java 17 worker. Trasování 0 IP spojení, makra se nespustila. Živý Copilot NOT_RUN. |
+
+[Doklady po krocích](changes/172_automateExcelMigration.md).
+
 ## T054 — Excel, Kotlin/JVM a Jira Cloud, 2026-11-25
 
 | Kritérium | Ověření | Důkaz |
@@ -67,10 +78,10 @@ PARTIAL a persistentní warm HIT je otevřený.
 ## T003-S10-W02 — reverse dependency indexy
 
 Dodání `PR_OPEN` v [#130](https://github.com/p-rum/kgmaker/pull/130). Aktuální
-kandidát vychází z `main` `b04d064` po #151. Cílené ověření má 41 PASS
-bez přeskočení se skutečným JDK 21 a Mavenem. Úplná sada CPython 3.13
-má 2 579 PASS, 1 343 SKIP a 1 očekávaný strict XFAIL.
-Předchozí běhy jsou zachovány v change145.
+kandidát vychází z `main` `3a6b97f` po #156. Cílené ověření má
+124 PASS bez přeskočení se skutečným JDK 21 a Mavenem. Úplná sada
+CPython 3.13 má 2 585 PASS, 1 345 SKIP a 1 očekávaný strict XFAIL.
+Omezení lokálního Excel workeru a předchozí běhy jsou v change145.
 [Zadání](tasks/T003-S10-02-reverseDependencyIndexes.md),
 [režim CLI a JSON](stage-content-cache.md#selektivní-dopad-změn) a
 [kontroly](changes/145_buildReverseDependencyIndexes.md).

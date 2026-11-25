@@ -1,6 +1,6 @@
 # Skilly KGMakeru v cílovém projektu
 
-`kgmaker init --root /cesta/k/projektu` instaluje pět samostatných skillů do
+`kgmaker init --root /cesta/k/projektu` instaluje šest samostatných skillů do
 `.agents/skills/`. Každý obsahuje `SKILL.md` s name/description; podrobné kontrakty
 pro semantic, data audit a testgen jsou v jeho `references/`. Tyto soubory jsou
 součástí distribuce, nepotřebují checkout ani vývojovou dokumentaci KGMakeru.
@@ -13,6 +13,7 @@ Dodávka: [T050](tasks/50_addTargetProjectSkills.md), [change117](changes/117_ad
 | `kgmaker-feature-analysis` | Posouzení požadavku, návrh změn a otevřených otázek bez implementace | „Použij $kgmaker-feature-analysis pro requirements/exposure.md.“ |
 | `kgmaker-data-audit` | Audit požadovaných vstupů a business nejasností ze schválených lokálních zdrojů | „Použij $kgmaker-data-audit a ověř podklady k tomuto požadavku.“ |
 | `kgmaker-testgen` | Návrhy testů existující funkcionality, syntetických dat a volitelný export | „Použij $kgmaker-testgen pro src/calculator.py; zatím jen návrh.“ |
+| `kgmaker-excel-migration` | Statická analýza zadaných sešitů, ověřený Kotlin/JVM plán a Jira CSV | „Použij $kgmaker-excel-migration pro Fakturace.xlsm a závislost Sazby.xlsx.“ |
 
 ## Instalace a použití
 
@@ -38,6 +39,8 @@ hostiteli. Pokud je nenabízí, zadej například:
 požadavek.“ Skills nevyžadují custom-agent delegaci, registraci služby ani modelové
 API. Konkrétní Copilot/Codex/Junie discovery a odpovědi modelů zatím nemají živé
 ověření; lokální testy dokazují soubory a nástrojové kontrakty, nikoli hostitele.
+
+Excel skill funguje bez grafu. Používá statické CLI a Java worker, makra nikdy nespouští. [Workflow migrace Excelu](excel-migration.md#jeden-pokyn-pro-copilot)
 
 ## Údržba a ochrana existujících souborů
 

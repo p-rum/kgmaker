@@ -529,3 +529,49 @@ základ. [Rozsah čtecího příkazu](../stage-content-cache.md#selektivní-dopa
 a podpora graph/store v1/v2/v3 zůstávají zachované. W02-AC01 zůstává
 `PARTIAL`. Zápis selektivní invalidace a negativní vyhledání mají
 samostatný rozsah.
+
+## Přenos po #156 — T003-S10-W02, kroky 4–5 a AC01–AC04
+
+První rodič `c3190576f348d954771ac45b143b0a516c5132b0` obsahuje ověřený čtecí
+report W02. Druhý rodič `3a6b97fc9c44941e68bb390772a5eb13906bf1ff` přináší
+T055 pro migraci sešitů a instalační skill. Devět produktových a testových
+souborů #130 a sedm z #156 je ve společném stromu bajtově shodných se
+svými rodiči. Sémantická vrstva zachovala 413 historických epizod a
+přidala záznam tohoto přenosu.
+
+**Krok 4, AC01–AC03.** Nativní výběr z předchozího přenosu rozšířený
+o `tests/test_skills.py`, `tests/test_xlsx_references.py` a
+`tests/test_binary_xls.py` má **124 PASS / 0 SKIP**, exit 0.
+Cloud Environment použil CPython 3.12.14, Temurin JDK 21.0.6+7 a
+skutečný Maven 3.9.9, včetně veřejného výběru konfigurace runtime.
+Výběr pokrývá čtecí report se skutečným Javacem, workbook freshness,
+lokátory Excelu a paritu instalovaného skillu. JUnit SHA-256
+`33161b2a201522717cac322ad39a25b3f6d79c783ac8a7e0a91d8a35debedbf9`.
+
+```bash
+python -m pytest -p no:cacheprovider -o tmp_path_retention_policy=failed -q -ra --tb=short
+```
+
+Úplná standardní sada s CPythonem 3.13.18, Gradle 8.13 a připravenými
+Maven závislostmi má **2 585 PASS / 1 345 SKIP / 1 očekávaný strict XFAIL**,
+exit 0. JUnit SHA-256 `d0c3650eab54bb5be1546575ab78d24d97d916a8db66937389476e01b49e908b`.
+Archiv `3cb7432c51ff580c2e2e6ac4e3ae6f5894b09886` a
+finální strom mají shodný obsah `src`, `tests`, `tooling` a `workers`.
+Manifest SHA-256 před a po obou bězích je
+`75dcefffbf947785b43f0671c613b9d19b87c88290f8ce4b084b015b9a3333b0`.
+Předchozí neúspěšné pokusy se zámkem Gradle a následný cílený výběr
+26 PASS, 3 volitelné Mermaid SKIP jsou vedeny ve starší sekci.
+
+Nový lokální build Excel workeru má stav `BLOCKED`. Připravené
+repozitáře neobsahovaly POI 6 a přístup Maven Central v izolovaném běhu
+skončil chybou `Network is unreachable` při načtení Maven pluginu
+(exit 1, SHA-256 logu `ed4074f4f92b3bba854ff08f1dfc895337fc65232d0c33cd689a586fa25d3d9e`).
+[Ověření původního T055](172_automateExcelMigration.md) platí pro jeho
+nezměněné soubory. Samostatné nativní ověření Excel workeru, Windows
+a GitHub Actions se pro toto spojení lokálně nedokončilo.
+
+**Krok 5, AC04.** [Inventář](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy)
+a [stavová matice](../production-analysis-progress.md) uvádějí aktuální
+základ. Veřejný [CLI kontrakt](../stage-content-cache.md#selektivní-dopad-změn)
+a formáty graph/store v1/v2/v3 zůstávají kompatibilní. W02-AC01 je
+`PARTIAL`. Selektivní zápis a negativní vyhledání mají vlastní rozsah.
