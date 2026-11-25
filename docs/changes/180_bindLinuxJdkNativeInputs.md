@@ -116,3 +116,39 @@ KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfDat
 
 Úplná standardní sada společného stromu, skutečný běh mimo Linux a GitHub
 Actions mají v tomto předání stav `NOT_RUN`. Warm HIT zůstává otevřený v #116.
+
+## Přenos po sloučení #163 — kroky 4 a 5
+
+První rodič je publikovaný kandidát `0b3d4807a1b945ce6c6b187114ae46e4d6b8705b`,
+druhý skutečný `main` `68e53af6587ce3535612234b0d78aa999a4e68ad` se stromem
+`f2b6bde185f087531d562f11906c7b1fdfa4aaac`. Otisk W01 a jeho dva testovací
+soubory mají shodné bajty s prvním rodičem. Implementace, testy a dokumentace
+Kafka katalogu z #163 mají bajty druhého rodiče. Společné README a oba
+inventáře obsahují přesné sloučení obou rodičů. Zachovali jsme 441 historických
+epizod před regenerací grafu. [Change179](179_validateKafkaProjectModelFiles.md).
+
+Cílená sada společného stromu má **29 PASS / 0 SKIP** za 69,19 s.
+Použila skutečné Javac 21.0.6+7, K1, K2 a TypeScript a připravené Spring a Kafka
+závislosti s kontrolovanými JAR/POM otisky. Vedle obsahu nativních knihoven,
+`STALE`, `BYPASS`, nedostupných vstupů a plánování pokryla Kafka katalog
+s Kotlin aliasem a odmítnutí změny LF→CRLF při ověřování vybraného file node.
+Pytest, vytvoření manifestu, porovnání a samostatná kontrola plánu mají exit 0.
+JUnit SHA-256 `1b697b670a15ede36dcd19ad929747aba4c72b7e58a6eba7da02a1a556efd833`.
+Shodné 597řádkové manifesty mají SHA-256
+`0133aecb54d71ee8de570dc12c503826e215728102cae7edd9405b289ef40108`.
+Plán zachovává 119 položek, z toho 90 `MERGED` a 29 `PLANNED`.
+W01, W02, T047-S02, import runtime T003-S13-W02 a T012 zůstávají `MERGED/PARTIAL`.
+W03 čeká na ověření W02. SHA-256 výřezu plánu je
+`770e86e82e7dfde49bb40cae1ddffd2719aad238a75b6e054343ba7772a83676`.
+
+```bash
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData \
+  python -m pytest -n 2 --dist load -q --tb=short -ra -p no:cacheprovider \
+    -o tmp_path_retention_policy=failed tests/test_stage_content_cache.py \
+    tests/test_stage_content_cache_actual.py tests/test_completion.py \
+    tests/test_t012_catalog_kafka_interfaces.py \
+    -k 'test_completion or launch_capture_hashes_without_materializing or launch_capture_binds_linux_native_library or non_linux_java_launch or unavailable_java_launch_input or java_native_library_change_after_analysis or actual_jvm_locale_drift_preserves_published_generation or actual_jvm_cold_warm or actual_typescript_preflight or actual_kafka_catalogue_preserves_kotlin_compiler_symbol_alias or actual_kafka_catalogue_preserves_file_mirror_for_selected_project_model'
+```
+
+Úplná standardní sada společného stromu, skutečný běh mimo Linux a GitHub
+Actions mají při tomto předání stav `NOT_RUN`. Warm HIT sleduje #116.

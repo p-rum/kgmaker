@@ -25,7 +25,8 @@ def capture(tmp_path_factory, request):
     return capture_workspace(tmp_path_factory.mktemp('t012-' + backend), backend)
 
 
-def capture_workspace(root, backend, *, consumer_ending='\n', consumer_helper=False):
+def capture_workspace(root, backend, *, consumer_ending='\n', consumer_helper=False,
+                      consumer_project_model=False):
     root, manifest, document = kafka_workspace.__wrapped__(root)
     jars = actual_prerequisites(backend) + extra_api_jars()
     bodies = {
@@ -62,8 +63,12 @@ fun kotlinConsume(value: String) {} }
             if consumer_helper:
                 kotlin.with_name('Helper.kt').write_text(
                     'package demo\nfun idleUtility(value: Int): Int = value\n', encoding='utf-8')
+        model = ({'source_sets': [
+            {'module': 'root', 'id': 'main', 'scope': 'production', 'roots': ['src/main']}]}
+            if repo == 'consumer' and consumer_project_model else None)
         result = inspect_jvm(root / repo, home=ROOT / 'workers', kotlin_backend=backend,
-            repo_id='local', classpath=jars, build_context={'spring_profiles': ['blue']})
+            repo_id=repo if model else 'local', project_model=model,
+            classpath=jars, build_context={'spring_profiles': ['blue']})
         assert not any('.err.' in str(d.get('code', '')) for d in result['diagnostics'])
         graph = KnowledgeGraph.from_dict(result['graph'])
         facts[repo] = (result['context']['id'], {n.metadata['method_name']: n for n in graph.nodes
@@ -192,6 +197,84 @@ def test_actual_kafka_catalogue_preserves_kotlin_compiler_symbol_alias(tmp_path)
             for symbol in graph.symbols])
         with pytest.raises(InterfaceProjectionError, match='Original compiler declaration tuple is changed'):
             project((workspace, damaged, coverage))
+    assert (workspace, graph.to_dict(), coverage) == supplied
+    assert {path: sha256(path.read_bytes()).hexdigest()
+            for path in tmp_path.rglob('*') if path.is_file()} == before
+
+
+def test_actual_kafka_catalogue_preserves_file_mirror_for_selected_project_model(tmp_path):
+    from kgmaker.interfaces import InterfaceProjectionError
+    from kgmaker.scanner import scan_repository
+    from kgmaker.store import load_graph
+    from kgmaker.workspace import qualified
+
+    workspace, graph, coverage = capture_workspace(tmp_path, 'k1', consumer_project_model=True)
+    local = load_graph(tmp_path / 'consumer')
+    local_file, = [node for node in local.nodes
+                   if node.kind == 'file' and node.path == 'src/main/java/demo/Code.java']
+    public_file, = [node for node in graph.nodes if node.id == qualified('consumer', local_file.id)]
+    context, = [item for item in local.contexts if item.get('analyzer_version')]
+    assert context['repo_id'] == 'consumer'
+    assert local_file.build_membership == ('root:main',) and local_file.origin == 'handwritten'
+    assert public_file.build_membership == () and public_file.origin == 'unknown'
+    assert local_file.scope == public_file.scope == 'production'
+
+    before = {path: sha256(path.read_bytes()).hexdigest()
+              for path in tmp_path.rglob('*') if path.is_file()}
+    supplied = copy.deepcopy((workspace, graph.to_dict(), coverage))
+    other_nodes = [node for node in graph.nodes if node.id != public_file.id]
+    altered_copies = [
+        replace(public_file, build_membership=('forged:main',)),
+        replace(public_file, classification_evidence=('forged-source-set',)),
+        replace(public_file, origin='generated'),
+        replace(public_file, role='configuration'),
+        replace(public_file, scope='test'),
+        replace(public_file, metadata={'forged': True}),
+    ]
+    with patch('subprocess.Popen', side_effect=AssertionError('implicit process')), \
+            patch('socket.socket', side_effect=AssertionError('network')):
+        view = project((workspace, graph, coverage)).to_dict()
+        for copies in ([], [public_file, public_file], *([file] for file in altered_copies)):
+            damaged = replace(graph, nodes=[*other_nodes, *copies])
+            with pytest.raises(InterfaceProjectionError):
+                project((workspace, damaged, coverage))
+        changed_private = replace(local, nodes=[
+            replace(node, origin='generated') if node.id == local_file.id else node for node in local.nodes
+        ])
+
+        def tampered_authority(root):
+            return changed_private if root == tmp_path / 'consumer' else load_graph(root)
+
+        with patch('kgmaker.store.load_graph', side_effect=tampered_authority), \
+                pytest.raises(InterfaceProjectionError, match='Original public compiler Node is missing or changed'):
+            project((workspace, graph, coverage))
+
+        checkout = tmp_path / 'consumer'
+        source = checkout / local_file.path
+        captured_bytes = source.read_bytes()
+        edited_bytes = captured_bytes.replace(b'\n', b'\r\n')
+        assert edited_bytes != captured_bytes
+        scan_hashes = []
+
+        def scan_during_line_ending_edit(root, **options):
+            if root != checkout or options.get('project_model') is not None:
+                return scan_repository(root, **options)
+            source.write_bytes(edited_bytes)
+            try:
+                scanned = scan_repository(root, **options)
+                scan_hashes.append((scanned.files[local_file.path], scanned.raw_file_hashes[local_file.path]))
+                return scanned
+            finally:
+                source.write_bytes(captured_bytes)
+
+        with patch('kgmaker.scanner.scan_repository', side_effect=scan_during_line_ending_edit), \
+                pytest.raises(InterfaceProjectionError, match='Original public compiler Node is missing or changed'):
+            project((workspace, graph, coverage))
+        assert scan_hashes == [(sha256(captured_bytes).hexdigest(), sha256(edited_bytes).hexdigest())]
+    catalogue = [node['attributes'] for node in view['nodes'] if node['kind'] == 'kafka_interface']
+    assert {item.get('consumer_group') for item in catalogue
+            if item['code_binding'] == 'VERIFIED_STATIC'} >= {'group-one', 'group-two'}
+    assert all(item['delivery'] == 'NOT_OBSERVED' for item in catalogue)
     assert (workspace, graph.to_dict(), coverage) == supplied
     assert {path: sha256(path.read_bytes()).hexdigest()
             for path in tmp_path.rglob('*') if path.is_file()} == before

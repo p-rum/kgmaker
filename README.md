@@ -1031,6 +1031,9 @@ listener/send declarations and declared bindings into the shared interfaces view
 Broker realms and consumer groups remain distinct; configuration-only and regex
 subscriptions retain their unresolved boundaries. Explicit workspace/private
 compiler indexes are required; the projection performs no inspection or transport.
+For raw JVM captures with an explicit build model, the catalogue checks the
+captured and current scanner versions of the same source file. It preserves
+the selected scope and exact source evidence. [Kafka catalogue contract](docs/kafka-interfaces.md).
 
 ### Explicit interface contracts (T013; merged PR74)
 

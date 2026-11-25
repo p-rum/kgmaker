@@ -25,6 +25,7 @@ Python callers may use the same [derived-view cache API](view-cache.md). See
 
 ```sh
 kgmaker architecture interfaces --root /repo --catalog http-providers --interface-capture interfaces.json
+kgmaker architecture interfaces --catalog kafka --capture-local --workspace workspace.json
 kgmaker architecture topology --root /repo --capture-snapshot topology-inputs.json --max-nodes 50
 kgmaker architecture topology --root /repo --capture-snapshot topology-inputs.json --max-nodes 50 --format mermaid
 kgmaker architecture explain --root /repo --snapshot filtered.json --capture-snapshot topology-inputs.json --element service:checkout
@@ -54,6 +55,9 @@ return fixed actionable errors; capture never creates them. Capture reads local
 sources/parsers, uses existing bounded APIs and disables workspace/index cache publication.
 Only topology with `--view-cache` may separately publish its derived-view cache. This
 is source replay, not a compiler, application, deployment or runtime proof.
+For Kafka, a saved raw JVM capture can include a supplied project model. The
+catalogue validates the saved and public File nodes for the same source bytes
+and scope before returning the interface. [Kafka evidence contract](kafka-interfaces.md).
 
 Explain's separate `--check-source --workspace workspace.json --graph-snapshot graph.json`
 observes confined original source hashes through T018. Default pure explanation is
