@@ -74,3 +74,28 @@ Znovu ověřený read-only probe nad 678 cestami vrací `stale` před opravou a
 je `a517a440cfbbb4fe88cbddb6414e5cb03006864c811ab1c6eae2c47a7079749c`. Windows, úplná standardní sada, GitHub Actions a nové
 T045 pro tento pár zůstávají NOT_RUN. T051-AC02 je doloženo v rozsahu
 čerstvosti paketu.
+
+
+## T051-S02 / T052-S02 — ověření po sloučení #154 a #155
+
+Základ `782ac6ac0287550084e9afadbd6182756fdd2730` a původní head
+`6dc5d6888114b43f15bbde7ea19d343c8e93d55a`. Sjednocení zachovává původní
+zdrojové změny v `context.py`, `workbooks.py` a `test_workflow.py`. Dokumentace
+upřesňuje rozsah zdrojových hashů a regenerované grafy zahrnují nový instalátor,
+migraci Excelu a jejich testovací vstupy. Životní cyklus packetů ani schémata
+výstupů se nemění.
+
+- Původní cílené moduly výše a `tests/test_installation.py` pod CPythonem
+  3.12 mají 208 PASS a 0 SKIP. JUnit SHA-256
+  `e0482894a0f3e2ead98063f6e853431f194db34cd4a0886d22ead7f947746220`.
+  Otisky zdrojů, testů, dokumentace a fixture se během běhu nezměnily.
+- Samostatná zkouška vložila do dočasného projektu `Rates.xlsx`,
+  `encrypted.xlsx`, `legacy.xls` a `migration.xlsm` z T054. Scan a packet
+  shodně zahrnují první tři sešity. Změna kteréhokoli z těchto tří vstupů
+  vrací `stale`; po obnovení bajtů je výsledek `current`. Změna `.xlsm`
+  nemění stav, protože jeho explicitní analýza patří do T054. Packet
+  zkouška blokovala parser i procesy, zachovala uložený graf a sama
+  neuložila výstup. SHA-256 výsledku
+  `823f33a5cf233153a158b9c36221d3ce2ff2d56da18d5b11096a29e960bc2e07`.
+- Nový úplný běh, Windows, GitHub Actions a T045 pro tento pár jsou
+  NOT_RUN. Výsledek dokládá zdrojovou čerstvost T051-AC02 a T052-AC02.

@@ -105,7 +105,9 @@ jeho poškození se projeví jako `stale`. `graph_status` vyjadřuje čerstvost
 zdrojových hashů.
 Compiler a runtime důkazy mají vlastní stav a omezení. Příprava kontextu
 nepřepisuje graf ani nespouští workery.
-[Ověřené příklady s legacy XLS a změněným XLSX](changes/167_useCanonicalPacketSourceSnapshot.md).
+Scanu i packetu odpovídá stejný výběr `.xlsx` a `.xls`. Pro výslovně vybrané
+`.xlsm` slouží samostatný [workflow migrace Excelu](excel-migration.md).
+[Ověřené příklady se skutečnými sešity](changes/167_useCanonicalPacketSourceSnapshot.md).
 
 ## Předání mezi rolemi
 

@@ -1,5 +1,30 @@
 # Aktuální stav a zbývající práce
 
+## T054 — analýza Excelu a Kotlin/JVM plán, 2026-11-25
+
+Dodání PR_OPEN. T054-S01–S02 ověřené pro popsané fixture se skutečným XLSM,
+BIFF8 XLS a XLSX. T054-S03–S04 částečně ověřené pomocí místního CSV a
+instalovaného Linux wheelu s JDK 17. Živý Jira Cloud import a Windows jsou
+NOT_RUN. Review původního `e7a44d7` odhalilo domýšlené vazby názvů a aliasů a rozdílné limity evidence. Opravený rozsah ověřila cílená sada 137 PASS s Linux wheel a Java 17. Reprezentovaný rozsah je statický a omezený podporovanými konstrukcemi.
+[Cílové zadání](tasks/54_addExcelMigration.md) · [Návod](excel-migration.md) · [Evidence](changes/171_addExcelMigration.md).
+
+## T053 — správa instalace v cílovém projektu, 2026-11-24
+
+Dodání PR_OPEN, ověření VERIFIED_IN_SCOPE pro T053-S01–S04 / AC01–AC04:
+Původní samostatná PR větev: 129 PASS / 0 SKIP včetně instalovaného wheelu.
+Review našlo ztracené vlastnictví legacy ignore při opakovaném init; oprava má
+4 regresní RED → GREEN a 133 PASS / 0 SKIP na opravené PR větvi včetně wheelu,
+viz doplnění change170.
+Lokální integrační sada s připravenými T049-S08 fixture: 134 PASS / 0 SKIP. Init eviduje vlastnictví, `upgrade` aktualizuje
+nezměněné templates a `uninstall` odstraňuje integraci i `.kgmaker/`.
+Konflikty/dry-run/invalidní manifest a symlinky nezapisují; zachytitelná chyba
+publikace obnoví původní soubory. Cizí soubory a ignore pravidla zůstávají.
+Legacy rozpoznání má explicitní seznam otisků; Windows, reload hostitelů a crash
+atomicita nejsou ověřené. T049-S01–S07 tím nejsou uzavřené.
+[Kontrakty a příklady](project-installation.md), [záznam kroků](changes/170_manageProjectInstallation.md).
+
+
+
 ## T052 — první běh dokončení 2026-11-19
 
 Integrační baseline po ověřeném merge [#125](https://github.com/p-rum/kgmaker/pull/125)
@@ -60,8 +85,10 @@ Pevné fáze, bez runneru/DAG/automatických trace vazeb. Fingerprint používá
 source_inventory s jeho výlukami; viz příručka. T049 a produkční acceptance nejsou uzavřené.
 
 Oprava zdrojové čerstvosti T051-S02 používané T052 je v [PR #151](https://github.com/p-rum/kgmaker/pull/151)
-`PR_OPEN / PARTIAL`. Legacy XLS a XLSX s doloženou buňkou ověřují shodu inventáře
-a změnu hashe. [Rozsah a cílené ověření](changes/167_useCanonicalPacketSourceSnapshot.md).
+`PR_OPEN / PARTIAL`. Po #154 a #155 prošlo 208 cílených testů bez přeskočení.
+Skutečné XLSX, šifrované XLSX a legacy XLS z fixture T054 ověřují shodu
+inventáře a indikátoru čerstvosti po změně bajtů.
+[Rozsah a důkazy](changes/167_useCanonicalPacketSourceSnapshot.md).
 
 
 ## Skilly v cílovém projektu T050 — 2026-11-15

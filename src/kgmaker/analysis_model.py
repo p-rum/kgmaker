@@ -72,7 +72,7 @@ def analysis_dir(root: Path, analysis_id: str) -> Path:
     return safe_path(root, f".kgmaker/analyses/{analysis_id}")
 
 
-def read_json(path: Path) -> Any:
+def decode_json(raw: str | bytes, label: str) -> Any:
     def reject_constant(value: str) -> None:
         raise ValueError(f"Non-finite JSON value: {value}")
     def unique(pairs: list) -> dict:
@@ -83,8 +83,15 @@ def read_json(path: Path) -> Any:
             result[key] = value
         return result
     try:
-        return json.loads(path.read_text(encoding="utf-8"), parse_constant=reject_constant, object_pairs_hook=unique)
+        return json.loads(raw, parse_constant=reject_constant, object_pairs_hook=unique)
     except (ValueError, UnicodeError) as exc:
+        raise AnalysisError(f"Invalid JSON in {label}: {exc}") from exc
+
+
+def read_json(path: Path) -> Any:
+    try:
+        return decode_json(path.read_text(encoding="utf-8"), path.name)
+    except UnicodeError as exc:
         raise AnalysisError(f"Invalid JSON in {path.name}: {exc}") from exc
 
 

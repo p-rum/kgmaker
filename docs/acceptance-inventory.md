@@ -1,5 +1,32 @@
 # Inventář acceptance T001 a T002
 
+## T054 — Excel, Kotlin/JVM a Jira Cloud, 2026-11-25
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T054-AC01 | VERIFIED_IN_SCOPE | Skutečné XLSM, BIFF8 XLS a XLSX, makro přes dva sešity a reference z formulí i přímého VBA. Regrese review pokrývají rozsah Run, lexikální jména, Range alias a názvy listů v Unicode. |
+| T054-AC02 | VERIFIED_IN_SCOPE | Chybové vstupy, zachování souborů a trasování procesů a IP spojení. |
+| T054-AC03 | VERIFIED_IN_SCOPE | Kandidát plánu, citace, pokrytí, závislosti, invalidace po změně vstupu a opětovné načtení vazby s více než tisícem důkazů. |
+| T054-AC04 | PARTIAL | Ověřené Jira CSV, vlastní pole a reference. Živý import NOT_RUN. |
+| T054-AC05 | PARTIAL | Linux wheel s JDK 17, 137 cílených PASS a plná sada s evidovanými SKIP. Windows NOT_RUN. |
+
+[Postup a kontroly po krocích](changes/171_addExcelMigration.md).
+
+
+## T053 — upgrade a uninstall, 2026-11-24
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T053-AC01 | VERIFIED_IN_SCOPE | Manifest skutečně instalovaných souborů, zachování cizího obsahu, idempotentní init a template páry |
+| T053-AC02 | VERIFIED_IN_SCOPE | Simulovaná změna distribuce ve všech kategoriích, nové/chybějící/retired výstupy, legacy otisky, zachování grafu a poznámek |
+| T053-AC03 | VERIFIED_IN_SCOPE | Odstranění integrace a dat, opakovaný uninstall, přesné zachování cizích souborů a ignore bajtů; po review opravené převzetí legacy ignore při init (4 RED → GREEN) |
+| T053-AC04 | VERIFIED_IN_SCOPE | Dry-run a konflikty, vadný manifest, symlinky, rollback při I/O chybě, CLI s odděleným cwd/root; Windows a crash scénáře NOT_RUN |
+
+Opravená PR větev po review: 133 PASS / 0 SKIP včetně wheelu; [příkazy a distribuce](changes/170_manageProjectInstallation.md).
+Dodání PR_OPEN; SPECIFICATION T053 není označení dodání.
+
+
+
 ## T046-S03/S04 — schéma dalších hodnot, 2026-11-20
 
 T046-AC04 a AC07. Oprava [#91](https://github.com/p-rum/kgmaker/issues/91) má
@@ -101,7 +128,7 @@ Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání MERGED
 | Acceptance | Ověření | Důkaz a limit |
 |---|---|---|
 | T051-AC01 | VERIFIED_IN_SCOPE | tests/test_workflow_profiles.py: strict config, duplicate JSON, symlink, null mutation, commands data-only |
-| T051-AC02 | VERIFIED_IN_SCOPE | Legacy ID/regrese, v3 immutable snapshot, konfigurace smazána bez změny tasku, role packet Kontrola čerstvosti ověřuje legacy XLS a změněný XLSX přes SHA-256 bez parsování a zápisu. [Důkaz](changes/167_useCanonicalPacketSourceSnapshot.md). |
+| T051-AC02 | VERIFIED_IN_SCOPE | Legacy ID/regrese, v3 immutable snapshot, konfigurace smazána bez změny tasku a role packet. Kontrola čerstvosti ověřuje skutečné XLSX a XLS přes SHA-256 bez parsování a zápisu. [Důkaz](changes/167_useCanonicalPacketSourceSnapshot.md). |
 | T051-AC03 | VERIFIED_IN_SCOPE | Persistence gates, required label/command, skipped/unknown/failed, stale binding, retry, review major; lokálně deklarované artefakty |
 | T051-AC04 | PARTIAL | Init parity/preservation a CLI handoffs PASS; wheel mimo checkout PASS; živý hostitel NOT_RUN |
 | T051-AC05 | PARTIAL | 103 testů PASS a dokumentace po krocích; GH CI a review publikovaného HEAD NOT_RUN |
