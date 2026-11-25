@@ -1290,6 +1290,14 @@ from the same source text. Both groups and broker realms survive in the API
 and CLI. A workspace inventory with a substituted normalized digest fails
 closed. [Exact regression and evidence](changes/160_bindJvmSourceBytes.md).
 
+T012-AC04 a AC05 mají nový případ Kafka katalogu se skutečným K1, stejným
+repo ID a výslovným modelem produkčního source setu. Katalog zachová oba
+statické consumery a odmítne chybějící, duplicitní nebo změněný veřejný
+File i pozměněnou soukromou klasifikaci. Vstup a uložené soubory zůstaly
+shodné po čtení. Opakovaná kontrola čerstvých bajtů odmítá i změnu pouze
+konců řádků mezi ověřením snímku a čtením uzlu. AC06 a meze jsou v
+[Change179](changes/179_validateKafkaProjectModelFiles.md).
+
 
 ## T013 — explicit versioned contract attachments (verified bounded scope)
 
