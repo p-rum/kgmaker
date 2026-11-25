@@ -94,6 +94,12 @@ Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`,
 Pevné fáze, bez runneru/DAG/automatických trace vazeb. Fingerprint používá existující
 source_inventory s jeho výlukami; viz příručka. T049 a produkční acceptance nejsou uzavřené.
 
+Oprava zdrojové čerstvosti T051-S02 používané T052 je v [PR #151](https://github.com/p-rum/kgmaker/pull/151)
+`PR_OPEN / PARTIAL`. Po #136 prošlo 208 cílených testů bez přeskočení.
+Skutečné XLSX, šifrované XLSX a legacy XLS z fixture T054 ověřují shodu
+inventáře a indikátoru čerstvosti po změně bajtů.
+[Rozsah a důkazy](changes/167_useCanonicalPacketSourceSnapshot.md).
+
 
 ## Skilly v cílovém projektu T050 — 2026-11-15
 
