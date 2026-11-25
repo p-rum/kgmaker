@@ -12,3 +12,5 @@ Stejný vstup lze předat přímo pomocí `kgmaker excel analyze --manifest app.
 Před opravou regresní test s `<br></br>` skončil `FAIL`, varianta `<br/>` prošla. Po opravě prošly obě varianty. `mvn -o -B -ntp -f workers/excel/pom.xml package` použil JDK 17 a lokální Maven cache. `python workers/excel/verify_distribution.py` potvrdil 16 runtime závislostí.
 
 Cílený `pytest` nad `test_excel_migration.py`, `test_workbooks.py`, `test_xlsx_references.py`, `test_binary_xls.py`, `test_skills.py` a `test_installation.py` s `KGMAKER_REQUIRE_EXCEL_WORKER=1` a `KGMAKER_REQUIRE_EXCEL_WHEEL=1` má 174 PASS. Plný `pytest -q` s `KGMAKER_REQUIRE_MARKDOWN_PARSER=1` má 2 582 PASS, 1 323 SKIP a 1 XFAIL. `strace -f -e trace=execve,execveat,connect` při `excel migrate prepare` zaznamenal dva statické Java workery, žádná IP spojení a shodné SHA-256 obou vstupů. `git diff --check` prošel. Živý Copilot a produkční XLSM mají stav NOT_RUN.
+
+První [GitHub Test run](https://github.com/p-rum/kgmaker/actions/runs/45660572649) skončil `failure` bez kroků v Excel jobu a bez dostupného logu (`BlobNotFound`). Ověření na GitHub runneru tím není doložené.

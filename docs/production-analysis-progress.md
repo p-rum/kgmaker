@@ -20,7 +20,7 @@ NOT_RUN. Review původního `e7a44d7` odhalilo domýšlené vazby názvů a alia
 
 Oprava čtení VML ověřuje vazbu tlačítka na VBA i s párovou značkou `<br></br>`.
 Normalizace probíhá v proudu VML a inventář dokládá SHA-256 původního XLSM.
-[Regrese a ověření](changes/174_readVmlLineBreaks.md).
+[Regrese a ověření](changes/176_readVmlLineBreaks.md).
 
 ## T053 — správa instalace v cílovém projektu, 2026-11-24
 
