@@ -1149,6 +1149,14 @@ review/ready/merge separate. [Capability](kafka-interfaces.md), [change81](chang
 Oprava #145 ověřuje shodu T012 a T019 na skutečných Javac zdrojích s LF a CRLF.
 Katalog porovnává bajtový otisk s kvalifikovaným workspace inventářem.
 [Doklad a hranice opravy](changes/160_bindJvmSourceBytes.md).
+
+Oprava nad `5d067f1` ověřuje běžný workspace File proti skeneru a
+kompilovaný File proti explicitnímu modelu téhož vybraného source setu.
+K1 reprodukce zachovává dvě oddělené skupiny se `VERIFIED_STATIC`.
+V Cloud Environment prošlo 242 cílených testů bez přeskočení.
+Celkové ověření T012 zůstává PARTIAL.
+[Change179](changes/179_validateKafkaProjectModelFiles.md).
+
 ## T011 — typed HTTP consumer catalogue
 
 Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,
