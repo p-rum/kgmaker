@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from ..analysis_model import AnalysisError, atomic_write, canonical
-from . import inventory, jira, plan
+from . import inventory, jira, migration, plan
 from .source import MAX_ARTIFACT_BYTES, bounded_json, manifest
 
 
@@ -24,6 +24,7 @@ def register(subparsers):
     packet.add_argument("--entity")
     packet.add_argument("--include-source", action="store_true")
     packet.add_argument("--budget", type=int, default=32_000)
+    migration.register(actions)
     actions.add_parser("jira-template", help="print the default Jira Cloud template")
     planning = actions.add_parser("plan", help="validate and export a migration plan")
     commands = planning.add_subparsers(dest="excel_plan_action", required=True)
@@ -60,6 +61,9 @@ def _print(value):
 
 def run(args: argparse.Namespace) -> int:
     try:
+        if args.excel_action == "migrate":
+            _print(migration.run(args))
+            return 0
         if args.excel_action == "jira-template":
             _print(jira.DEFAULT)
             return 0

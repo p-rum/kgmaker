@@ -470,3 +470,120 @@ def test_distinct_unicode_sheet_spellings_keep_cells_and_name_scopes_separate(tm
     codes = {row["code"] for row in value["evidence"] if row["kind"] == "gap"}
     assert codes == {"VBA_EVENT_BINDING_UNRESOLVED", "VBA_RANGE_UNRESOLVED",
                      "EXCEL_FORMULA_TARGET_UNRESOLVED"}
+
+
+def test_copilot_migration_bundle_from_workbooks_produces_validated_jira_csv(
+        tmp_path, sample, actual_worker):
+    output = tmp_path / "excel migration"
+    sources = ["--workbook", "migration.xlsm", "--dependency", "Rates.xlsx", "--out-dir", output]
+    original = {file: (tmp_path / file).read_bytes() for file in ("migration.xlsm", "Rates.xlsx")}
+    result = cli(tmp_path, "migrate", "prepare", *sources)
+    assert result.returncode == 0, result.stderr
+    assert not (output / "candidate.json").exists()
+    value = plan.load_inventory(output / "inventory.json")
+    packet = json.loads((output / "packet.json").read_text(encoding="utf-8"))
+    assert packet["template"]["inventory_id"] == value["inventory_id"]
+    assert packet["status"] == "ANALYZED"
+    assert all(not {"source", "formula", "value", "cached_value"} & row.keys()
+               for row in packet["evidence"])
+    subjects = [json.loads(line) for line in (output / "subjects.jsonl").read_text().splitlines()]
+    assert subjects == value["subjects"]
+    formula = evidence_at(value, "cell", workbook="main", cell="D1")
+    rate = evidence_at(value, "cell", workbook="dependency-1", cell="B2")
+    edge_sources(value, formula, "reads", rate)
+    assert cli(tmp_path, "migrate", "prepare", *sources).returncode == 2
+
+    proposal = candidate(value)
+    write_json(output / "candidate.json", {**proposal, "tasks": []})
+    failed = cli(tmp_path, "migrate", "export", *sources)
+    assert failed.returncode == 2 and not (output / "result").exists()
+    write_json(output / "candidate.json", proposal)
+
+    profile = write_json(tmp_path / "project-jira.json", {**jira.DEFAULT, "fields": [{
+        "field": "Delivery team", "type": "select", "source": "jira_fields.team",
+        "allowed_values": ["Spojky"], "required": True,
+    }]})
+    result = cli(tmp_path, "migrate", "export", *sources, "--jira-template", profile)
+    assert result.returncode == 0, result.stderr
+    bundle = output / "result"
+    csv_path = bundle / "migration.csv"
+    previous = csv_path.read_bytes()
+    rows = list(csv.reader(io.StringIO(previous.decode("utf-8"), newline="")))
+    assert rows[0][-1] == "Delivery team"
+    assert [row[2] for row in rows[1:]] == ["Epic", "Task", "Task"]
+    assert "Kotlin/JVM architecture" in (bundle / "migration.md").read_text(encoding="utf-8")
+    mapping = json.loads((bundle / "jira-mapping.json").read_text())
+    assert mapping["mapping"][-1]["jira_field"] == "Delivery team"
+    assert cli(tmp_path, "migrate", "export", *sources).returncode == 2
+    assert csv_path.read_bytes() == previous
+    assert all((tmp_path / file).read_bytes() == data for file, data in original.items())
+
+
+def test_copilot_migration_bundle_rejects_changed_manifest_or_workbook(tmp_path, sample, actual_worker):
+    output = tmp_path / "bundle"
+    args = ["--manifest", sample, "--out-dir", output]
+    result = cli(tmp_path, "migrate", "prepare", *args, "--include-source")
+    assert result.returncode == 0, result.stderr
+    packet = json.loads((output / "packet.json").read_text(encoding="utf-8"))
+    assert any("Workbook_Open" in row.get("source", "") for row in packet["evidence"])
+    value = plan.load_inventory(output / "inventory.json")
+    write_json(output / "candidate.json", candidate(value))
+    (tmp_path / "Rates.xlsx").write_bytes(b"changed")
+    result = cli(tmp_path, "migrate", "export", *args)
+    assert result.returncode == 2 and "inventory is stale" in result.stderr
+    assert not (output / "result").exists()
+
+
+def test_direct_workbook_selection_only_maps_unique_exact_basenames(tmp_path):
+    from kgmaker.excel.source import workbook_selection
+
+    main, one, two, unique = [tmp_path / file for file in
+                              ("main.xlsm", "a/Rates.xlsx", "b/rates.xlsx", "c/Lookup.xlsx")]
+    for path in (main, one, two, unique):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"not analyzed in this test")
+    selection = workbook_selection(main, [one, two, unique])
+    assert selection.links["main", "Lookup.xlsx"] == "dependency-3"
+    assert ("main", "Rates.xlsx") not in selection.links
+    assert ("main", "rates.xlsx") not in selection.links
+    assert ("main", "c/Lookup.xlsx") not in selection.links
+    assert workbook_selection(main, [unique, one, two]).sha256 == selection.sha256
+
+
+@pytest.mark.parametrize(("replacement", "changed_inputs"), [
+    (None, True), ("directory", True), ("file", True), ("directory", False),
+])
+def test_migration_bundle_rollback_only_removes_owned_paths(tmp_path, replacement, changed_inputs):
+    from kgmaker.excel.migration import _write_bundle
+
+    parent = tmp_path / "out"
+    parent.mkdir()
+    bundle = parent / "bundle"
+    other = tmp_path / "other"
+    (other / "bundle").mkdir(parents=True)
+    (other / "bundle/migration.md").write_text("unrelated", encoding="utf-8")
+
+    def check():
+        output = bundle / "migration.md"
+        if not output.exists():
+            return
+        if replacement == "directory":
+            parent.rename(tmp_path / "moved")
+            other.rename(parent)
+        elif replacement == "file":
+            output.rename(tmp_path / "moved.md")
+            output.write_text("unrelated", encoding="utf-8")
+        if changed_inputs:
+            raise AnalysisError("inputs changed during publication")
+
+    reason = "inputs changed" if changed_inputs else "output changed"
+    with pytest.raises(AnalysisError, match=reason):
+        _write_bundle(bundle, {"migration.md": "ours"}, check)
+    if replacement == "directory":
+        assert (tmp_path / "moved/bundle/migration.md").read_text(encoding="utf-8") == "ours"
+    elif replacement == "file":
+        assert (tmp_path / "moved.md").read_text(encoding="utf-8") == "ours"
+    if replacement:
+        assert (bundle / "migration.md").read_text(encoding="utf-8") == "unrelated"
+    else:
+        assert not bundle.exists()
