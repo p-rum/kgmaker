@@ -8,6 +8,12 @@ tři cesty ke stejnému výsledku včetně vazby query tabulky, podmínky `IFERR
 odděleného zobrazení listu. V provozním sešitu a v živé relaci Copilotu má stav
 NOT_RUN. [Zadání](tasks/56_extractExcelBehavior.md) · [Návod](excel-migration.md#funkce-a-tok-dat-v-sešitu) · [Doklady](changes/177_extractExcelBehavior.md).
 
+Review follow-up `a1cb9e0` doplňuje do T056-S02 regresní případy pro překryv adres
+query tabulky a vzorce bez uloženého `cell`, zachování definice přes známý
+nepřepisující intrinsic VBA a přepis návratové hodnoty po ukončené větvi. Tři
+cílené testy prošly; v celé migrační sadě je 19 PASS a 14 SKIP (13 vyžaduje worker,
+jeden instalovaný wheel). Viz [změna 178](changes/178_fixExcelBehaviorLineage.md). Produkční sešit,
+živý Copilot, Java worker/wheel a hostovaná CI v tomto follow-upu mají NOT_RUN.
 
 ## T055 — Copilot skill pro migraci Excelu, 2026-11-25
 

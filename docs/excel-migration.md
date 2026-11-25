@@ -63,7 +63,11 @@ uvádí mezery v dokladech a hranice analýzy.
 Konkrétní syntaktické důkazy zahrnují `WEBSERVICE`, odkazy na další sešity,
 deklarace připojení OOXML a vazby query tabulek. VBA sleduje deklarace podporovaných
 HTTP klientů, přípravu a odeslání požadavku, čtení odpovědi a návaznost na
-lokální přiřazení. Výstupní buňka v zobrazeném listu je kandidát na prezentaci.
+lokální přiřazení. Známá nepřepisující intrinsic volání, například `Format`,
+nepřeruší vazbu vstupní hodnoty. Alternativní definice zůstávají uvnitř
+podporovaných větví; přímé přiřazení po jejich uzavření starší definici přepíše.
+Neznámá volání dál ruší možné přepsané definice. Výstupní buňka v zobrazeném listu
+je kandidát na prezentaci.
 Změna `Caption`, `Text`, `Visible` či `MsgBox` dokládá příslušný zápis nebo volání;
 skutečné zobrazení závisí na běhu. Neprůhledné integrace přes COM, Power Query, dynamicky sestavené
 adresy, aktivní sešit a skutečné výsledky externího volání mohou vyžadovat další
