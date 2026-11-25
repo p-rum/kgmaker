@@ -9,6 +9,16 @@ import java.util.*;
 import java.util.jar.JarFile;
 
 public final class State {
+    private static final Set<String> KOTLIN_IDENTITY_TYPES = Set.of("kotlin.Int", "kotlin.String", "kotlin.Boolean");
+    private final Set<String> ambiguousKotlinDeclarations = new HashSet<>();
+
+    public static Map<String,Object> kotlinDeclaration(String packageName, String name,
+                                                        List<String> parameters, String result) {
+        if (result == null || !KOTLIN_IDENTITY_TYPES.contains(result)
+            || parameters.stream().anyMatch(type -> type == null || !KOTLIN_IDENTITY_TYPES.contains(type))) return null;
+        return map("schema_version", 2, "package", packageName, "name", name,
+                   "parameters", parameters, "return_type", result);
+    }
     public final Map<String,Object> request, context;
     public final Path root;
     public final Map<String,Map<String,Object>> symbols = new TreeMap<>();
@@ -104,6 +114,14 @@ public final class State {
         var value=map("id",identity,"owner",owner,"name",name,"descriptor",descriptor,"kind",name.equals("<init>")?"constructor":"method",
             "scope",realm.get("scope"),"context_id",context.get("id"),"origin",loc==null?"dependency":"handwritten","path",null,"range",null);
         if(loc!=null)value.putAll(loc); if(metadata!=null)value.putAll(metadata);
+        var previous = symbols.get(identity);
+        if (loc != null && previous != null && previous.get("path") != null
+            && (!Objects.equals(previous.get("path"), value.get("path"))
+                || !Objects.equals(previous.get("range"), value.get("range")))
+            && (previous.containsKey("kotlin_declaration") || value.containsKey("kotlin_declaration"))) {
+            ambiguousKotlinDeclarations.add(identity);
+        }
+        if (ambiguousKotlinDeclarations.contains(identity)) value.remove("kotlin_declaration");
         if(loc!=null || !symbols.containsKey(identity)) symbols.put(identity,value);
         if(symbols.size()>20000) throw new IllegalStateException("symbol output limit exceeded");
         return identity;

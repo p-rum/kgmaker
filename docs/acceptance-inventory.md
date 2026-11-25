@@ -244,6 +244,34 @@ signatury bez publikace grafu. Otevřené zůstávají inkrementální přepoče
 body-dependent důkazů, scénáře Windows a úplná matice §7.
 [Ověření a omezení](changes/137_prepareIncrementalMutationOracle.md).
 
+T047-S02 / T047-R02 a T047-AC02 — IN_PROGRESS / PARTIAL.
+Skutečné K1 a K2 dokládají logické klíče přetížení `score(Int)` a
+`score(String)` s neměnným klíčem a novým ID výskytu po komentáři. Výslovně
+vybrané produkční a testovací source sety a různé repozitáře mají vlastní
+klíče. Kontroly vyžadují úplný zachycený výběr Kotlin souborů a ověřují
+strukturované členství deklarace i při shodném textovém označení dvou source setů.
+Přechod z předchozí inspekce na raw workspace po #145 i jeho opakované načtení
+ověřily oba workery s neměnným logickým klíčem.
+Doklad deklarace po kontrole kolizí zahrnuje i stejnojmenné zdrojové protějšky
+bez doložitelného JVM symbolu. Při neznámém vstupním typu protějšku se klíč
+zadrží pro stejné jméno a package. Kafka katalog při repo aliasu používá
+stejnou kvalifikaci jako snímek workspace.
+Po přenosu na `5809e849` prošlo 106 cílených testů se skutečnými K1 a K2
+bez přeskočení včetně raw JVM, workspace, cache a Kafka katalogu.
+Následující přenos na `b04d064a` zachoval compiler zdroje. Pět cílených
+testů porovnalo otisky sešitů a čtení grafů v1–v3, nový nativní běh je
+pro tuto revizi NOT_RUN. Přenos na `3a6b97fc` převzal T055, zachoval stejné
+compiler zdroje a ověřil 12 cílených případů instalace, migrace a čtení
+starších grafů.
+Pokud skener hlásí `SOURCE_NOT_ANALYZED` u vybraného souboru Kotlinu,
+chybí důkaz úplnosti source setu. Přímá inspekce, offline čtení a opakované
+načtení workspace v takovém případě zadrží volitelný klíč. Ostatní platné
+compiler údaje a klíče v jiném repozitáři nebo source setu zůstávají dostupné.
+Po přenosu na `61cd97d9` prošlo 57 cílených testů se skutečnými K1, K2
+a Javac bez přeskočení.
+Podporované signatury, nejednoznačné deklarace, grafy v1–v3 a zbývající
+rozsah popisuje [záznam ověření](changes/166_addKotlinLogicalSymbolKeys.md).
+
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
 původní SHA a výsledky. Již proběhlý merge není čekající gate: T020 PR87,
 T014/16/17/18/19 PR80–84, T030/31/32/33 PR75/77/78/79, W05 PR71,
