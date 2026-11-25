@@ -165,19 +165,45 @@ selektivní publikace do grafu a dotčených revizí. W02-AC01 zůstává
 [Záznam implementace](145_buildReverseDependencyIndexes.md) ·
 [Schválení T045](https://github.com/p-rum/kgmaker/pull/130#issuecomment-7169443480)
 
+## T052-S01, T052-R01 a T052-AC01 — ověřená závislost W03
+
+[#160](https://github.com/p-rum/kgmaker/pull/160) je sloučené jako
+`61cd97d90d7a342396da79e7c3c7401c3df2560e`. Merge a schválený head
+`46cedec5e07ae9612fcf0e590bfc30bd4cd3c77c` mají shodný strom
+`1b64d5e3e7f730582d5fab38920b6bfa4d042dbe`. Plánovač požaduje pro W03
+ověřený W02. Skutečný W02 je `MERGED/PARTIAL`; W03 je `PLANNED/NOT_RUN`
+a zůstává mimo `dispatch` s důvodem
+`T003-S10-W02: MERGED/PARTIAL; VERIFIED_IN_SCOPE required`.
+
+- Na schváleném stromu prošlo **109 PASS / 0 SKIP** v cílené autorské sadě
+  a **44 PASS / 0 SKIP** pro převzatý rozsah #130 se skutečným JDK 21.
+  Nezávislé T052 kontroly měly **42** a **109 PASS**, bez přeskočení.
+  T045 zopakovalo cílenou sadu s **109 PASS / 0 SKIP**.
+- Po sloučení proběhlo **109 PASS / 0 SKIP**, exit 0, v sadě plánovače,
+  workflow, předávání a skills. Shodný manifest 900 sledovaných cest má
+  SHA-256 `ee408ca0dda043fe589a45dde7374f4deadcf7f0c18145d582d9fd0fbbec59ac`.
+  JUnit SHA-256 `fe8fdb0d5ee676071a5ffd9fbbf19968533ea340226475e50778123f22a42ce9`.
+  GitHub Actions po sloučení zůstávají neověřené.
+
+[Záznam implementace](175_requireVerifiedDependencies.md) ·
+[Schválení T045](https://github.com/p-rum/kgmaker/pull/160#issuecomment-7169793956).
+
 ## Ověření inventáře a kompatibilita
 
 ```bash
 PYTHONPATH=src python -m pytest -p no:cacheprovider -q tests/test_completion.py
-PYTHONPATH=src python -m kgmaker.cli completion plan --root .
+PYTHONPATH=src python -m kgmaker.cli completion plan --root . --jobs 32
 ```
 
-- Cílené testy plánovače **7 PASS / 0 SKIP**, exit 0. JUnit SHA-256
+- Před sloučením #160 měly cílené testy plánovače **7 PASS / 0 SKIP**,
+  exit 0. JUnit SHA-256
   `6b61c3c3aa108bb86770ca04b0dce1b8bc30db5b962a45b6679ee8968561c469`.
+- Při přenosu po #160 prošlo **13 PASS / 0 SKIP**, exit 0, v aktuálním
+  `tests/test_completion.py`.
 - Přímý běh plánovače načetl všech 119 existujících řádků. Matice má
   89 MERGED a 30 PLANNED. T003-S13-W02 zůstává dostupné pro další
-  ověření. U T003-S10-W02 navazuje selektivní publikace. Přehled
-  kandidátů podle dodání sám neprokazuje splnění W02-AC01 pro W03.
+  ověření. U T003-S10-W02 navazuje selektivní publikace. Podmínka ověření
+  drží W03 mimo `dispatch` i při `--jobs 32`.
 - Úplná testovací sada a GitHub Actions pro tuto dokumentační změnu jsou
   NOT_RUN. Veřejné API, příklady CLI, README, ostatní capability návody a registr
   zadání mají nulový dopad, protože publikované chování, schémata a
