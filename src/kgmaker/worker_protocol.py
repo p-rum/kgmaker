@@ -162,7 +162,8 @@ def _exchange(process, payload, *, deadline, cancel_file, max_response, job=None
 
 
 def request_worker(argv: list[str], request: dict, *, cwd: Path, timeout: float = 120,
-                   cancel_file: Path | None = None, max_response: int = MAX_RESPONSE) -> dict:
+                   cancel_file: Path | None = None, max_response: int = MAX_RESPONSE,
+                   env: dict[str, str] | None = None) -> dict:
     if not argv or not all(isinstance(a, str) and a and "\0" not in a for a in argv):
         raise AnalysisError("worker command must be a nonempty argv array")
     if timeout <= 0 or max_response < 1:
@@ -190,7 +191,7 @@ def request_worker(argv: list[str], request: dict, *, cwd: Path, timeout: float 
                 from ._windows_job import Job
                 job = Job()
             process = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE, start_new_session=os.name == "posix",
+                                       stderr=subprocess.PIPE, env=env, start_new_session=os.name == "posix",
                                        creationflags=0x00000004 if os.name == 'nt' else 0)
             if job is not None:
                 job.attach_and_resume(process)

@@ -84,7 +84,7 @@ def read_regular_bytes(path: Path) -> bytes:
         return stream.read()
 
 
-def read_json(path: Path, *, regular_only: bool = False) -> Any:
+def decode_json(raw: str | bytes, label: str) -> Any:
     def reject_constant(value: str) -> None:
         raise ValueError(f"Non-finite JSON value: {value}")
     def unique(pairs: list) -> dict:
@@ -95,9 +95,16 @@ def read_json(path: Path, *, regular_only: bool = False) -> Any:
             result[key] = value
         return result
     try:
-        text = read_regular_bytes(path).decode("utf-8") if regular_only else path.read_text(encoding="utf-8")
-        return json.loads(text, parse_constant=reject_constant, object_pairs_hook=unique)
+        return json.loads(raw, parse_constant=reject_constant, object_pairs_hook=unique)
     except (ValueError, UnicodeError) as exc:
+        raise AnalysisError(f"Invalid JSON in {label}: {exc}") from exc
+
+
+def read_json(path: Path, *, regular_only: bool = False) -> Any:
+    try:
+        text = read_regular_bytes(path).decode("utf-8") if regular_only else path.read_text(encoding="utf-8")
+        return decode_json(text, path.name)
+    except UnicodeError as exc:
         raise AnalysisError(f"Invalid JSON in {path.name}: {exc}") from exc
 
 

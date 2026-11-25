@@ -118,16 +118,28 @@ def engine_fingerprint():
 
 def launch_inputs(argv):
     """Capture the selected executable/platform, without starting a process."""
+    launcher = Path(argv[0])
     try:
-        executable = Path(argv[0]).resolve(strict=True)
-        files = {str(executable): file_hash(executable)}
-    except FileNotFoundError:
+        executable = launcher.resolve(strict=True)
+    except (OSError, RuntimeError):
+        # Python 3.12 pathlib reports symlink loops as RuntimeError.
         return None
-    if executable.name in {'java', 'java.exe'}:
-        for relative in ('release', 'lib/modules'):
-            target = executable.parent.parent / relative
-            if not target.is_file(): return None
-            files[str(target)] = file_hash(target)
+    try:
+        files = {str(executable): file_hash(executable)}
+    except OSError:
+        return None
+    java_names = {'java', 'java.exe'}
+    is_java = (os.path.normcase(launcher.name) in java_names
+               or os.path.normcase(executable.name) in java_names)
+    if is_java:
+        try:
+            for relative in ('release', 'lib/modules', 'lib/ct.sym'):
+                target = executable.parent.parent / relative
+                if not target.is_file():
+                    return None
+                files[str(target)] = file_hash(target)
+        except OSError:
+            return None
     environment = {name: os.environ.get(name) for name in
                    ('JAVA_TOOL_OPTIONS', '_JAVA_OPTIONS', 'JDK_JAVA_OPTIONS', 'NODE_OPTIONS', 'CLASSPATH')}
     # Arbitrary runtime options may add uncaptured loaders/files. Keep explicit
@@ -135,6 +147,10 @@ def launch_inputs(argv):
     if any(value and not (name == 'JAVA_TOOL_OPTIONS' and value == '-XX:-UsePerfData')
            for name, value in environment.items()):
         return None
+    if is_java and os.name == 'posix':
+        for name in ('LANG', 'LC_ALL', 'LC_CTYPE'):
+            value = os.environ.get(name)
+            environment[name] = os.fsencode(value).hex() if value is not None else None
     return {'argv': list(argv), 'files': files, 'environment_sha256': digest(environment)}
 
 

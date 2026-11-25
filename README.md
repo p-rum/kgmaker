@@ -61,6 +61,10 @@ preservation rules and limits ([T050 change117](docs/changes/117_addTargetProjec
 
 Restart Copilot CLI after installing the hook. Each new session refreshes the graph and injects a compact map as `additionalContext`.
 
+## Excel migration
+
+`kgmaker excel` analyzes explicitly listed XLSM, BIFF8 XLS and XLSX workbooks with a separate Java 17+ worker. Use the output with Copilot to draft and validate a Kotlin/JVM migration plan, then export Markdown, JSON or Jira Cloud CSV with a project-specific `jira-task` template. See [Excel migration and Jira import](docs/excel-migration.md).
+
 ## Commands
 
 Offline production classification, graph schema v2 and scoped evidence views are
@@ -162,8 +166,18 @@ Repo-qualified compiler contexts and `@repo/path` symbol paths must match the
 symbol repository. This contract does not discover deployment boundaries or infer
 runtime identity.
 
+After installing a newer Python package, run `kgmaker upgrade --root PATH` to
+refresh the project's agents, skills, hooks, commands and templates. Local edits
+are reported as conflicts; `--dry-run` previews changes and explicit `--force`
+replaces modified managed files. `kgmaker uninstall --root PATH` removes the
+integration and **all `.kgmaker/` data**, including notes and analysis history,
+while preserving unrelated project files. See [project installation lifecycle](docs/project-installation.md)
+and [change170](docs/changes/170_manageProjectInstallation.md).
+
 ```text
 kgmaker init [--root PATH] [--force]
+kgmaker upgrade [--root PATH] [--dry-run] [--force]
+kgmaker uninstall [--root PATH] [--dry-run] [--force]
 kgmaker scan [--root PATH] [--no-docs] [--confluence-dir PATH] [--confluence-report PATH]
 kgmaker build [--root PATH] [--no-docs] [--confluence-dir PATH] [--confluence-report PATH]
 kgmaker update [--root PATH] [--no-docs] [--confluence-dir PATH] [--confluence-report PATH]
@@ -1278,6 +1292,11 @@ and [change128](docs/changes/128_unifiedFlowViews.md).
 Při opakované explicitní JVM/TS inspekci worker i projekce vypočítají aktuální
 compiler evidence znovu. JSON hlásí `cache.stages`
 se stavem BYPASS. Offline scan/hook/feature zachovávají stávající chování.
+Java launcher váže také `lib/ct.sym` a na POSIX přesné locale vstupy
+`LANG`, `LC_ALL`, `LC_CTYPE`. Změna zaznamenaného vstupu během inspekce
+vrátí `STALE` a zachová poslední uložený graf.
+Při spuštění přes symbolický odkaz `java` se otisk váže na cílový JDK.
+Relativní položka `PATH` se vyhodnotí v pracovním adresáři KGMAKERu.
 Graph publication reserves the checkout before writing and rejects a stale
 candidate if a newer graph was published during capture, import or migration.
 A Confluence-enabled scan stages its report and validation index with the graph.

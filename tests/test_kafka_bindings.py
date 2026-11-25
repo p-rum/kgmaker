@@ -9,7 +9,7 @@ import pytest
 from kgmaker.analysis_model import AnalysisError
 from kgmaker.model import KnowledgeGraph
 from kgmaker.scanner import scan_repository
-from kgmaker.workspace import snapshot_workspace, load_workspace, _REPO_CACHE
+from kgmaker.workspace import snapshot_workspace, load_workspace, _REPO_CACHE, split_id
 
 
 @pytest.fixture
@@ -293,7 +293,7 @@ def test_actual_captured_context_properties_and_offline_staleness(kafka_workspac
     binding = next(n for n in graph.nodes if n.kind == "kafka_binding" and n.metadata["repo_id"] == "producer")
     assert binding.metadata["status"] == "RESOLVED" and binding.metadata["topic"] == "captured-topic"
     derived = next(c for c in graph.contexts if c["id"] == binding.metadata["context_id"])
-    assert derived["selected_compiler_context"].endswith(result["context"]["id"])
+    assert split_id(derived["selected_compiler_context"]) == ("producer", result["context"]["id"])
     # Cache keys include local sources; additionally the selected snapshot is
     # content-validated on every use, never executed to repair itself.
     source.write_text(source.read_text().replace("static", "edited"))
