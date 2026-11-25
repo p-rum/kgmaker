@@ -887,6 +887,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"kgmaker {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
+    from .excel.cli import register as register_excel
+    register_excel(sub)
     from .architecture_cli import register as register_architecture
     register_architecture(sub)
     feature_cli.register(sub)
@@ -1042,6 +1044,9 @@ def main() -> None:
         raise SystemExit(run_architecture(sys.argv[2:]))
     parser = build_parser()
     args = parser.parse_args()
+    if args.command == "excel":
+        from .excel.cli import run as run_excel
+        raise SystemExit(run_excel(args))
     root = args.root.resolve()
     if args.command in {"template", "testgen", "trace"}:
         from .delivery_cli import run

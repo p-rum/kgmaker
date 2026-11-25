@@ -1,5 +1,13 @@
 # Aktuální stav a zbývající práce
 
+## T054 — analýza Excelu a Kotlin/JVM plán, 2026-11-25
+
+Dodání PR_OPEN. T054-S01–S02 ověřené pro popsané fixture se skutečným XLSM,
+BIFF8 XLS a XLSX. T054-S03–S04 částečně ověřené pomocí místního CSV a
+instalovaného Linux wheelu s JDK 17. Živý Jira Cloud import a Windows jsou
+NOT_RUN. Reprezentovaný rozsah je statický a omezený podporovanými konstrukcemi.
+[Cílové zadání](tasks/54_addExcelMigration.md) · [Návod](excel-migration.md) · [Evidence](changes/171_addExcelMigration.md).
+
 ## T053 — správa instalace v cílovém projektu, 2026-11-24
 
 Dodání PR_OPEN, ověření VERIFIED_IN_SCOPE pro T053-S01–S04 / AC01–AC04:

@@ -5,6 +5,29 @@ on:
   pull_request:
 
 jobs:
+  excel-migration:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      KGMAKER_REQUIRE_EXCEL_WORKER: "1"
+      KGMAKER_REQUIRE_EXCEL_WHEEL: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: python -m pip install pytest==8.3.4 setuptools==84.2.1 wheel==0.48.0
+      - run: mvn -B -ntp -C -f workers/excel/pom.xml package
+      - run: python workers/excel/verify_distribution.py
+      - run: python -m pytest -q tests/test_excel_migration.py
+
   windows-user-install:
     runs-on: windows-latest
     timeout-minutes: 20

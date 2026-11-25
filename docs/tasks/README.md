@@ -33,6 +33,7 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T051 | [51_connectProjectWorkflows.md](51_connectProjectWorkflows.md) | Konfigurovatelné workflow profily, snapshoty a návaznosti rolí | SPECIFICATION, revize 1; ověření viz stavová matice |
 | T052 | [52_addCompletionOrchestrator.md](52_addCompletionOrchestrator.md) | Lokální plánování a koordinace dokončení existující funkcionality | SPECIFICATION, revize 2; dodání viz stavová matice |
 | T053 | [53_manageProjectInstallation.md](53_manageProjectInstallation.md) | Upgrade a úplné odstranění integrace v cílovém projektu | SPECIFICATION, revize 1; ověření viz stavová matice |
+| T054 | [54_addExcelMigration.md](54_addExcelMigration.md) | Analýza VBA a sešitů, Kotlin/JVM plán a ruční Jira Cloud import | SPECIFICATION, revize 1 |
 
 T046 je již registrováno v `main`: kroky S01–S06 byly sloučeny v PR #41, #42,
 #43, #44, #45 a #40.
