@@ -25,3 +25,7 @@ Příklad použití v Copilotu. „Použij $kgmaker-excel-migration pro Fakturac
 
 Cílené ověření použilo Java 17, instalovaný Linux wheel a příkaz `python -m pytest -q tests/test_excel_migration.py tests/test_skills.py tests/test_installation.py tests/test_workbooks.py tests/test_xlsx_references.py tests/test_binary_xls.py` s `KGMAKER_REQUIRE_EXCEL_WORKER=1` a `KGMAKER_REQUIRE_EXCEL_WHEEL=1`.
 Výsledek cílené sady je 168 PASS. Plná sada `python -m pytest -q -rs` má 2 571 PASS, 1 317 SKIP a 1 XFAIL. `git diff --check` prošel.
+
+## Předání T055-S01–S03 k review
+
+Aktuální `main` `5809e84932b1910bfc3f17c72e2a2005283389b1` byl integrován bez konfliktů. Ověřený integrační commit `13559f6a55f89785b4e142bf6b6aab10b8ab6da6` zachovává rozsah AC01–AC03. Cílená sada ze záznamu výše znovu prošla se skutečným Java 17 workerem a instalovaným Linux wheelem, 168 PASS. `python workers/excel/verify_distribution.py` ověřil 16 runtime závislostí. `git diff --check origin/main...HEAD` prošel. Živý Copilot, Windows a Jira import zůstávají NOT_RUN.
