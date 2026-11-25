@@ -487,3 +487,45 @@ základ. [CLI příklady](../stage-content-cache.md#selektivní-dopad-změn),
 kontrakt reportu a graph/store v1/v2/v3 se tímto přenosem nemění. W02-AC01
 zůstává `PARTIAL`. Zápis selektivní invalidace a negativní vyhledání čekají
 na samostatné ověření.
+
+## Přenos po #151 — T003-S10-W02, kroky 4–5 a AC01–AC04
+
+První rodič `4ef6471381aac892f6d711cb51754a373122fe7f` obsahuje společný
+strom reverse dependency reportu a runtime navigace. Druhý rodič
+`b04d064a6147436adc751f5fffa4a219b8f8c16e` přináší shodné zdrojové otisky
+sešitů v pracovních packetech a ve scanu. Produktové a testové soubory
+obou změn se shodují s příslušnými rodiči. Sémantická vrstva zachovala
+412 historických epizod a přidala záznam přenosu.
+
+**Krok 4, AC01–AC03.** Výběr z předchozí sekce a obě regrese sešitů
+`WorkflowContextTests.test_packet_freshness_uses_same_workbook_inputs_as_scan`
+a `WorkflowContextTests.test_packet_freshness_handles_unparseable_workbook_edit`
+mají **41 PASS / 0 SKIP**, exit 0, CPython 3.12.14, Temurin JDK 21.0.6+7
+a skutečný Maven 3.9.9. JUnit SHA-256
+`6431f10b8ca62ecdf8ae20044a2ec711bec18468fc395b1c2eb0678a25fa90cd`.
+
+```bash
+python -m pytest -n 2 --dist load -p no:cacheprovider -o tmp_path_retention_policy=failed -q -ra --tb=short \
+  tests/test_workflow.py::WorkflowContextTests::test_packet_freshness_uses_same_workbook_inputs_as_scan \
+  tests/test_workflow.py::WorkflowContextTests::test_packet_freshness_handles_unparseable_workbook_edit
+python -m pytest -p no:cacheprovider -o tmp_path_retention_policy=failed -q -ra --tb=short
+```
+
+Druhý příkaz je úplná standardní sada s CPythonem 3.13.18, Gradle 8.13
+a připravenými Maven závislostmi v Cloud Environment. Zahrnuje
+**2 579 PASS / 1 343 SKIP / 1 očekávaný strict XFAIL**, exit 0.
+JUnit SHA-256 `aac2f2c0aa7466c0534b2f586e0c8a30bb1d401845e088d930c9ebf62e04eec0`.
+Archivovaný strom `cb3ea34bc94733c7d11ad219d388ea9fab59fbe7`
+a výsledný strom mají shodný obsah `src`, `tests`, `tooling` a `workers`.
+Shodný manifest před a po obou bězích má SHA-256
+`fb611ee9534bfecadc223baf1ab51f260ec9587717637d58ed32b6cb8dbd9e42`.
+Záznamy předchozí chyby prostředí Gradle a cílené obnovy s 26 PASS
+a třemi volitelnými Mermaid SKIP jsou výše. Windows a GitHub Actions
+mají při lokálním předání stav `NOT_RUN`.
+
+**Krok 5, AC04.** [Inventář](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy)
+a [stavová matice](../production-analysis-progress.md) uvádějí aktuální
+základ. [Rozsah čtecího příkazu](../stage-content-cache.md#selektivní-dopad-změn)
+a podpora graph/store v1/v2/v3 zůstávají zachované. W02-AC01 zůstává
+`PARTIAL`. Zápis selektivní invalidace a negativní vyhledání mají
+samostatný rozsah.
