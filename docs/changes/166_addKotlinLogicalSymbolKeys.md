@@ -273,3 +273,88 @@ python -m pytest -c pyproject.toml -n 2 -p no:cacheprovider -q --tb=short -ra \
 
 Nezávislé review, úplná projektová sada, GitHub Actions a Windows mají pro
 tento společný stav zatím status NOT_RUN. T047-AC02 zůstává PARTIAL.
+
+## Kontrola kolizí zdrojových deklarací a repo aliasu
+
+T047-S02, T047-R02 a T047-AC02. Výchozí kandidát
+`c13a3c26c10a157224fa3ef728199a89674ce0bc` uměl porovnávat doklady pouze
+mezi vydanými JVM symboly. Stejnojmenný zdrojový protějšek mohl mít například
+anotaci, odvozený návratový typ nebo žádný použitelný JVM symbol, a přesto
+byla jeho kolize pro Kotlin rozhodující.
+
+[Společná kontrola](../../workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinDeclarationConflicts.kt)
+v aktuálním běhu přiřadí diagnostiku ke konkrétnímu souboru a rozsahu deklarace.
+K1 čte diagnostiku z existujícího `BindingContext`, K2 získá diagnostiku
+a protějšky ve stávající analýze `KaSession`. Oba workery odebírají
+volitelný doklad až po zpracování všech vybraných souborů. Při chybném
+vstupním typu protějšku zůstávají pro stejné jméno a package běžné výskyty.
+Konflikt zadrží klíč i při změně JVM jména pomocí `@JvmName`.
+K1 zahrne potlačené kolizní diagnostiky z téhož analyzovaného kontextu.
+K2 při potlačení kontroly kolizí zadrží klíč pro skupinu deklarace nebo
+jednotlivé jmenné skupiny deklarací ze souboru s takovou anotací.
+Rozdílně typované přetížení, jiný package a chyby v těle bez vlivu na
+podpis zachovávají doložené klíče. Kontrola nemění volání ani jejich evidenci.
+
+Nové doklady mají `kotlin_declaration.schema_version` 2. Dřívější vývojový
+snapshot se slabším dokladem je nadále čitelný s výskytem. Klíč se ověří
+opětovnou explicitní inspekcí s novým workerem. Prefix
+`logical:kotlin-function-v1:`, vstupy do jeho hashe a verze grafu zůstávají
+stejné. Obyčejné grafy v1–v3 nevyžadují migraci.
+
+Například `fun score(x: Int): Int = x` v jednom souboru a
+`external fun score(x: Int): Int` v jiném souboru téhož package nemají
+logický klíč. `private fun score(x: String): Int = x.length` je oddělené
+přetížení a veřejnému klíči pro parametr `Int` nepřekáží.
+
+[Workspace](../../src/kgmaker/workspace.py) a [Kafka katalog](../../src/kgmaker/interfaces.py)
+používají společnou kvalifikaci compiler symbolu. Repo alias zachová
+výskyt a při porovnání odvodí stejnou nepřítomnost volitelného dokladu jako
+uložený veřejný symbol. Katalog dál odmítá změny ostatních údajů deklarace.
+Změna běží bez spuštění procesů a bez zápisu zachycených dat. Žádný CLI
+argument, runtime projekce ani Kafka retry kontrakt se touto kontrolou nemění.
+
+### Ověření kandidáta
+
+- RED v přesném `c13a3c2` s novými případy. Na skutečných K1 a K2 se
+  vydaly neplatné klíče. K1 Kafka katalog odmítl platný repo alias.
+  3 FAIL, 0 SKIP, exit 1. JUnit `red.xml`, SHA-256
+  `bec960d7da0e5d185b3a35e7f7644bfc547b05a0be2caca005440a41ab27ad16`.
+- Předběžné GREEN po opravě. Stejná cílená sada prošla skutečným Temurin
+  JDK 21.0.6+7 a Kotlinem 2.1.10 na obou workerech, 3 PASS, 0 SKIP, exit 0.
+  Kafka kontrola zahrnuje dvě skupiny s `VERIFIED_STATIC`, odmítnutí změněného
+  JVM deskriptoru a bajtově shodný uložený stav. JUnit `green-targets.xml`,
+  SHA-256 `925b23313040ad68bc58332a5d2b842eea90b584763f7c72ce057e8ace664b79`.
+- Mezikrok širší sady měl 193 PASS a 26 FAIL, 0 SKIP. Čtyři testy K1
+  ztratily platný klíč pro známý typ `Int` bez explicitní stdlib.
+  Chybová diagnostika chybějící knihovny sama neznamenala neznámý typ
+  parametru. Oprava proto používá skutečný chybový typ z descriptoru.
+  Dalších 22 testů cache mělo nepovolený parametr prostředí JVM a cache
+  správně přešla na `INCOMPLETE_INPUT_CLOSURE`. JUnit `native.xml`,
+  SHA-256 `d98a20c5c57874c22603bb7535780d8dd38671736895fc750c7d1a672a9aae84`.
+- Finální cílený běh po novém sestavení obou workerů a s podporovaným
+  parametrem JVM měl 84 PASS, 0 SKIP, exit 0. Zahrnul všechny případy
+  logických klíčů včetně čtyř opravovaných kontrol K1 bez explicitní stdlib,
+  funkční i souborové potlačení kolizí, čtení původních výskytů, workspace,
+  kontroly cache a skutečný Kafka katalog. JUnit `final.xml`, SHA-256
+  `ce175f3a81a5350d078a6e269f41f43ad419fdd4eb870915f6af388eb86016b3`.
+  Shodné kontrolní manifesty zdrojů před a po běhu mají SHA-256
+  `f23353c319ba021670f11d271b7d38fa62448a481cabd096b4bf90224d8599dd`.
+  SHA-256 JARu K1 je
+  `021584a2c6b14626d8af4a6907aed1837dc7c8ee51da1d9ad56c3326b87e0e3b`
+  a K2 `e2ab706954b70a5341e0d57bdb0189949f94eee5ae81ce235c38f4da18aea196`.
+
+```bash
+export PYTHONPATH=src KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1
+export JAVA_TOOL_OPTIONS=-XX:-UsePerfData
+python -m pytest -n 3 -p no:cacheprovider -q --tb=short \
+  tests/test_symbol_identity.py tests/test_stage_content_cache.py tests/test_workspace.py \
+  tests/test_t012_catalog_kafka_interfaces.py::test_actual_kafka_catalogue_preserves_kotlin_compiler_symbol_alias \
+  tests/test_t012_catalog_kafka_interfaces.py::test_actual_ac01_ac02_realms_groups_original_ids_and_regex \
+  tests/test_t012_catalog_kafka_interfaces.py::test_actual_kotlin_k1_listener_and_k2_annotation_boundary
+```
+
+Po přenosu na aktuální `main` je potřeba zopakovat compiler testy nad
+přesným integračním stromem. Úplná standardní sada, GitHub Actions, Windows
+a nezávislé review mají pro tuto revizi stav NOT_RUN. T047-AC02 zůstává
+PARTIAL. Otevřené jsou další signatury, TypeScript, Windows a samostatný
+postup migrace historických identit a packetů.

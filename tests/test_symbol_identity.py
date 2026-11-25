@@ -64,8 +64,7 @@ def test_native_incomplete_kotlin_selection_cannot_prove_realm_uniqueness(tmp_pa
         symbols = {(s["path"], s["name"]): s for s in graph.symbols if s["name"] in {"score", "control"}}
         assert set(symbols) == {(path, name) for path in inputs
                                 for name in (("score", "control") if path == first else ("score",))}
-        assert all(s.get("kotlin_declaration") and s["context_id"] == result["context"]["id"]
-                   for s in symbols.values())
+        assert all(s["context_id"] == result["context"]["id"] for s in symbols.values())
         assert not (tmp_path / ".kgmaker").exists()
         return symbols
 
@@ -76,6 +75,71 @@ def test_native_incomplete_kotlin_selection_cannot_prove_realm_uniqueness(tmp_pa
     assert "logical_key" not in complete[(first, "score")] and "logical_key" not in complete[(second, "score")]
     assert complete[(first, "control")]["logical_key"] == expected_key(
         "backend", "api", "main", "production", "kotlin.Int", name="control")
+
+
+@pytest.mark.parametrize("backend", ["k1", "k2"])
+def test_native_kotlin_conflicts_include_unwitnessed_source_declarations(tmp_path, backend):
+    home = require_worker(backend)
+    conflicts = {
+        "nativePeer": "external fun nativePeer(value: Int): Int",
+        "suspendPeer": "suspend fun suspendPeer(value: Int): Int = value",
+        "renamedPeer": '@JvmName("renamed") fun renamedPeer(value: Int): Int = value',
+        "annotatedPeer": '@Suppress("UNUSED_PARAMETER") fun annotatedPeer(value: Int): Int = 0',
+        "inferredPeer": "fun inferredPeer(value: Int) = value",
+        "aliasedPeer": "fun aliasedPeer(value: SameInt): Int = value",
+        "internalPeer": "internal fun internalPeer(value: Int): Int = value",
+        "privatePeer": "private fun privatePeer(value: Int): Int = value",
+        "suppressedPeer": '@Suppress("CONFLICTING_OVERLOADS", "ERROR_SUPPRESSION") '
+                          "private fun suppressedPeer(value: Int): Int = value",
+        "unknownPeer": "fun unknownPeer(value: MissingType): Int = 0",
+        "suppressedUnknown": '@Suppress("UNRESOLVED_REFERENCE") '
+                             "fun suppressedUnknown(value: MissingType): Int = 0",
+    }
+    blocked = set(conflicts) | {"fileSuppressed"}
+    controls = {"legalPrivate", "realOverload", "otherPackage", "unresolvedBody"}
+    primary = kotlin_file(tmp_path, "Primary", "\n".join(
+        f"fun {name}(value: Int): Int = {'missing(value)' if name == 'unresolvedBody' else 'value'}"
+        for name in sorted(blocked | controls)))
+    peers = kotlin_file(tmp_path, "Rivals", "\n".join([
+        "typealias SameInt = Int",
+        *conflicts.values(),
+        "private fun legalPrivate(value: String): Int = value.length",
+        "fun realOverload(value: String): Int = value.length",
+        "fun unrelated(value: MissingType): Int = 0",
+    ]))
+    foreign = kotlin_file(tmp_path, "Foreign", "fun otherPackage(value: Int): Int = value")
+    (tmp_path / foreign).write_text("package other\nfun otherPackage(value: Int): Int = value\n",
+                                    encoding="utf-8")
+    suppressed = kotlin_file(tmp_path, "Suppressed", "")
+    (tmp_path / suppressed).write_text('@file:Suppress("CONFLICTING_OVERLOADS")\npackage fixture\n'
+                                       "private fun fileSuppressed(value: Int): Int = value\n",
+                                       encoding="utf-8")
+    sources = [primary, peers, foreign, suppressed]
+    model = {"source_sets": [{"module": "api", "id": "main", "scope": "production",
+                              "roots": ["src/main/kotlin"]}]}
+    lib = "target-k2" if backend == "k2" else "target"
+    classpath = [str(home / "jvm" / lib / "lib" / "kotlin-stdlib.jar")]
+    result = inspect_jvm(tmp_path, repo_id="backend", module="api", source_set="main", sources=sources,
+                         project_model=model, home=home, kotlin_backend=backend, classpath=classpath,
+                         publish=False)
+    assert result["exit_code"] == 0
+    assert set(result["context"]["compiler_inputs"]) == set(sources)
+    graph = KnowledgeGraph.from_dict(result["graph"])
+    local = {symbol["name"]: symbol for symbol in graph.symbols
+             if symbol["path"] == primary and symbol["kind"] == "method"}
+    assert set(local) == blocked | controls
+    assert all(local[name]["descriptor"] == "(I)I" for name in local)
+    actual_keys = {name for name, symbol in local.items() if "logical_key" in symbol}
+    assert actual_keys == controls
+    assert all("kotlin_declaration" not in local[name] for name in blocked)
+    for name in controls:
+        assert local[name]["logical_key"] == expected_key(
+            "backend", "api", "main", "production", "kotlin.Int", name=name)
+    overload, = [symbol for symbol in graph.symbols
+                 if symbol["path"] == peers and symbol["name"] == "realOverload"]
+    assert overload["logical_key"] == expected_key(
+        "backend", "api", "main", "production", "kotlin.String", name="realOverload")
+    assert not (tmp_path / ".kgmaker").exists()
 
 
 @pytest.mark.parametrize("backend", ["k1", "k2"])
@@ -243,6 +307,14 @@ private fun hidden(value: Int): Int = value
     aliased = snapshot_workspace(alias_manifest)[3]
     declarations = [s for s in aliased.symbols if s.get("name") == "score"]
     assert declarations and not any("logical_key" in s or "kotlin_declaration" in s for s in declarations)
+
+    draft = deepcopy(prod)
+    old_witness = next(s for s in draft["symbols"] if s.get("logical_key"))
+    old_witness["kotlin_declaration"]["schema_version"] = 1
+    occurrences = KnowledgeGraph.from_dict(draft).symbols
+    retained, = [s for s in occurrences if s["id"] == old_witness["id"]]
+    assert retained == {key: value for key, value in old_witness.items() if key != "logical_key"}
+    assert "logical_key" in old_witness
 
     forged = deepcopy(prod)
     symbol = next(s for s in forged["symbols"] if s.get("logical_key"))

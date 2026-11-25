@@ -16,7 +16,7 @@ public final class State {
                                                         List<String> parameters, String result) {
         if (result == null || !KOTLIN_IDENTITY_TYPES.contains(result)
             || parameters.stream().anyMatch(type -> type == null || !KOTLIN_IDENTITY_TYPES.contains(type))) return null;
-        return map("schema_version", 1, "package", packageName, "name", name,
+        return map("schema_version", 2, "package", packageName, "name", name,
                    "parameters", parameters, "return_type", result);
     }
     public final Map<String,Object> request, context;

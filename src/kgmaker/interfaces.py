@@ -859,7 +859,7 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
     from .store import load_graph
     from .views import _summarize_view_evidence, ContextSelectionError, ServiceInventoryError
     from .workspace import (qualified, _qualified_node, _qualified_kafka_metadata, _qualified_evidence,
-                            _qualified_symbol, _qualified_call_site)
+                            _qualified_compiler_symbol, _qualified_call_site)
 
     def fail(message):
         _fail('INVALID_KAFKA_INTERFACE', message)
@@ -1011,7 +1011,7 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
         for symbol in local.symbols:
             if symbol.get('context_id')==context['id']:
                 check_original_node(symbol['id'])
-                expected_symbol=_qualified_symbol(repo,symbol)
+                expected_symbol=_qualified_compiler_symbol(repo,symbol,context.get('repo_id'))
                 if public_symbols.get(expected_symbol['id'])!=expected_symbol:
                     fail('Original compiler declaration tuple is changed')
         for site in local.call_sites:

@@ -14,12 +14,14 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoot
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionOrKFunctionTypeWithAnySuspendability
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.FlexibleType
 import org.jetbrains.kotlin.types.AbbreviatedType
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -145,9 +147,25 @@ class KotlinFrontend(private val state: State) {
             val analysis=KotlinToJVMBytecodeCompiler.analyze(environment) ?: error("Kotlin analysis failed")
             binding=analysis.bindingContext
             mapper=KotlinTypeMapper(binding,ClassBuilderMode.FULL,state.context["module"].toString(),settings,false,JvmTarget.JVM_21)
+            val captured = environment.getSourceFiles()
+            val conflicts = KotlinDeclarationConflicts(state, files, captured)
             for(diagnostic in binding.diagnostics.all()) state.diagnostic("KOTLIN_"+diagnostic.factory.name,
                 diagnostic.severity.toString()+": "+diagnostic.factory.name,loc(diagnostic.psiElement))
-            for(file in environment.getSourceFiles()) {
+            // Keep reported diagnostics unchanged, but include suppressed
+            // overload conflicts in the optional identity proof.
+            for (diagnostic in binding.diagnostics.noSuppression().all()) {
+                if (diagnostic.factory == Errors.CONFLICTING_OVERLOADS) {
+                    val peers = Errors.CONFLICTING_OVERLOADS.cast(diagnostic).a
+                    conflicts.overload(diagnostic.psiElement, peers.map(DescriptorToSourceUtils::descriptorToDeclaration))
+                }
+            }
+            for(file in captured) {
+                for (function in file.declarations.filterIsInstance<KtNamedFunction>()) {
+                    val symbol = binding[BindingContext.FUNCTION, function]
+                    if (function.valueParameterList == null || symbol == null ||
+                        ErrorUtils.containsErrorTypeInParameters(symbol))
+                        conflicts.incomplete(function)
+                }
                 val moduleId="source-module:"+state.prefix(state.context)+":"+state.root.relativize(Path.of(file.virtualFilePath).toRealPath()).toString().replace('\\','/')
                 val value=State.map("id",moduleId,"name","<module>","kind","module","scope",state.context["scope"],"context_id",state.context["id"])
                 value.putAll(loc(file));state.symbols[moduleId]=value
@@ -155,6 +173,7 @@ class KotlinFrontend(private val state: State) {
                 visitor.processFileInitializers(file)
                 file.accept(visitor)
             }
+            conflicts.finish()
         }finally { Disposer.dispose(disposable) }
     }
     private inner class Visitor(private var caller: String): KtTreeVisitorVoid() {

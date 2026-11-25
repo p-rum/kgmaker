@@ -126,6 +126,7 @@ class KnowledgeGraph:
             if version == 1:
                 item["evidence_kind"] = "SYNTAX_CANDIDATE"
             edges.append(Edge(**item))
+        symbols = data.get("symbols", [])
         if version in {2, 3}:
             from .classification import SCOPES, ROLES, ORIGINS
             ids = {n.id for n in nodes}
@@ -166,11 +167,16 @@ class KnowledgeGraph:
                     if symbol.get("id") not in ids or symbol.get("id") in symbol_ids or symbol.get("context_id") not in context_ids:
                         raise ValueError("Dangling/duplicate compiler symbol or context")
                     symbol_ids.add(symbol["id"])
-                symbols = data.get("symbols", [])
                 if any("logical_key" in symbol or "kotlin_declaration" in symbol for symbol in symbols):
                     from .symbol_identity import occurrence_keys, valid_declaration
                     if any("kotlin_declaration" in s and not valid_declaration(s["kotlin_declaration"]) for s in symbols):
                         raise ValueError("Invalid Kotlin declaration identity witness")
+                    # Draft witnesses lacked source conflict checks. Keep their
+                    # occurrences readable while requiring a fresh key proof.
+                    symbols = [{key: value for key, value in symbol.items() if key != "logical_key"}
+                               if "logical_key" in symbol and
+                               symbol.get("kotlin_declaration", {}).get("schema_version") == 1 else symbol
+                               for symbol in symbols]
                     if sum(isinstance(c.get("id"), str) for c in contexts) != len(context_ids):
                         raise ValueError("Ambiguous Kotlin logical symbol context")
                     keyed = occurrence_keys(symbols, {node.id: node for node in nodes},
@@ -219,7 +225,7 @@ class KnowledgeGraph:
             contexts=list(data.get("contexts", [])),
             diagnostics=list(data.get("diagnostics", [])),
             evidence=list(data.get("evidence", [])),
-            symbols=list(data.get("symbols", [])),
+            symbols=list(symbols),
             call_sites=list(data.get("call_sites", [])),
             cfgs=list(data.get("cfgs", [])),
             analysis_annotations=list(data.get("analysis_annotations", [])),

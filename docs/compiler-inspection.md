@@ -1661,11 +1661,20 @@ včetně zachycených vstupů jeho generované varianty. Členství každé dekl
 se ověřuje proti samostatným hodnotám modulu, source setu a scope z modelu
 buildu. Při částečném výběru souborů nebo nejednoznačném členství graf dál
 poskytuje výskyt a jeho compiler doklad.
+Oba workery kontrolují kolize zdrojových deklarací ve stejném běhu analýzy.
+Při konfliktu klíč nevzniká ani v případě, kdy kompilátor pro druhou deklaraci
+nevydá JVM symbol. Při neověřeném podpisu stejnojmenné deklarace v témže
+package zůstávají k dispozici výskyty. Chyby v těle nesouvisející funkce
+samostatně doložený klíč nezablokují.
 Další typy, generické, anotované, lokální, anonymní a nejednoznačné deklarace
 vracejí původní informace o výskytu bez logického klíče. SOURCE_ONLY grafy
 dodávají pouze syntaktické výskyty. Workspace klíč přebírá od compiler kontextu se
 stejným repozitářem jako v manifestu; náhradní repo označení stačí pro kvalifikaci
 výskytu, ale neposkytuje důkaz jeho logické identity.
+Ověření kolizí vyžaduje doklad `kotlin_declaration.schema_version` 2.
+Dřívější vývojové snapshoty s verzí 1 poskytují výskyt; pro doložení klíče
+znovu spusťte inspekci s aktuálním workerem. Formát a hash ověřeného klíče se
+zachovávají.
 
 ```bash
 kgmaker inspect code --root ./service --build-id BUILD_ID --context CONTEXT_ID \

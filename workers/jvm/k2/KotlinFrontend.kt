@@ -6,6 +6,9 @@ import com.intellij.psi.*
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.standalone.buildStandaloneAnalysisAPISession
@@ -18,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtSdkModule
@@ -237,10 +241,23 @@ class KotlinFrontend(private val state: State) {
                     })
                 }
             }
-            for (file in session.modulesWithFiles.values.flatten().filterIsInstance<KtFile>().sortedBy { it.virtualFilePath }) {
+            val captured = session.modulesWithFiles.values.flatten().filterIsInstance<KtFile>()
+                .sortedBy { it.virtualFilePath }
+            val conflicts = KotlinDeclarationConflicts(state, files, captured)
+            for (file in captured) {
                 state.diagnostic("K2_SOURCE_MODEL_PARTIAL",
                     "K2 models named-function declarations, explicit call expressions, type annotations and property use-site metadata; other source execution and framework constructs remain unmodeled", loc(file))
                 analyze(file) {
+                    for (diagnostic in file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)) {
+                        if (diagnostic is KaFirDiagnostic.ConflictingOverloads) {
+                            conflicts.overload(diagnostic.psi, diagnostic.conflictingOverloads.map { it.psi })
+                        } else if (diagnostic is KaFirDiagnostic.ErrorSuppression &&
+                            diagnostic.diagnosticName == "CONFLICTING_OVERLOADS") {
+                            conflicts.suppressedOverload(diagnostic.psi)
+                        } else if (diagnostic.severity == KaSeverity.ERROR) {
+                            conflicts.signatureError(diagnostic.psi)
+                        }
+                    }
                     file.accept(object : KtTreeVisitorVoid() {
                         override fun visitClassOrObject(declaration: KtClassOrObject) {
                             val symbol = declaration.symbol as? KaClassSymbol
@@ -316,6 +333,10 @@ class KotlinFrontend(private val state: State) {
 
                         override fun visitNamedFunction(function: KtNamedFunction) {
                             val symbol = function.symbol as? KaNamedFunctionSymbol
+                            if (function.isTopLevel && (function.valueParameterList == null || symbol == null ||
+                                    symbol.valueParameters.any { it.returnType is KaErrorType })) {
+                                conflicts.incomplete(function)
+                            }
                             val caller = symbol?.let { method(it, function) }
                             if (caller == null) {
                                 state.diagnostic("K2_UNSUPPORTED_DECLARATION", "No unambiguous JVM light-method signature", loc(function))
@@ -408,6 +429,7 @@ class KotlinFrontend(private val state: State) {
                     })
                 }
             }
+            conflicts.finish()
         } finally {
             if (::methodLookup.isInitialized) methodLookup.close()
             Disposer.dispose(disposable)

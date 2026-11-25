@@ -19,7 +19,7 @@ def _name(value):
 def valid_declaration(value):
     return (type(value) is dict
             and set(value) == {"schema_version", "package", "name", "parameters", "return_type"}
-            and type(value["schema_version"]) is int and value["schema_version"] == 1
+            and type(value["schema_version"]) is int and value["schema_version"] in {1, 2}
             and isinstance(value["package"], str)
             and isinstance(value["name"], str) and bool(value["name"])
             and type(value["parameters"]) is list
@@ -100,7 +100,7 @@ def _complete_kotlin_namespace(context, realm):
 
 def _identity(symbol, node, context, realm):
     declaration = symbol.get("kotlin_declaration")
-    if not valid_declaration(declaration) or node is None:
+    if not valid_declaration(declaration) or declaration["schema_version"] != 2 or node is None:
         return None
     if not _name(declaration["name"]) or not all(_name(part) for part in declaration["package"].split(".")):
         return None

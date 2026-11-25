@@ -157,6 +157,14 @@ def _qualified_symbol(repo: str, value: dict) -> dict:
     return result
 
 
+def _qualified_compiler_symbol(repo: str, value: dict, compiler_repo: str | None) -> dict:
+    result = _qualified_symbol(repo, value)
+    if compiler_repo != repo:
+        result.pop('logical_key', None)
+        result.pop('kotlin_declaration', None)
+    return result
+
+
 def _qualified_evidence(repo: str, value: dict) -> dict:
     result = copy.deepcopy(value)
     result.update(repo_id=repo, id=qualified(repo, value['id']),
@@ -734,12 +742,8 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                           evidence_ids=tuple(qualified(identity, c) for c in e.evidence_ids),
                           source_file=source_key(identity, e.source_file) if e.source_file else None) for e in local.edges]
         realm_by_context = {context.get('id'): context.get('repo_id') for context in local.contexts}
-        for item in local.symbols:
-            symbol = _qualified_symbol(identity, item)
-            if realm_by_context.get(item['context_id']) != identity:
-                symbol.pop('logical_key', None)
-                symbol.pop('kotlin_declaration', None)
-            symbols.append(symbol)
+        symbols += [_qualified_compiler_symbol(identity, item, realm_by_context.get(item['context_id']))
+                    for item in local.symbols]
         call_sites += [_qualified_call_site(identity, item) for item in local.call_sites]
         cfgs += [_qualified_cfg(identity, item) for item in local.cfgs]
         annotations += [_qualified_annotation(identity, item) for item in local.analysis_annotations]

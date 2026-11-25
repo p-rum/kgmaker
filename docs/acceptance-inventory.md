@@ -158,6 +158,10 @@ klíče. Kontroly vyžadují úplný zachycený výběr Kotlin souborů a ověř
 strukturované členství deklarace i při shodném textovém označení dvou source setů.
 Přechod z předchozí inspekce na raw workspace po #145 i jeho opakované načtení
 ověřily oba workery s neměnným logickým klíčem.
+Doklad deklarace po kontrole kolizí zahrnuje i stejnojmenné zdrojové protějšky
+bez doložitelného JVM symbolu. Při neznámém vstupním typu protějšku se klíč
+zadrží pro stejné jméno a package. Kafka katalog při repo aliasu používá
+stejnou kvalifikaci jako snímek workspace.
 Podporované signatury, nejednoznačné deklarace, grafy v1–v3 a zbývající
 rozsah popisuje [záznam ověření](changes/166_addKotlinLogicalSymbolKeys.md).
 
