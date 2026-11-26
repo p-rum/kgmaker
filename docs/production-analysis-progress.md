@@ -12,26 +12,58 @@ Historické T052 runtime checkpointy níže se neobnovují jako vývojové workf
 Distribuované funkce a templates zůstávají zachované; T049-S01–S07 nedokončené.
 [Záznam kroku a kontroly](changes/169_removeRepositorySelfUse.md).
 
+## T056 — Funkce a toky dat v Excelu, 2026-11-25
+
+Dodání sleduje [PR #161](https://github.com/p-rum/kgmaker/pull/161). `behavior.md` zachycuje statické doklady zdrojů, vzorců a VBA
+operací, mezilistový tok a možné výstupy. Patnáctilistý syntetický sešit ověřuje
+tři cesty ke stejnému výsledku včetně vazby query tabulky, podmínky `IFERROR` a
+odděleného zobrazení listu. V provozním sešitu a v živé relaci Copilotu má stav
+NOT_RUN. [Zadání](tasks/56_extractExcelBehavior.md) · [Návod](excel-migration.md#funkce-a-tok-dat-v-sešitu) · [Doklady](changes/177_extractExcelBehavior.md).
+
+Review follow-up `a1cb9e0` doplňuje do T056-S02 regresní případy pro překryv adres
+query tabulky a vzorce bez uloženého `cell`, zachování definice přes známý
+nepřepisující intrinsic VBA a přepis návratové hodnoty po ukončené větvi. Tři
+cílené testy prošly; v celé migrační sadě je 19 PASS a 14 SKIP (13 vyžaduje worker,
+jeden instalovaný wheel). Viz [změna 178](changes/178_fixExcelBehaviorLineage.md). Produkční sešit,
+živý Copilot, Java worker/wheel a hostovaná CI v tomto follow-upu mají NOT_RUN.
+
 ## T055 — Copilot skill pro migraci Excelu, 2026-11-25
 
-Dodání MERGED v [PR #156](https://github.com/p-rum/kgmaker/pull/156). Ověřena instalace a upgrade skillu, lokální příprava a
-Jira CSV výstup na reálném Java 17 workeru. Syntetický XLSM se načetl
-staticky bez spuštění maker nebo IP spojení. Review zpřesnilo rozsah souhlasu s
-předáním dat a ochranu při souběžné výměně výstupu, 172 cílených PASS. Živý
-Copilot a Jira import mají stav NOT_RUN. Excel joby s Java 17 a instalovaným wheelem
-měly v CI 26 PASS na Linuxu i Windows. [Zadání](tasks/55_automateExcelMigration.md) · [Návod](excel-migration.md#jeden-pokyn-pro-copilot) · [Doklady](changes/172_automateExcelMigration.md) · [Oprava CI](changes/173_removeRepositorySelfCheck.md).
+Dodání MERGED v [#156](https://github.com/p-rum/kgmaker/pull/156) jako
+`3a6b97fc9c44941e68bb390772a5eb13906bf1ff`. Ověření instalace a upgrade
+skillu, lokální přípravy a Jira CSV zahrnuje skutečný Java 17 worker a
+172 cílených PASS po review. Syntetický XLSM se načetl staticky bez
+spuštění maker nebo IP spojení. Živý Copilot a import do Jira Cloud
+zůstávají NOT_RUN. Dřívější Excel joby se skutečným Java 17 workerem a
+wheelem měly po 26 PASS na Linuxu a Windows. Oprava repozitářového CI
+a ověření 84 testů cílových projektů po #157 jsou v samostatném
+[dokladu](changes/174_reconcileMergedDelivery.md#t055-s03-a-t055-ac03--ověření-cílové-instalace-po-157).
+[Zadání](tasks/55_automateExcelMigration.md) ·
+[Návod](excel-migration.md#jeden-pokyn-pro-copilot) ·
+[Doklady](changes/172_automateExcelMigration.md) · [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
 
 ## T054 — analýza Excelu a Kotlin/JVM plán, 2026-11-25
 
-Dodání MERGED v [PR #155](https://github.com/p-rum/kgmaker/pull/155). T054-S01–S02 ověřené pro popsané fixture se skutečným XLSM,
-BIFF8 XLS a XLSX. T054-S03–S04 částečně ověřené pomocí místního CSV a
-instalovaného Linux wheelu s JDK 17. Živý Jira Cloud import a Windows jsou
-NOT_RUN. Review původního `e7a44d7` odhalilo domýšlené vazby názvů a aliasů a rozdílné limity evidence. Opravený rozsah ověřila cílená sada 137 PASS s Linux wheel a Java 17. Reprezentovaný rozsah je statický a omezený podporovanými konstrukcemi.
-[Cílové zadání](tasks/54_addExcelMigration.md) · [Návod](excel-migration.md) · [Evidence](changes/171_addExcelMigration.md).
+Dodání MERGED v [#155](https://github.com/p-rum/kgmaker/pull/155)
+jako `782ac6ac0287550084e9afadbd6182756fdd2730`. T054-S01–S02 mají
+doložený statický rozsah se skutečnými XLSM, BIFF8 XLS a XLSX. Linux
+wheel s JDK 17 a 137 cílených PASS patří k revizi po opravě vazeb názvů,
+aliasů a limitů evidence. T054-S03–S04 zůstávají PARTIAL. Živý import do
+Jira Cloud je NOT_RUN. Po sloučení prošel povinný Excel worker i wheel na
+Windows v [přesném jobu #136](https://github.com/p-rum/kgmaker/actions/runs/45613808138/job/139203894219)
+s nezměněnými Excel vstupy; jde o ověření dané fixture a distribuce.
+[Cílové zadání](tasks/54_addExcelMigration.md) · [Návod](excel-migration.md) ·
+[Evidence implementace](changes/171_addExcelMigration.md) · [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
+
+Oprava čtení VML ověřuje vazbu tlačítka na VBA i s párovou značkou `<br></br>`.
+Normalizace probíhá v proudu VML a inventář dokládá SHA-256 původního XLSM.
+[Regrese a ověření](changes/176_readVmlLineBreaks.md).
 
 ## T053 — správa instalace v cílovém projektu, 2026-11-24
 
-Dodání MERGED v [#154](https://github.com/p-rum/kgmaker/pull/154), ověření VERIFIED_IN_SCOPE pro T053-S01–S04 / AC01–AC04:
+Dodání MERGED v [#154](https://github.com/p-rum/kgmaker/pull/154)
+jako `1e782a119e5ae54d22bfc8d7c22c565ed651815a`.
+Doložený rozsah T053-S01–S04 / AC01–AC04 je VERIFIED_IN_SCOPE.
 Původní samostatná PR větev: 129 PASS / 0 SKIP včetně instalovaného wheelu.
 Review našlo ztracené vlastnictví legacy ignore při opakovaném init; oprava má
 4 regresní RED → GREEN a 133 PASS / 0 SKIP na opravené PR větvi včetně wheelu,
@@ -40,9 +72,11 @@ Lokální integrační sada s připravenými T049-S08 fixture: 134 PASS / 0 SKIP
 nezměněné templates a `uninstall` odstraňuje integraci i `.kgmaker/`.
 Konflikty/dry-run/invalidní manifest a symlinky nezapisují; zachytitelná chyba
 publikace obnoví původní soubory. Cizí soubory a ignore pravidla zůstávají.
-Legacy rozpoznání má explicitní seznam otisků; Windows, reload hostitelů a crash
-atomicita nejsou ověřené. T049-S01–S07 tím nejsou uzavřené.
-[Kontrakty a příklady](project-installation.md), [záznam kroků](changes/170_manageProjectInstallation.md).
+Legacy rozpoznání má explicitní seznam otisků. Windows upgrade a uninstall,
+živý reload hostitelů a crash atomicita jsou stále neověřené. T049-S01–S07
+mají vlastní stav a ověření.
+[Kontrakty a příklady](project-installation.md) ·
+[Záznam kroků](changes/170_manageProjectInstallation.md) · [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
 
 ## T052 — první běh dokončení 2026-11-19
 
@@ -110,11 +144,13 @@ Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`,
 Pevné fáze, bez runneru/DAG/automatických trace vazeb. Fingerprint používá existující
 source_inventory s jeho výlukami; viz příručka. T049 a produkční acceptance nejsou uzavřené.
 
-Oprava zdrojové čerstvosti T051-S02 používané T052 je v [PR #151](https://github.com/p-rum/kgmaker/pull/151)
-`PR_OPEN / PARTIAL`. Po #136 prošlo 208 cílených testů bez přeskočení.
-Skutečné XLSX, šifrované XLSX a legacy XLS z fixture T054 ověřují shodu
-inventáře a indikátoru čerstvosti po změně bajtů.
-[Rozsah a důkazy](changes/167_useCanonicalPacketSourceSnapshot.md).
+Oprava zdrojové čerstvosti T051-S02 používané T052 je sloučena v [#151](https://github.com/p-rum/kgmaker/pull/151)
+jako `b04d064a6147436adc751f5fffa4a219b8f8c16e`. Po #136 prošlo
+208 cílených testů bez přeskočení. Skutečné XLSX, šifrované XLSX a legacy
+XLS z fixture T054 ověřují shodu inventáře a indikátoru čerstvosti po
+změně bajtů. Výsledek platí pro zdrojové otisky role packetu.
+[Rozsah a důkazy](changes/167_useCanonicalPacketSourceSnapshot.md) ·
+[Záznam sloučení](changes/174_reconcileMergedDelivery.md).
 
 
 ## Skilly v cílovém projektu T050 — 2026-11-15
@@ -222,8 +258,8 @@ Oprava čtení normalizovaného kontextu T032 je od 2026-11-21 v main přes [#13
 | [T003-S09-W03](tasks/T003-S09-03-templateDialectExpansion.md) | MERGED | PARTIAL | `2b0cf353c31f88c0c0226cf415585433843187f2` | [src/kgmaker/templates.py](../src/kgmaker/templates.py), [src/kgmaker/framework.py](../src/kgmaker/framework.py), [tests/test_templates.py](../tests/test_templates.py) | [# 38](https://github.com/p-rum/kgmaker/pull/38) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S09-W04](tasks/T003-S09-04-approvedMethodologyConflicts.md) | MERGED | PARTIAL | `aa9e64bbec0bfea4bf143824dcc3d8ddf5cd6533` | [src/kgmaker/availability.py](../src/kgmaker/availability.py), [src/kgmaker/feature.py](../src/kgmaker/feature.py), [src/kgmaker/analysis_report.py](../src/kgmaker/analysis_report.py), [tests/test_methodology_conflicts.py](../tests/test_methodology_conflicts.py) | [# 8](https://github.com/p-rum/kgmaker/pull/8) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S09-W05](tasks/T003-S09-05-completeAnalysisReport.md) | MERGED | VERIFIED_IN_SCOPE | `9c86d29fc267014e2bee4b197c7692f17a1cda93` (approved `edb5cff`) | [Report capability/CLI](complete-analysis-report.md), [actual fixture](../tests/test_complete_analysis_report_actual.py) | [PR112](https://github.com/p-rum/kgmaker/pull/112) | Independent overlapping facets, declared business/tool blockers, explicit delivery/acceptance/test links and pinned atomic publication. 73 integration PASS with actual Javac21/TS5.7.3/React; subsequent publication audit151 PASS / 2 DESELECTED + actual5 PASS / 0 SKIP; compiler BEFE artifact and SOURCE_ONLY template/PDF capability remain separate. Single-context feature selection, runtime/data UNKNOWN; [change131](changes/131_completeAnalysisReport.md). |
-| [T003-S10-W01](tasks/T003-S10-01-stageContentCache.md) | MERGED | PARTIAL | merge `7a89e2868791eb7a061572de7527172e3b1ceb6a` | [inspection](../src/kgmaker/inspection.py), [store](../src/kgmaker/store.py), [cache](../src/kgmaker/extraction_cache.py), [unit](../tests/test_stage_content_cache.py), [actual](../tests/test_stage_content_cache_actual.py) | [#114](https://github.com/p-rum/kgmaker/pull/114), [#119](https://github.com/p-rum/kgmaker/pull/119), [#127](https://github.com/p-rum/kgmaker/pull/127) | Historické dodání #114 a 102 PASS jsou v [change133](changes/133_stageContentCache.md). Regresi #116 reprodukuje základní revize. Dílčí oprava #119 má 97 PASS / 0 SKIP, používá živý výpočet evidence a je součástí [společné integrace](changes/142_integrateCompilerEvidenceRepairs.md). [Change164](changes/164_bindJavaLaunchInputs.md) na base `0dbe9a7` pokrývá locale a `ct.sym` na JDK 21/POSIX, včetně odmítnutí změny otisku bez přepsání grafu. W02/W06 mají vlastní acceptance. Výkonový HIT zůstává otevřený v #116. Předchozí řádek evidoval merge `7c6a3dda821b55a4de6718f09504de4a861f47ae`. Přesné ověření viz [výsledek integrace](changes/143_recordCompilerIntegrationMerge.md). |
-| [T003-S10-W02](tasks/T003-S10-02-reverseDependencyIndexes.md) | MERGED | PARTIAL | `0c834c8b2c06ca80d76f1aaf09f6f49b968e8aa3` | [store](../src/kgmaker/store.py), [provider](../src/kgmaker/graph_provider.py), [feature](../src/kgmaker/feature.py), [fixture](../tests/test_reverse_dependency_index.py) | [#130](https://github.com/p-rum/kgmaker/pull/130) | Čtecí report pro doložené callery, Flyway, OpenAPI a použité citace feature. LF↔CRLF může označit i tranzitivní callery cíle s přesným bajtovým lokátorem. Report vynechá raw JVM kontext s neplatným uloženým otiskem a zachová ostatní doložené vazby. Oprava nad `1569d5d` má 164 PASS / 0 SKIP se skutečným Javac/K1/K2, včetně W06 a T032. Přenos po #156 má 124 PASS / 0 SKIP na JDK 21 s Mavenem a 2 585 PASS v úplné sadě CPython 3.13. Oprava T045 odmítá smíšené volby CLI, má 44 nativních PASS bez přeskočení a 2 586 PASS v úplné sadě. AC01 zůstává PARTIAL. [Stav AC a hranice](acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy), [change145](changes/145_buildReverseDependencyIndexes.md). |
+| [T003-S10-W01](tasks/T003-S10-01-stageContentCache.md) | MERGED | PARTIAL | `ec95f1ee1c3400cf90e79c45950a4da339a4998a` | [inspection](../src/kgmaker/inspection.py), [store](../src/kgmaker/store.py), [cache](../src/kgmaker/extraction_cache.py), [unit](../tests/test_stage_content_cache.py), [actual](../tests/test_stage_content_cache_actual.py) | [#114](https://github.com/p-rum/kgmaker/pull/114), [#119](https://github.com/p-rum/kgmaker/pull/119), [#127](https://github.com/p-rum/kgmaker/pull/127) | Historické dodání #114 na `7a89e2868791eb7a061572de7527172e3b1ceb6a` a 102 PASS jsou v [change133](changes/133_stageContentCache.md). Regresi #116 reprodukuje základní revize. Dílčí oprava #119 má 97 PASS / 0 SKIP, používá živý výpočet evidence a je součástí [společné integrace](changes/142_integrateCompilerEvidenceRepairs.md). Dílčí oprava otisku a ochrany při změně launcheru je sloučena v [#149](https://github.com/p-rum/kgmaker/pull/149) jako `16f2ba8c4d109957edc295feea80db86da7093f1`. [Change164](changes/164_bindJavaLaunchInputs.md) pokrývá locale, `ct.sym` a odmítnutí změny vstupu se zachováním grafu na JDK 21/POSIX. W02/W06 mají vlastní acceptance. [#162](https://github.com/p-rum/kgmaker/pull/162) počítá otisk launcheru průběžně a ověřuje každý živý grafový stupeň jednou. Má 34 cílených PASS / 0 SKIP s Javacem, K1/K2 a TypeScriptem. Persistentní warm HIT zůstává otevřený v [#116](https://github.com/p-rum/kgmaker/issues/116). [Change178](changes/178_reduceLiveInspectionOverhead.md). Předchozí řádek evidoval merge `7c6a3dda821b55a4de6718f09504de4a861f47ae`. Přesné ověření viz [výsledek integrace](changes/143_recordCompilerIntegrationMerge.md). |
+| [T003-S10-W02](tasks/T003-S10-02-reverseDependencyIndexes.md) | MERGED | PARTIAL | merge `0c834c8b2c06ca80d76f1aaf09f6f49b968e8aa3` | [store](../src/kgmaker/store.py), [provider](../src/kgmaker/graph_provider.py), [feature](../src/kgmaker/feature.py), [fixture](../tests/test_reverse_dependency_index.py) | [#130](https://github.com/p-rum/kgmaker/pull/130) | Čtecí report pro doložené callery, Flyway, OpenAPI a použité citace feature. LF↔CRLF může označit i tranzitivní callery cíle s přesným bajtovým lokátorem. Report vynechá raw JVM kontext s neplatným uloženým otiskem a zachová ostatní doložené vazby. Oprava nad `1569d5d` má 164 PASS / 0 SKIP se skutečným Javac/K1/K2, včetně W06 a T032. Přenos po #156 má 124 PASS / 0 SKIP na JDK 21 s Mavenem a 2 585 PASS v úplné sadě CPython 3.13. Oprava T045 odmítá smíšené volby CLI, má 44 nativních PASS bez přeskočení a 2 586 PASS v úplné sadě. AC01 zůstává PARTIAL. Navazuje selektivní publikace do grafu a revizí. Plánovač po [#160](https://github.com/p-rum/kgmaker/pull/160) vyžaduje `VERIFIED_IN_SCOPE` pro zahájení W03. [Stav AC a hranice](acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy), [change145](changes/145_buildReverseDependencyIndexes.md) a [Sloučení a ověření](changes/174_reconcileMergedDelivery.md#t003-s10-w02-kroky-35-a-ac01ac04). |
 | [T003-S10-W03](tasks/T003-S10-03-negativeLookupInvalidation.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/store.py](../src/kgmaker/store.py), [src/kgmaker/scanner.py](../src/kgmaker/scanner.py), [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S10-W04](tasks/T003-S10-04-filesystemMutationEquivalence.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/scanner.py](../src/kgmaker/scanner.py), [src/kgmaker/semantic.py](../src/kgmaker/semantic.py), [src/kgmaker/store.py](../src/kgmaker/store.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S10-W05](tasks/T003-S10-05-selectiveFeatureRevise.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/feature.py](../src/kgmaker/feature.py), [src/kgmaker/analysis_validation.py](../src/kgmaker/analysis_validation.py), [src/kgmaker/store.py](../src/kgmaker/store.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
@@ -238,7 +274,7 @@ Oprava čtení normalizovaného kontextu T032 je od 2026-11-21 v main přes [#13
 | [T003-S11-W08](tasks/T003-S11-08-releaseDocumentation.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S12-W01](tasks/T003-S12-01-liveConfluenceConnector.md) | MERGED | PARTIAL | `7b9a9eaecaf41c9c5bc5a6d1233cd82e2cf4f1e9` | [src/kgmaker/confluence.py](../src/kgmaker/confluence.py), [src/kgmaker/confluence_sync.py](../src/kgmaker/confluence_sync.py), [tests/test_confluence_configuration.py](../tests/test_confluence_configuration.py) | [# 25](https://github.com/p-rum/kgmaker/pull/25) | Pouze offline konfigurace; live adapter DEFERRED, live acceptance NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S13-W01](tasks/T003-S13-01-runtimeTraceProducer.md) | MERGED | PARTIAL; JDK21/POSIX subset VERIFIED_IN_SCOPE | `d2507ef465c9b4844830520de68629a3b577c0d2`, `385943e48d2d2e60cec541f1f0db78beda83de22` | [tests/test_runtime_trace_producer.py](../tests/test_runtime_trace_producer.py), [JDK fixture](../tests/fixtures/runtime-trace/TraceApplication.java) | [PR101](https://github.com/p-rum/kgmaker/pull/101) MERGED · [#148](https://github.com/p-rum/kgmaker/pull/148) MERGED | Skutečný synchronní opt-in SDK capture call/factory/condition/map registration, strict v2, pre/postflight a POSIX cleanup. #148 dodalo veřejné předání deklarovaného SHA-256 z vybrané varianty BuildManifestu. Ověření W01 zůstává PARTIAL v rozsahu JDK21/POSIX. Okolní runtime prostředí, automatický Spring capture, Windows a dostupnost dat mají vlastní rozsah. Historický přenos PR102 zahrnul 88 runtime testů v sadě 205 PASS / 0 SKIP. [Ověření PR102](changes/120_namedQueryContainers.md) · [Kontrakt](runtime-trace.md) · [Change122](changes/122_runtimeTraceProducer.md) · [Change165](changes/165_forwardBuildConfiguration.md). |
-| [T003-S13-W02](tasks/T003-S13-02-runtimeRtaImport.md) | MERGED | PARTIAL | `5809e84932b1910bfc3f17c72e2a2005283389b1` | [import](../src/kgmaker/runtime_evidence.py), [navigace](../src/kgmaker/callgraph.py), [fixture](../tests/test_runtime_trace_producer.py) | [#136](https://github.com/p-rum/kgmaker/pull/136) | Import uchovává doklady podle compiler kontextu a variant služby. V2 `call` a `dispatch` vyžadují volatelné symboly. Při změně vstupních objektů Python API se uloží jen ověřená konfigurace a pozorování. Statické cesty a cykly používají compiler call sites. #147 ověřuje zdroje, worker a u v2 bytecode při publikaci. #148 předává deklarovaný otisk. Receiver/type dispatch, přesná vazba na call site a širší T003-AC13 zůstávají otevřené. [Ověření #136](changes/151_preserveRuntimeObservationEvidence.md) · [Ověření #147](changes/163_revalidateRuntimeImportPublication.md). |
+| [T003-S13-W02](tasks/T003-S13-02-runtimeRtaImport.md) | MERGED | PARTIAL | merge `5809e84932b1910bfc3f17c72e2a2005283389b1` | [import](../src/kgmaker/runtime_evidence.py), [navigace](../src/kgmaker/callgraph.py), [fixture](../tests/test_runtime_trace_producer.py) | [#136](https://github.com/p-rum/kgmaker/pull/136) | Import uchovává doklady podle compiler kontextu a variant služby. V2 `call` a `dispatch` vyžadují volatelné symboly. Při změně vstupních objektů Python API se uloží jen ověřená konfigurace a pozorování. Statické cesty a cykly používají compiler call sites. #147 ověřuje zdroje, worker a u v2 bytecode při publikaci. #148 předává deklarovaný otisk. Receiver/type dispatch, přesná vazba na call site a širší T003-AC13 zůstávají otevřené. [Ověření #136](changes/151_preserveRuntimeObservationEvidence.md) · [Ověření #147](changes/163_revalidateRuntimeImportPublication.md) · [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md). |
 | [T003-S13-W03](tasks/T003-S13-03-runtimeValueFlow.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/runtime_evidence.py](../src/kgmaker/runtime_evidence.py), [src/kgmaker/availability.py](../src/kgmaker/availability.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S13-W04](tasks/T003-S13-04-runtimeAsyncReflection.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/runtime_evidence.py](../src/kgmaker/runtime_evidence.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T005](tasks/T-005_add-view-model.md) | MERGED | PARTIAL | `c0a10261c2ff1f83291125ec838bbaeea8723532` | [src/kgmaker/architecture_model.py](../src/kgmaker/architecture_model.py), [tests/test_t005_add_view_model.py](../tests/test_t005_add_view_model.py) | [#11](https://github.com/p-rum/kgmaker/pull/11) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
@@ -288,7 +324,7 @@ Oprava čtení normalizovaného kontextu T032 je od 2026-11-21 v main přes [#13
 | [T046-S05](tasks/46_addTemplatesTestsAndTraceability.md) | MERGED | VERIFIED_IN_SCOPE | head `bdedb6cc0e4f48a4e19357458a375fe3e04a72d9`; merge `6dffe5e39fb847e5552f38e67b957e4b51b20bed` | [src/kgmaker/workflow.py](../src/kgmaker/workflow.py), [tests/test_delivery.py](../tests/test_delivery.py) | [#45](https://github.com/p-rum/kgmaker/pull/45) | Exact-pair review po opravě statusů schválilo default-off approval gates. Cíleně 114 passed + 49 subtests; full 1633 passed, 1055 skipped + 71 subtests. [Záznam](changes/60_enforceOptionalLocalApprovals.md). |
 | [T046-S06](tasks/46_addTemplatesTestsAndTraceability.md) | MERGED | VERIFIED_IN_SCOPE | head `65e6a3bbe7246ef7d3caac4d0f956cd6d3f81de5`; merge `9bcf91db1d1349241f7e1f7114f74c0331c25802` | [src/kgmaker/delivery_cli.py](../src/kgmaker/delivery_cli.py), [src/kgmaker/delivery_instructions.py](../src/kgmaker/delivery_instructions.py), [tests/test_delivery.py](../tests/test_delivery.py) | [#40](https://github.com/p-rum/kgmaker/pull/40) | Exact-pair review schválilo CLI/instrukce/CAS integraci. Cíleně 309 passed, 10 skipped + 67 subtests; full 1635 passed, 1055 skipped + 76 subtests. [Záznam](changes/61_integrateDeliveryWorkflow.md); [post-merge srovnání](changes/113_reconcileT046DeliverySummary.md). |
 | [T047-S01](tasks/47_addReliableIncrementalContext.md) | MERGED | PARTIAL | `b3bbba43304f499f96950ea4ecc2a2467919e616` | [Oracle](../fixtures/incremental-integrity/oracle.json), [test](../tests/test_incremental_equivalence.py), [historie běhů](changes/137_prepareIncrementalMutationOracle.md) | [#121](https://github.com/p-rum/kgmaker/pull/121) | SOURCE_ONLY mezistavy, oddělené deklarace se stejným FQN a shodný graf po přesunu workspace, cold Kotlin změna těla, add, změna signatury a odstranění přesunutého cíle s nezměněným callerem, deklarativní Kafka match a Kotlin–TS flow s hash/release provenance. Cold JVM varianta pokrývá kladné `supplies_classpath` a dvě negativní změny. Inkrementální refresh a zbývající scénáře §7 jsou otevřené. Merge splňuje závislost dodání pro S02. [Doklad integrace](changes/161_recordMutationCorpusMerge.md). |
-| [T047-S02](tasks/47_addReliableIncrementalContext.md) | IN_PROGRESS | PARTIAL | přenos nad `61cd97d90d7a342396da79e7c3c7401c3df2560e` | [Identity](../src/kgmaker/symbol_identity.py), [test](../tests/test_symbol_identity.py), [Change166](changes/166_addKotlinLogicalSymbolKeys.md) | [#150](https://github.com/p-rum/kgmaker/pull/150) | K1 a K2 dokládají identitu pojmenovaných funkcí Kotlinu v úplném source setu a kontrolují i kolize s protějšky bez JVM symbolu. Oprava zadrží klíče při opomenutí vybraného Kotlin souboru i v offline grafu a zahřáté workspace cache. Přenos po #160 má 57 cílených PASS bez přeskočení. Otevřené zůstávají další signatury, TS, Windows a explicitní legacy reindex. |
+| [T047-S02](tasks/47_addReliableIncrementalContext.md) | MERGED | PARTIAL | `9f07bf742a85204760b61bbaf1ae4c360437ead9` | [Identity](../src/kgmaker/symbol_identity.py), [test](../tests/test_symbol_identity.py), [Change166](changes/166_addKotlinLogicalSymbolKeys.md) | [#150](https://github.com/p-rum/kgmaker/pull/150) | K1 a K2 dokládají identitu pojmenovaných funkcí Kotlinu v úplném source setu a kontrolují i kolize s protějšky bez JVM symbolu. Oprava zadrží klíče při opomenutí vybraného Kotlin souboru i v offline grafu a zahřáté workspace cache. Přenos po #160 má 57 cílených PASS bez přeskočení. Na sloučené revizi prošlo 29 testů s připnutými K1 a K2. Otevřené zůstávají další signatury, TS, Windows a explicitní legacy reindex. [Sloučení a ověření](changes/174_reconcileMergedDelivery.md#t047-s02-t047-r02-a-t047-ac02). |
 | [T047-S03](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/model.py](../src/kgmaker/model.py), [src/kgmaker/store.py](../src/kgmaker/store.py) | — | Upstream owner: T003-S10-W02; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S04](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [src/kgmaker/inspection.py](../src/kgmaker/inspection.py) | — | Upstream owner: T003-S10-W03; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S05](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/store.py](../src/kgmaker/store.py), [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py) | — | Upstream owner: T003-S10-W06; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
@@ -1157,6 +1193,16 @@ review/ready/merge separate. [Capability](kafka-interfaces.md), [change81](chang
 Oprava #145 ověřuje shodu T012 a T019 na skutečných Javac zdrojích s LF a CRLF.
 Katalog porovnává bajtový otisk s kvalifikovaným workspace inventářem.
 [Doklad a hranice opravy](changes/160_bindJvmSourceBytes.md).
+
+Oprava nad `5d067f1` ověřuje běžný workspace File proti skeneru a
+kompilovaný File proti explicitnímu modelu téhož vybraného source setu.
+K1 reprodukce zachovává dvě oddělené skupiny se `VERIFIED_STATIC`.
+V Cloud Environment prošlo 242 cílených testů bez přeskočení.
+Přenos na `ec95f1e` po #162 ověřil 76 případů bez přeskočení, včetně
+odmítnutí změny LF na CRLF při čtení uzlu a živé inspekce W01.
+Celkové ověření T012 zůstává PARTIAL.
+[Change179](changes/179_validateKafkaProjectModelFiles.md).
+
 ## T011 — typed HTTP consumer catalogue
 
 Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,

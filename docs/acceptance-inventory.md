@@ -10,6 +10,17 @@
 [Přesné kontroly a omezení](changes/169_removeRepositorySelfUse.md).
 Historické self-use kroky níže jsou doklady svých revizí, nikoli pokyny k obnově.
 
+## T056 — Funkce a toky dat v Excelu, 2026-11-25
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T056-AC01 | VERIFIED_IN_SCOPE | Syntetický 15listý OOXML sešit, tři zdroje a deklarovaná query tabulka na cestě do výstupu; VBA HTTP a výpočet na vstupu s doloženými řádky. |
+| T056-AC02 | VERIFIED_IN_SCOPE | Kontext `IFERROR`, alternativní definice VBA, oddělené pozorování a statická inference, odkaz na původní buňku nebo řádek. Regrese překryvu rozsahu bez `cell`, zachování definice přes `Format` a přepisu po `End If`; [změna 178](changes/178_fixExcelBehaviorLineage.md). |
+| T056-AC03 | VERIFIED_IN_SCOPE | Report CLI a příprava, redakce výchozího reportu a packetu, kompatibilní inventář a exporty. Živý Copilot a produkční sešit mají stav NOT_RUN. |
+
+[Doklady](changes/177_extractExcelBehavior.md).
+
+
 ## T055 — Copilot skill pro migraci Excelu, 2026-11-25
 
 | Kritérium | Ověření | Důkaz |
@@ -18,19 +29,25 @@ Historické self-use kroky níže jsou doklady svých revizí, nikoli pokyny k o
 | T055-AC02 | VERIFIED_IN_SCOPE | Export Markdown a Jira CSV s vlastním polem, mapování, ochrana před nevalidním kandidátem, změnou sešitu, přepsáním výstupu a výměnou cesty při úklidu. |
 | T055-AC03 | VERIFIED_IN_SCOPE | Instalace a upgrade v dočasných cílových projektech, shoda s distribuovanou šablonou a pravidla předání dat. Excel CI se skutečným Java 17 workerem a wheelem, 26 PASS na Linuxu i Windows. Trasování 0 IP spojení, makra se nespustila. Živý Copilot NOT_RUN. [Oprava CI](changes/173_removeRepositorySelfCheck.md). |
 
-[Doklady po krocích](changes/172_automateExcelMigration.md).
+Dodání MERGED v [#156](https://github.com/p-rum/kgmaker/pull/156) jako
+`3a6b97fc9c44941e68bb390772a5eb13906bf1ff`. Živý Copilot a import do Jira
+Cloud zůstávají NOT_RUN.
+[Doklady po krocích](changes/172_automateExcelMigration.md) · [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
 
 ## T054 — Excel, Kotlin/JVM a Jira Cloud, 2026-11-25
 
 | Kritérium | Ověření | Důkaz |
 |---|---|---|
-| T054-AC01 | VERIFIED_IN_SCOPE | Skutečné XLSM, BIFF8 XLS a XLSX, makro přes dva sešity a reference z formulí i přímého VBA. Regrese review pokrývají rozsah Run, lexikální jména, Range alias a názvy listů v Unicode. |
-| T054-AC02 | VERIFIED_IN_SCOPE | Chybové vstupy, zachování souborů a trasování procesů a IP spojení. |
+| T054-AC01 | VERIFIED_IN_SCOPE | Skutečné XLSM, BIFF8 XLS a XLSX, makro přes dva sešity a reference z formulí i přímého VBA. Regrese review pokrývají rozsah Run, lexikální jména, Range alias a názvy listů v Unicode. [Vazba VML tlačítka s `<br></br>` a `<br/>`](changes/176_readVmlLineBreaks.md). |
+| T054-AC02 | VERIFIED_IN_SCOPE | Chybové vstupy, zachování souborů a trasování procesů a IP spojení. [Původní bajty a SHA-256 při čtení VML](changes/176_readVmlLineBreaks.md). |
 | T054-AC03 | VERIFIED_IN_SCOPE | Kandidát plánu, citace, pokrytí, závislosti, invalidace po změně vstupu a opětovné načtení vazby s více než tisícem důkazů. |
 | T054-AC04 | PARTIAL | Ověřené Jira CSV, vlastní pole a reference. Živý import NOT_RUN. |
-| T054-AC05 | PARTIAL | Linux wheel s JDK 17, 137 cílených PASS a plná sada s evidovanými SKIP. Windows NOT_RUN. |
+| T054-AC05 | PARTIAL | Linux wheel s JDK 17, 137 cílených PASS a plná sada s evidovanými SKIP. Následně prošel i [povinný Windows Excel worker a wheel](https://github.com/p-rum/kgmaker/actions/runs/45613808138/job/139203894219) na headu #136 s nezměněnými Excel vstupy. Výsledek platí pro testovaný rozsah. |
 
-[Postup a kontroly po krocích](changes/171_addExcelMigration.md).
+Dodání MERGED v [#155](https://github.com/p-rum/kgmaker/pull/155) jako
+`782ac6ac0287550084e9afadbd6182756fdd2730`.
+[Postup a kontroly po krocích](changes/171_addExcelMigration.md) ·
+[Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
 
 
 ## T053 — upgrade a uninstall, 2026-11-24
@@ -40,10 +57,12 @@ Historické self-use kroky níže jsou doklady svých revizí, nikoli pokyny k o
 | T053-AC01 | VERIFIED_IN_SCOPE | Manifest skutečně instalovaných souborů, zachování cizího obsahu, idempotentní init a template páry |
 | T053-AC02 | VERIFIED_IN_SCOPE | Simulovaná změna distribuce ve všech kategoriích, nové/chybějící/retired výstupy, legacy otisky, zachování grafu a poznámek |
 | T053-AC03 | VERIFIED_IN_SCOPE | Odstranění integrace a dat, opakovaný uninstall, přesné zachování cizích souborů a ignore bajtů; po review opravené převzetí legacy ignore při init (4 RED → GREEN) |
-| T053-AC04 | VERIFIED_IN_SCOPE | Dry-run a konflikty, vadný manifest, symlinky, rollback při I/O chybě, CLI s odděleným cwd/root; Windows a crash scénáře NOT_RUN |
+| T053-AC04 | VERIFIED_IN_SCOPE | Dry-run a konflikty, vadný manifest, symlinky, rollback při I/O chybě, CLI s odděleným cwd/root. Windows upgrade a uninstall, živý reload hostitelů a crash scénáře NOT_RUN |
 
 Opravená PR větev po review: 133 PASS / 0 SKIP včetně wheelu; [příkazy a distribuce](changes/170_manageProjectInstallation.md).
-Dodání MERGED v [#154](https://github.com/p-rum/kgmaker/pull/154); SPECIFICATION T053 není označení dodání.
+Dodání MERGED v [#154](https://github.com/p-rum/kgmaker/pull/154) jako
+`1e782a119e5ae54d22bfc8d7c22c565ed651815a`. [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
+SPECIFICATION T053 není označení dodání.
 
 ## T046-S03/S04 — schéma dalších hodnot, 2026-11-20
 
@@ -79,18 +98,33 @@ adresáři workeru.
 Regrese s cyklickým odkazem ověřuje `STALE` po Javac analýze i rollback
 po nahrazení obsahově odlišného pohledu.
 AC02 zachovává graph v1/v2/v3 a interní envelope v1. AC04 vymezuje přesný
-rozsah v [change164](changes/164_bindJavaLaunchInputs.md). W01/AC01 zůstává
+rozsah v [change164](changes/164_bindJavaLaunchInputs.md). Oprava byla sloučena v [#149](https://github.com/p-rum/kgmaker/pull/149)
+jako `16f2ba8c4d109957edc295feea80db86da7093f1`. W01/AC01 zůstává
 PARTIAL a persistentní warm HIT je otevřený.
+
+Dílčí oprava živé inspekce z [#162](https://github.com/p-rum/kgmaker/pull/162)
+je MERGED jako `ec95f1ee1c3400cf90e79c45950a4da339a4998a`. Zachovává
+otisk při průběžném čtení launcheru a jednou validuje každý živý grafový
+stupeň. Testy s Javacem, K1, K2 a TypeScriptem počítají i skutečné worker
+operace. Negativní kontroly pokrývají nevhodný živý výstup a závody při
+publikaci. W01-AC01 zůstává `PARTIAL` a persistentní warm HIT sleduje
+[#116](https://github.com/p-rum/kgmaker/issues/116).
+[Přesná evidence a hranice](changes/178_reduceLiveInspectionOverhead.md) ·
+[Sloučení a ověření](changes/174_reconcileMergedDelivery.md#t003-s10-w01-a-ac01ac04).
 
 ## T003-S10-W02 — reverse dependency indexy
 
-Čtecí rozsah má stav `MERGED` po [#130](https://github.com/p-rum/kgmaker/pull/130)
-v commitu `0c834c8b2c06ca80d76f1aaf09f6f49b968e8aa3`. W02-AC01 je `PARTIAL`.
-Na sloučeném produktu prošlo 44 cílených testů bez přeskočení na JDK 21
-a v úplné sadě CPython 3.13 2 586 PASS, 1 345 SKIP a 1 očekávaný strict XFAIL.
-[Povinně ověřená závislost W03](changes/175_requireVerifiedDependencies.md)
-vyžaduje doložit selektivní zápis W02-AC01.
-Předchozí běhy a omezení Excel workeru jsou zachovány v change145.
+Čtecí report z [#130](https://github.com/p-rum/kgmaker/pull/130) je MERGED
+v `main` jako `0c834c8b2c06ca80d76f1aaf09f6f49b968e8aa3`. Po opravě
+nálezu T045 prošlo 44 cílených testů bez přeskočení na JDK 21. Úplná
+sada CPython 3.13 má 2 586 PASS, 1 345 SKIP a 1 očekávaný strict XFAIL.
+W02-AC01 zůstává PARTIAL. Po čtecím reportu následuje selektivní
+publikace do grafu a revizí. Plánovač řadí W03 mezi kandidáty až po
+doložení W02-AC01 ve stavu `VERIFIED_IN_SCOPE`.
+GitHub Actions jsou pro schválený head neověřené. Předchozí běhy a
+omezení Excel workeru jsou zachovány v change145.
+[Sloučení a ověření](changes/174_reconcileMergedDelivery.md#t003-s10-w02-kroky-35-a-ac01ac04) ·
+[Povinně ověřená závislost W03](changes/175_requireVerifiedDependencies.md).
 [Zadání](tasks/T003-S10-02-reverseDependencyIndexes.md),
 [režim CLI a JSON](stage-content-cache.md#selektivní-dopad-změn) a
 [kontroly](changes/145_buildReverseDependencyIndexes.md).
@@ -154,8 +188,11 @@ Ověření W01 zůstává `PARTIAL`. [#148](https://github.com/p-rum/kgmaker/pul
 
 [Zadání](tasks/T003-S13-02-runtimeRtaImport.md) a
 [záznam opravy](changes/151_preserveRuntimeObservationEvidence.md).
-Dodání sleduje [#136](https://github.com/p-rum/kgmaker/pull/136). Lokální
-přenos na `main` `34591e2` ověřilo 137 cílených testů bez přeskočení. Na
+Dodání MERGED v [#136](https://github.com/p-rum/kgmaker/pull/136) jako
+`5809e84932b1910bfc3f17c72e2a2005283389b1`; ověření W02 zůstává PARTIAL.
+Po sloučení prošlo 104 cílených testů bez přeskočení se skutečným JDK 21
+a Mavenem. [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
+Dřívější přenos na `main` `34591e2` ověřilo 137 cílených testů bez přeskočení. Na
 `31271aa` nad základem `1569d5d` prošlo dalších 88 cílených testů bez
 přeskočení se skutečným Mavenem 3.9.9 a JDK/Javac 21. Úplná sada v tomto
 ověření nebyla spuštěna. Po spojení s `edb65e5` ověřuje nová regrese také
@@ -251,7 +288,9 @@ signatury bez publikace grafu. Otevřené zůstávají inkrementální přepoče
 body-dependent důkazů, scénáře Windows a úplná matice §7.
 [Ověření a omezení](changes/137_prepareIncrementalMutationOracle.md).
 
-T047-S02 / T047-R02 a T047-AC02 — IN_PROGRESS / PARTIAL.
+T047-S02 / T047-R02 a T047-AC02 — `MERGED / PARTIAL` po
+[#150](https://github.com/p-rum/kgmaker/pull/150) jako
+`9f07bf742a85204760b61bbaf1ae4c360437ead9`.
 Skutečné K1 a K2 dokládají logické klíče přetížení `score(Int)` a
 `score(String)` s neměnným klíčem a novým ID výskytu po komentáři. Výslovně
 vybrané produkční a testovací source sety a různé repozitáře mají vlastní
@@ -275,9 +314,12 @@ chybí důkaz úplnosti source setu. Přímá inspekce, offline čtení a opakov
 načtení workspace v takovém případě zadrží volitelný klíč. Ostatní platné
 compiler údaje a klíče v jiném repozitáři nebo source setu zůstávají dostupné.
 Po přenosu na `61cd97d9` prošlo 57 cílených testů se skutečnými K1, K2
-a Javac bez přeskočení.
+a Javacem bez přeskočení. Po sloučení prošlo 29 testů s připnutými K1 a K2
+bez přeskočení. Další signatury, TypeScript, Windows a explicitní legacy
+reindex zůstávají nedoložené.
 Podporované signatury, nejednoznačné deklarace, grafy v1–v3 a zbývající
-rozsah popisuje [záznam ověření](changes/166_addKotlinLogicalSymbolKeys.md).
+rozsah popisuje [záznam ověření](changes/166_addKotlinLogicalSymbolKeys.md) ·
+[Sloučení a ověření](changes/174_reconcileMergedDelivery.md#t047-s02-t047-r02-a-t047-ac02).
 
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
 původní SHA a výsledky. Již proběhlý merge není čekající gate: T020 PR87,
@@ -1266,6 +1308,14 @@ T012-AC01/02/04/05 and T019-AC01/03 use actual Javac LF and CRLF catalogues
 from the same source text. Both groups and broker realms survive in the API
 and CLI. A workspace inventory with a substituted normalized digest fails
 closed. [Exact regression and evidence](changes/160_bindJvmSourceBytes.md).
+
+T012-AC04 a AC05 mají nový případ Kafka katalogu se skutečným K1, stejným
+repo ID a výslovným modelem produkčního source setu. Katalog zachová oba
+statické consumery a odmítne chybějící, duplicitní nebo změněný veřejný
+File i pozměněnou soukromou klasifikaci. Vstup a uložené soubory zůstaly
+shodné po čtení. Opakovaná kontrola čerstvých bajtů odmítá i změnu pouze
+konců řádků mezi ověřením snímku a čtením uzlu. AC06 a meze jsou v
+[Change179](changes/179_validateKafkaProjectModelFiles.md).
 
 
 ## T013 — explicit versioned contract attachments (verified bounded scope)

@@ -211,3 +211,34 @@ Kontroly na sloučeném stromu, Python 3.12 a pytest 8.3.4 v `/tmp`:
   a nezávislé review nového merge. Historické CI logy opět vracejí HTTP 404;
   nové běhy pro předchozí head při kontrole probíhaly. Jejich výsledek není PASS.
   Aktuální merge vyžaduje nové review a ověření CI; starší APPROVE se nepřenáší.
+
+## Čtvrtá integrace main — T049-S08 / AC13–AC14, T050-R04
+
+Výchozí head `51aa32c3053405ef5b1dc618ff98d355609a885a`, společná base
+`5d067f152522442fa4cff22c2e69e1b9b6fcef86`, integrovaný main
+`5ff2c0846056353605ccb9ab271bd86847c6e661`. Cílem je vyřešit konflikty
+bez návratu self-use a zachovat nově sloučené změny Excelu, cache a evidence.
+
+Konflikty v `docs/acceptance-inventory.md` a
+`docs/production-analysis-progress.md` zachovávají sekce T049-S08 i T056
+a zpřesněné doklady T053 a T003-S13-W02 z main. Tři vlastní grafy
+`.kgmaker/GRAPH.md`, `.kgmaker/GRAPH.mmd` a `.kgmaker/semantic.json` zůstaly
+odstraněné. Ostatní soubory včetně `README.md`, registru, produktových
+templates, workeru, testů a návodů jsou sloučené z obou větví bez další
+úpravy. Integrace nemění veřejné API ani příklady; např. test instalace
+skillů nadále vytváří oddělený cílový projekt.
+
+- **PASS:** `PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-merge-20261126/bin/python -m pytest -q -p no:cacheprovider --tb=short -ra --basetemp /tmp/kgmaker-merge-20261126-self tests/test_init.py tests/test_skills.py tests/test_workflow_profiles.py tests/test_completion.py tests/test_completion_handoff.py tests/test_scanner.py tests/test_installation.py` — 177 PASS.
+- **PARTIAL:** `JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64 PATH=/usr/lib/jvm/temurin-21-jdk-amd64/bin:$PATH PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-merge-20261126/bin/python -m pytest -q -p no:cacheprovider --tb=short -ra --basetemp /tmp/kgmaker-merge-20261126-main tests/test_excel_migration.py tests/test_stage_content_cache.py tests/test_stage_content_cache_actual.py tests/test_t012_catalog_kafka_interfaces.py` — 82 PASS / 132 SKIP; chybí workery, Spring fixture a explicitní wheel smoke.
+- **FAIL / blocked:** `mvn -o -B -ntp -C -f workers/excel/pom.xml package`
+  nemohl offline načíst Maven resources plugin 3.5.0, který není v cache;
+  Excel worker nebyl ověřen.
+- **PASS:** `git diff --cached --check`, načtení 101 profilů pomocí `tomllib`,
+  inventář sledovaných self-use cest a kontrola absence `kgmaker check` v CI.
+- **CI:** historický [push běh](https://github.com/p-rum/kgmaker/actions/runs/45616987337)
+  na `d52b32a` selhal při stahování Maven pluginu kvůli HTTP 429; pozdější
+  [PR běh](https://github.com/p-rum/kgmaker/actions/runs/45616997950) pro
+  tento starší head skončil success. Běh pro `51aa32c` byl action_required
+  bez jobů; nový merge není tímto výsledkem ověřen.
+- **NOT_RUN:** úplná sada, Windows, živí hostitelé a nezávislé review nového
+  merge. Předchozí review se na nový head nepřenáší.

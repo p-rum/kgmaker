@@ -1572,6 +1572,8 @@ for context/proof guards, atomic output and exact bounded native verification.
 
 Explicitní JVM/TS inspekce vrací `cache.stages` s důvodem BYPASS.
 Každá fáze používá aktuální výpočet a znovu ověří zdroj/worker před publikací.
+Grafová fáze vrací svůj validovaný objekt a otisk launcheru čte soubory
+průběžně při každé kontrole.
 Otisk spuštění Java zahrnuje `lib/ct.sym`, který Javac používá pro starší
 `--java-release`, a na POSIX přesné hodnoty `LANG`, `LC_ALL` a `LC_CTYPE`.
 Při výběru přes `bin/java` jako symbolický odkaz vychází otisk z cílové
@@ -1591,7 +1593,8 @@ there is no store. A Confluence-enabled scan keeps the report and validation ind
 in the graph publication rollback scope.
 [Detaily, příklady a hranice souběhu](stage-content-cache.md),
 [ověření #116](changes/135_bindCachedCompilerEvidence.md),
-[regrese locale a platformních symbolů](changes/164_bindJavaLaunchInputs.md).
+[regrese locale a platformních symbolů](changes/164_bindJavaLaunchInputs.md),
+[ověření nákladů živé inspekce](changes/178_reduceLiveInspectionOverhead.md).
 
 Runtime import ověří obálku před publikací. Pod zámkem store hlídá
 očekávanou generaci a import před každým nahrazením výstupu znovu kontroluje

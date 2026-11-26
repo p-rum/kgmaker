@@ -68,9 +68,11 @@ Restart Copilot CLI after installing the hook. Each new session refreshes the gr
 
 ## Excel migration
 
-`kgmaker excel` analyzes explicitly listed XLSM, BIFF8 XLS and XLSX workbooks with a separate Java 17+ worker. Use the output with Copilot to draft and validate a Kotlin/JVM migration plan, then export Markdown, JSON or Jira Cloud CSV with a project-specific `jira-task` template. See [Excel migration and Jira import](docs/excel-migration.md).
+`kgmaker excel` analyzes explicitly listed XLSM, BIFF8 XLS and XLSX workbooks with a separate Java 17+ worker. It reads VML controls with paired line breaks directly from the original workbook. Use the output with Copilot to draft and validate a Kotlin/JVM migration plan, then export Markdown, JSON or Jira Cloud CSV with a project-specific `jira-task` template. See [Excel migration and Jira import](docs/excel-migration.md).
 
 Ask Copilot `Use $kgmaker-excel-migration to prepare the Kotlin plan and Jira CSV for Fakturace.xlsm with Sazby.xlsx as a dependency.` The skill prepares the inputs, writes and validates the plan, and produces both exports. It uses static analysis only and forbids macro execution.
+
+`kgmaker excel migrate prepare` also writes `behavior.md` with data sources, calculations, entry points and available paths to displayed results. Use `kgmaker excel behavior --inventory <dir>/inventory.json --sheet <name>` for a focused view of a sheet and its upstream paths.
 
 ## Commands
 
@@ -1039,6 +1041,9 @@ listener/send declarations and declared bindings into the shared interfaces view
 Broker realms and consumer groups remain distinct; configuration-only and regex
 subscriptions retain their unresolved boundaries. Explicit workspace/private
 compiler indexes are required; the projection performs no inspection or transport.
+For raw JVM captures with an explicit build model, the catalogue checks the
+captured and current scanner versions of the same source file. It preserves
+the selected scope and exact source evidence. [Kafka catalogue contract](docs/kafka-interfaces.md).
 
 ### Explicit interface contracts (T013; merged PR74)
 
@@ -1323,6 +1328,8 @@ and [change128](docs/changes/128_unifiedFlowViews.md).
 Při opakované explicitní JVM/TS inspekci worker i projekce vypočítají aktuální
 compiler evidence znovu. JSON hlásí `cache.stages`
 se stavem BYPASS. Offline scan/hook/feature zachovávají stávající chování.
+Otisk launcheru a platformních souborů se počítá průběžným čtením.
+Každá grafová fáze předá výsledek své živé validace přímo dalšímu kroku.
 Java launcher váže také `lib/ct.sym` a na POSIX přesné locale vstupy
 `LANG`, `LC_ALL`, `LC_CTYPE`. Změna zaznamenaného vstupu během inspekce
 vrátí `STALE` a zachová poslední uložený graf.
@@ -1335,7 +1342,8 @@ A failed graph replacement restores both outputs. A runtime import with an
 explicit graph object requires it to match the stored generation, when present.
 Retry the original command after the other writer finishes.
 [Příkazy a omezení](docs/stage-content-cache.md),
-[ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md).
+[ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md),
+[ověření nákladů živé inspekce](docs/changes/178_reduceLiveInspectionOverhead.md).
 
 ### Selektivní dopad změněných souborů (T003-S10-W02)
 

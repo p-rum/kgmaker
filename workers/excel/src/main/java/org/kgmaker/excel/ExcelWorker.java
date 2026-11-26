@@ -5,20 +5,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.hssf.OldExcelFormatException;
 import org.apache.poi.hssf.record.Record;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.openxml4j.opc.TargetMode;
+import org.apache.poi.openxml4j.opc.ZipPackagePart;
+import org.apache.poi.openxml4j.util.ZipFileZipEntrySource;
+import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.util.XMLHelper;
 import org.w3c.dom.Element;
 import org.apache.poi.poifs.filesystem.DirectoryNode;
@@ -35,8 +47,10 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.model.ExternalLinksTable;
 import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -46,13 +60,23 @@ public final class ExcelWorker {
         "http://schemas.microsoft.com/office/2006/relationships/vbaProject";
     private static final int MAX_CELLS = 100_000;
     private static final int MAX_VBA = 4 * 1024 * 1024;
+    private static final int MAX_XML_PART = 8 * 1024 * 1024;
+    private static final String PAIRED_BREAK = "<br></br>";
+    private static final Pattern VML_BREAK_MARKUP = Pattern.compile(
+        "<!--.*?(?:-->|\\z)|<!\\[CDATA\\[.*?(?:\\]\\]>|\\z)|<\\?.*?(?:\\?>|\\z)|" + PAIRED_BREAK,
+        Pattern.DOTALL);
+    private static final String CONNECTION_REL =
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/connections";
+    private static final String QUERY_TABLE_REL =
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/queryTable";
+    private static final String SPREADSHEET = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
 
     private ExcelWorker() {}
 
     public static void main(String[] args) throws IOException {
         ObjectNode response = JSON.createObjectNode();
         response.put("protocol_version", 1);
-        response.put("worker", "excel-poi-6.0.0-2");
+        response.put("worker", "excel-poi-6.0.0-3");
         response.putArray("capabilities").add("biff8").add("ooxml").add("vba");
         response.put("status", "OK");
         ArrayNode problems = response.putArray("diagnostics");
@@ -89,6 +113,51 @@ public final class ExcelWorker {
         if (cell != null) value.put("cell", cell);
     }
 
+    private static final class VmlZipEntries extends ZipFileZipEntrySource {
+        private final Set<ZipArchiveEntry> drawings = new HashSet<>();
+
+        VmlZipEntries(ZipSecureFile archive) {
+            super(archive);
+        }
+
+        @Override
+        public InputStream getInputStream(ZipArchiveEntry entry) throws IOException {
+            InputStream input = super.getInputStream(entry);
+            if (!drawings.contains(entry)) return input;
+            try (input) {
+                byte[] bytes = input.readNBytes(MAX_XML_PART + 1);
+                if (bytes.length > MAX_XML_PART) throw new IOException("VML drawing exceeds 8 MiB");
+                // POI replaces literal <br> with <br/> before parsing VML, which leaves a
+                // stray </br> for the valid paired form. ISO-8859-1 preserves the source bytes.
+                String markup = new String(bytes, StandardCharsets.ISO_8859_1);
+                if (!markup.contains(PAIRED_BREAK)) return new ByteArrayInputStream(bytes);
+                String normalized = VML_BREAK_MARKUP.matcher(markup).replaceAll(match ->
+                    match.group().equals(PAIRED_BREAK) ? "<br/>" : Matcher.quoteReplacement(match.group()));
+                return new ByteArrayInputStream(normalized.getBytes(StandardCharsets.ISO_8859_1));
+            }
+        }
+    }
+
+    private static Workbook openWorkbook(Path path, String format) throws IOException, InvalidFormatException {
+        if (format.equals("xls")) return WorkbookFactory.create(path.toFile(), null, true);
+        var entries = new VmlZipEntries(new ZipSecureFile(path.toFile()));
+        try {
+            // A custom ZipEntrySource opens the OPC package read-only and keeps POI ZIP limits.
+            OPCPackage pkg = OPCPackage.open(entries);
+            for (var part : pkg.getPartsByContentType(XSSFRelation.VML_DRAWINGS.getContentType())) {
+                if (part instanceof ZipPackagePart zipPart) entries.drawings.add(zipPart.getZipArchive());
+            }
+            return new XSSFWorkbook(pkg);
+        } catch (IOException | InvalidFormatException | RuntimeException failure) {
+            try {
+                entries.close();
+            } catch (IOException closeFailure) {
+                failure.addSuppressed(closeFailure);
+            }
+            throw failure;
+        }
+    }
+
     private static void readWorkbook(Path path, String format, ObjectNode response, ArrayNode problems)
         throws Exception {
         if (format.equals("xls")) {
@@ -105,7 +174,7 @@ public final class ExcelWorker {
                 }
             }
         }
-        try (Workbook book = WorkbookFactory.create(path.toFile(), null, true)) {
+        try (Workbook book = openWorkbook(path, format)) {
             if (format.equals("xls") != (book instanceof HSSFWorkbook)) {
                 reject(response, "EXCEL_FORMAT_MISMATCH");
                 return;
@@ -125,12 +194,15 @@ public final class ExcelWorker {
             ArrayNode cells = facts.putArray("cells");
             ArrayNode tables = facts.putArray("tables");
             ArrayNode triggers = facts.putArray("triggers");
+            ArrayNode connections = facts.putArray("connections");
+            ArrayNode queryTables = facts.putArray("query_tables");
             ObjectNode externalLinks = facts.putObject("links");
             if (book instanceof XSSFWorkbook xssf) {
                 var properties = xssf.getCTWorkbook().getWorkbookPr();
                 if (properties != null) put(facts, "code_name", properties.getCodeName());
                 facts.put("date_1904", xssf.isDate1904());
                 readExternalLinks(xssf, externalLinks, problems);
+                readConnections(xssf, connections, problems);
                 for (var part : xssf.getPackage().getParts()) {
                     String type = part.getContentType().toLowerCase(Locale.ROOT);
                     if (type.contains("macrosheet")) diagnostic(problems, "EXCEL_XLM_UNSUPPORTED", null, null);
@@ -163,9 +235,20 @@ public final class ExcelWorker {
                     var properties = xssf.getCTWorksheet().getSheetPr();
                     if (properties != null) put(item, "code_name", properties.getCodeName());
                     readControls(xssf, triggers, problems);
+                    readQueryTables(xssf.getPackagePart(), sheet.getSheetName(), null, queryTables, problems);
                     for (var table : xssf.getTables()) {
                         tables.addObject().put("name", table.getName()).put("sheet", sheet.getSheetName())
                             .put("range", table.getCellReferences().formatAsString());
+                        long firstDataRow = table.getStartRowIndex() + table.getCTTable().getHeaderRowCount();
+                        long lastDataRow = table.getEndRowIndex() - table.getCTTable().getTotalsRowCount();
+                        String targetRange = null;
+                        if (firstDataRow >= 0 && firstDataRow <= lastDataRow) {
+                            var first = new CellReference((int) firstDataRow, table.getStartColIndex());
+                            var last = new CellReference((int) lastDataRow, table.getEndColIndex());
+                            targetRange = first.formatAsString() + ":" + last.formatAsString();
+                        }
+                        readQueryTables(table.getPackagePart(), sheet.getSheetName(), targetRange,
+                                        queryTables, problems);
                     }
                 } else if (sheet instanceof HSSFSheet hssf) {
                     put(item, "code_name", biffCodeName(hssf.getSheet().findFirstRecordBySid((short) 0x01ba)));
@@ -208,6 +291,61 @@ public final class ExcelWorker {
                 // Keep the workbook structure and report the unavailable link.
             }
             diagnostic(problems, "EXCEL_EXTERNAL_LINK_UNREADABLE", null, null);
+        }
+    }
+
+    private static void readConnections(XSSFWorkbook book, ArrayNode sources, ArrayNode problems) {
+        try {
+            var owner = book.getPackagePart();
+            for (var relation : owner.getRelationshipsByType(CONNECTION_REL)) {
+                if (relation.getTargetMode() != TargetMode.INTERNAL) continue;
+                var part = owner.getRelatedPart(relation);
+                if (part.getSize() > MAX_XML_PART) throw new IOException("Connection part exceeds XML limit");
+                try (var input = part.getInputStream()) {
+                    var document = XMLHelper.newDocumentBuilder().parse(input);
+                    var declarations = document.getElementsByTagNameNS(SPREADSHEET, "connection");
+                    for (int index = 0; index < declarations.getLength(); index++) {
+                        var declaration = (Element) declarations.item(index);
+                        String id = declaration.getAttribute("id");
+                        if (!id.matches("[0-9]{1,10}")) continue;
+                        ObjectNode source = sources.addObject().put("id", id).put("index", index + 1)
+                            .put("part", part.getPartName().getName()).put("mechanism", "workbook connection");
+                        var web = declaration.getElementsByTagNameNS(SPREADSHEET, "webPr");
+                        var file = declaration.getElementsByTagNameNS(SPREADSHEET, "textPr");
+                        if (web.getLength() == 1) {
+                            source.put("mechanism", "workbook web query");
+                            put(source, "reference", ((Element) web.item(0)).getAttribute("url"));
+                        } else if (file.getLength() == 1) {
+                            source.put("mechanism", "workbook text import");
+                            put(source, "reference", ((Element) file.item(0)).getAttribute("sourceFile"));
+                        }
+                    }
+                }
+            }
+        } catch (Exception failure) {
+            diagnostic(problems, "EXCEL_CONNECTION_UNREADABLE", null, null);
+        }
+    }
+
+    private static void readQueryTables(PackagePart owner, String sheet, String range,
+                                        ArrayNode bindings, ArrayNode problems) {
+        try {
+            for (var relation : owner.getRelationshipsByType(QUERY_TABLE_REL)) {
+                if (relation.getTargetMode() != TargetMode.INTERNAL) continue;
+                var part = owner.getRelatedPart(relation);
+                if (part.getSize() > MAX_XML_PART) throw new IOException("Query-table part exceeds XML limit");
+                try (var input = part.getInputStream()) {
+                    Element query = XMLHelper.newDocumentBuilder().parse(input).getDocumentElement();
+                    String id = query.getAttribute("connectionId");
+                    if (!SPREADSHEET.equals(query.getNamespaceURI()) || !"queryTable".equals(query.getLocalName())
+                        || !id.matches("[0-9]{1,10}")) continue;
+                    ObjectNode binding = bindings.addObject().put("id", id).put("sheet", sheet)
+                        .put("part", part.getPartName().getName());
+                    put(binding, "range", range);
+                }
+            }
+        } catch (Exception failure) {
+            diagnostic(problems, "EXCEL_CONNECTION_UNREADABLE", sheet, null);
         }
     }
 
@@ -283,6 +421,10 @@ public final class ExcelWorker {
         var style = cell.getCellStyle();
         if (style != null && DateUtil.isADateFormat(style.getDataFormat(), style.getDataFormatString())) {
             item.put("date_format", true);
+        }
+        if (style != null && style.getDataFormat() != 0) {
+            String pattern = style.getDataFormatString();
+            if (pattern != null && pattern.length() <= 128) item.put("number_format", pattern);
         }
     }
 

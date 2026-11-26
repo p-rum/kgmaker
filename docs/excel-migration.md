@@ -44,12 +44,46 @@ kgmaker excel migrate prepare --workbook Fakturace.xlsm --dependency Sazby.xlsx 
 kgmaker excel migrate export --workbook Fakturace.xlsm --dependency Sazby.xlsx --out-dir migrace
 ```
 
-`prepare` vytvoří nový adresář s `inventory.json`, `packet.json` a
-`subjects.jsonl`. `export` používá stejný výběr zdrojů, znovu ověří jejich
+`prepare` vytvoří nový adresář s `behavior.md`, `inventory.json`, `packet.json`
+a `subjects.jsonl`. `export` používá stejný výběr zdrojů, znovu ověří jejich
 otisky a sestaví všechny tři finální soubory do nového podadresáře `result`.
 Volitelně přijímá `--candidate` a `--jira-template`. Existující výsledky se
 zachovají. Při souběžné výměně výstupního adresáře nebo souboru příkaz ohlásí
 chybu. Při úklidu ověřuje vlastnictví jednotlivých cest. Na straně kgmakeru se nespouští Copilot ani jiný model.
+
+## Funkce a tok dat v sešitu
+
+`behavior.md` vznikne před plánem a Jira exportem. Uvádí deklarované zdroje dat,
+vstupní události, výpočty, zápisy VBA a možné výstupy s adresou buňky nebo
+modulem, procedurou a řádkem. Sleduje mezilistové odkazy až ke zdroji tam,
+kde je statický řetězec rozpoznaný. Například `IFERROR` označí výpočet s náhradní
+větví a v cestě k výsledku ukáže možné zdroje z obou větví. Poslední část
+uvádí mezery v dokladech a hranice analýzy.
+
+Konkrétní syntaktické důkazy zahrnují `WEBSERVICE`, odkazy na další sešity,
+deklarace připojení OOXML a vazby query tabulek. VBA sleduje deklarace podporovaných
+HTTP klientů, přípravu a odeslání požadavku, čtení odpovědi a návaznost na
+lokální přiřazení. Známá nepřepisující intrinsic volání, například `Format`,
+nepřeruší vazbu vstupní hodnoty. Alternativní definice zůstávají uvnitř
+podporovaných větví; přímé přiřazení po jejich uzavření starší definici přepíše.
+Neznámá volání dál ruší možné přepsané definice. Výstupní buňka v zobrazeném listu
+je kandidát na prezentaci.
+Změna `Caption`, `Text`, `Visible` či `MsgBox` dokládá příslušný zápis nebo volání;
+skutečné zobrazení závisí na běhu. Neprůhledné integrace přes COM, Power Query, dynamicky sestavené
+adresy, aktivní sešit a skutečné výsledky externího volání mohou vyžadovat další
+doklady.
+
+Ve velkém sešitu lze z již vytvořeného inventáře vypsat jeden list i s cestami
+do ostatních listů a sešitů.
+
+```sh
+kgmaker excel behavior --inventory migrace/inventory.json --book main --sheet Vysledky
+```
+
+Výchozí report uvádí strukturu a identifikátory důkazů. `--include-source`
+v `prepare` nebo `behavior` přidá přesné vzorce, příkazy VBA, hodnoty a identity
+zdrojů podle stejného souhlasu jako u packetu. Lokální příkaz čte výhradně
+inventář a volání ani vzorce nevyhodnocuje. [Rozsah a ověření](changes/177_extractExcelBehavior.md)
 
 ## Sešity a plán
 
@@ -109,6 +143,7 @@ Ve výpisu exportu najdeš názvy cílových polí pro ruční mapování. Sprá
 ## Podporovaný rozsah
 
 - `.xlsm` a BIFF8 `.xls` zahrnují zdrojové VBA. `.xlsx` podporuje statickou analýzu listů a vzorců. Základní A1 odkazy, rozlišené názvy a vybraná volání VBA použijí rozsah doložený vstupem. Inventář zachytí i OOXML tabulky, kontrolní vazby DrawingML/VML a data označená jako datum.
+- Sešity s `<br></br>` v popisku VML ovládacího prvku lze předat přímo do `excel analyze` nebo `excel migrate prepare`. Worker normalizuje tento zápis pouze při čtení části VML. SHA-256 v inventáři dál identifikuje bajty původního sešitu.
 - Dynamická adresace, sestavené argumenty `Run`, aliasy objektů `Range`, lokální jména ve vzorcích `LET` a `LAMBDA`, podmíněná kompilace VBA, XLM, ActiveX a externí komponenty vytvářejí diagnostiku mezery. Excelové vestavěné funkce uvedené v metadatech POI mají přednost před stejnojmennými deklaracemi VBA. Přesný název listu má přednost při vyhledávání odkazu. Neshodný zápis se použije jen při jednoznačné shodě bez ohledu na velikost písmen. Rozpoznávání VBA pracuje se zdrojovým textem a omezenými konstrukcemi. Projekty bez čitelného zdroje zůstanou otevřené k ověření.
 - Výsledky jsou statické. Worker nevyhodnocuje vzorce ani VBA a nepoužívá cesty z odkazů k otevření souborů. Nečitelná závislost způsobí `PARTIAL`. Chyba struktury hlavního sešitu nebo chybějící worker zastaví tvorbu inventáře.
 - Jeden manifest má nejvýše 16 sešitů. Limity jsou 32 MiB na sešit, 128 MiB součtu deklarovaných zdrojů, 2 000 ZIP položek, 64 MiB po rozbalení, 8 MiB na XML část, 100 000 buněk a 4 MiB textu VBA na sešit. Worker má 512 MiB Java heap, 30 sekund a 16 MiB odpovědi na sešit. Větší analýzu rozděl podle samostatných vstupních sad.
