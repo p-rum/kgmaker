@@ -31,3 +31,18 @@ instrukce přes `kgmaker upgrade` po instalaci nové distribuce.
   a časy změn souborů.
 - PASS `git diff --check`.
 - NOT_RUN Živé ověření odpovědi Copilot a Junie a úplná sada testů.
+
+## Zásady implementačního agenta
+
+Výchozí SHA `0d9bed68d3be09bc8ff2fb277d1b562e004e4789`. T053-S01 / T053-AC01.
+Šablona v `src/kgmaker/agents.py` a profil
+`.github/agents/kgmaker-implementation.agent.md` obsahují čtyři zásady pro
+vyjasnění předpokladů a kompromisů, jednoduchost, omezení rozsahu změn
+a ověření kritérií úspěchu. Zásady doplňují stávající implementační workflow.
+
+- PASS `python -m pytest -q tests/test_init.py tests/test_installation.py tests/test_installation_distribution.py`.
+  Znovu prošlo všech 61 testů.
+- PASS Čistý `init` v dočasném adresáři. Každá ze čtyř zásad je doslova
+  a právě jednou ve vygenerovaném agentovi i v profilu repozitáře.
+- PASS `git diff --check`.
+- NOT_RUN Živý běh agenta.
