@@ -2,7 +2,8 @@
 
 ## T056 — Funkce a toky dat v Excelu, 2026-11-25
 
-Dodání sleduje [PR #161](https://github.com/p-rum/kgmaker/pull/161). `behavior.md` zachycuje statické doklady zdrojů, vzorců a VBA
+Dodání MERGED v [#161](https://github.com/p-rum/kgmaker/pull/161) jako
+`cb02463098c6cd3145b5b269154daf07586687a0`. `behavior.md` zachycuje statické doklady zdrojů, vzorců a VBA
 operací, mezilistový tok a možné výstupy. Patnáctilistý syntetický sešit ověřuje
 tři cesty ke stejnému výsledku včetně vazby query tabulky, podmínky `IFERROR` a
 odděleného zobrazení listu. V provozním sešitu a v živé relaci Copilotu má stav
@@ -14,6 +15,11 @@ nepřepisující intrinsic VBA a přepis návratové hodnoty po ukončené větv
 cílené testy prošly; v celé migrační sadě je 19 PASS a 14 SKIP (13 vyžaduje worker,
 jeden instalovaný wheel). Viz [změna 178](changes/178_fixExcelBehaviorLineage.md). Produkční sešit,
 živý Copilot, Java worker/wheel a hostovaná CI v tomto follow-upu mají NOT_RUN.
+
+Nové reprodukce nad `5ff2c0846056353605ccb9ab271bd86847c6e661` upřesňují
+T056-S01 až S03 na PARTIAL. Přetrvávají mezery pro koncové buňky s definovaným
+názvem, predikáty větvení filtrovaných událostí a rozsah zdrojů ve filtrovaném
+reportu. [Doložená fixture a reprodukce](changes/183_reconcileExcelCompletionInventory.md).
 
 ## T055 — Copilot skill pro migraci Excelu, 2026-11-25
 
@@ -173,21 +179,25 @@ compiler/build/Windows matice zůstávají NOT_RUN/SKIP. Nejde o dokončení T00
 
 ## Aktuální pracovní inventář T048-S01 — 2026-11-07
 
-Baseline: `f115aa4a1c37683f3be9e4607111d51d9c1301c1`. Audit zdrojů, git historie a GitHub PR; změna [111](changes/111_reconcileDeliveryStatus.md).
+Původní audit T048-S01 vychází z `f115aa4a1c37683f3be9e4607111d51d9c1301c1`.
+[Původní audit](changes/111_reconcileDeliveryStatus.md).
 Řádky níže jsou jediným aktuálním delivery inventářem. Následující historické
 checkpointy zachovávají původní výsledky a nepředstavují čekající merge již
 sloučených funkcí. SPECIFICATION je stav zadání a zůstává oddělený od dodání.
+T052 zde eviduje i kroky T054–T056. Závislosti T055-S03 na T050-S01,
+T053-S01 a T053-S02 mají dosavadní doklady, ale zatím nemají vlastní kanonické
+řádky. [Doplnění inventáře](changes/183_reconcileExcelCompletionInventory.md).
 
 | Skupina | MERGED | PLANNED | PR_OPEN | Celkem |
 |---|---:|---:|---:|---:|
-| T003 work packages | 49 | 10 | 1 | 60 |
+| T003 work packages | 51 | 9 | 0 | 60 |
 | T004 / T005–T044 | 29 | 11 | 0 | 40 |
 | T046 etapy | 6 | 0 | 0 | 6 |
-| T047 kroky | 1 | 11 | 1 | 13 |
-| Celkem (včetně sdílených kontraktů T047) | 85 | 32 | 2 | 119 |
+| T047 kroky | 4 | 9 | 0 | 13 |
+| T054–T056 kroky | 10 | 0 | 0 | 10 |
+| Celkem (včetně sdílených kontraktů T047) | 100 | 29 | 0 | 129 |
 
-T003/T004 mají podle níže uvedených atomických řádků 21 položek v `PLANNED`
-a jednu v `PR_OPEN`.
+T003/T004 mají podle níže uvedených atomických řádků 20 položek v `PLANNED`.
 W09 a S09-W05 jsou `MERGED`. Součet vyjadřuje evidovaný stav dodání.
 T047 není dalších 13 nezávislých
 implementací; sloupec omezení určuje upstream vlastníky. `PARTIAL` znamená nalezený
@@ -327,6 +337,16 @@ Oprava čtení normalizovaného kontextu T032 je od 2026-11-21 v main přes [#13
 | [T047-S11](tasks/47_addReliableIncrementalContext.md) | MERGED | PARTIAL | `47807742a07c4a4fb92a590479fbfa0b558bf7fe` | [workflow](../src/kgmaker/workflow.py), [verification](../src/kgmaker/verification.py), [lineage](../src/kgmaker/provenance.py), [context](../src/kgmaker/context.py), [test](../tests/test_verification_records.py) | [#144](https://github.com/p-rum/kgmaker/pull/144) | Lokální volitelná brána `done` používá aktuální doklad jednoho explicitního běhu. Schválení T046 mají vlastní pravidla. Report odlišuje workflow od aktuálnosti evidence. Přesný head a sloučené main mají 179 PASS / 0 SKIP se skutečným Mavenem a Surefire. Mapování požadovaných testů, selektivní dopad, širší matice a projekce do paměti zůstávají otevřené. [Doklad integrace](changes/161_recordMutationCorpusMerge.md#t047-s11--t047-r11--t047-ac11-a-t048-s01--t048-ac01) · [Change159](changes/159_gateCompletionOnCurrentVerification.md). |
 | [T047-S12](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/cli.py](../src/kgmaker/cli.py), [src/kgmaker/feature_cli.py](../src/kgmaker/feature_cli.py) | — | Upstream owner: T047-S12; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S13](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Upstream owner: T047-S13 + T003-S11; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
+| [T054-S01](tasks/54_addExcelMigration.md) | MERGED | VERIFIED_IN_SCOPE | `782ac6ac0287550084e9afadbd6182756fdd2730; VML 5ff2c0846056353605ccb9ab271bd86847c6e661` | [test_excel_migration.py](../tests/test_excel_migration.py), [171_addExcelMigration.md](changes/171_addExcelMigration.md), [176_readVmlLineBreaks.md](changes/176_readVmlLineBreaks.md) | [# 155](https://github.com/p-rum/kgmaker/pull/155), [# 159](https://github.com/p-rum/kgmaker/pull/159) | Statická XLSM/BIFF8/XLSX evidence, no-mutation, původní SHA a VML vazby. |
+| [T054-S02](tasks/54_addExcelMigration.md) | MERGED | VERIFIED_IN_SCOPE | `782ac6ac0287550084e9afadbd6182756fdd2730` | [test_excel_migration.py](../tests/test_excel_migration.py), [171_addExcelMigration.md](changes/171_addExcelMigration.md) | [# 155](https://github.com/p-rum/kgmaker/pull/155) | Lokální Kotlin/JVM plán, pokrytí, citace, pořadí a odmítnutí stale vstupu. |
+| [T054-S03](tasks/54_addExcelMigration.md) | MERGED | PARTIAL | `782ac6ac0287550084e9afadbd6182756fdd2730` | [test_excel_migration.py](../tests/test_excel_migration.py), [174_reconcileMergedDelivery.md](changes/174_reconcileMergedDelivery.md) | [# 155](https://github.com/p-rum/kgmaker/pull/155) | Jira CSV s vlastními poli a vztahy ověřeno. Živý import do cílové Jira Cloud NOT_RUN. |
+| [T054-S04](tasks/54_addExcelMigration.md) | MERGED | PARTIAL | `782ac6ac0287550084e9afadbd6182756fdd2730` | [test_excel_migration.py](../tests/test_excel_migration.py), [174_reconcileMergedDelivery.md](changes/174_reconcileMergedDelivery.md) | [# 155](https://github.com/p-rum/kgmaker/pull/155) | Skutečný Linux wheel a navazující Windows Excel worker/wheel s tehdy shodnými vstupy pro doložený rozsah. |
+| [T055-S01](tasks/55_automateExcelMigration.md) | MERGED | VERIFIED_IN_SCOPE | `3a6b97fc9c44941e68bb390772a5eb13906bf1ff` | [test_excel_migration.py](../tests/test_excel_migration.py), [172_automateExcelMigration.md](changes/172_automateExcelMigration.md) | [# 156](https://github.com/p-rum/kgmaker/pull/156) | Explicitní výběr dvou sešitů, redakce packetu a úplný seznam subjektů. |
+| [T055-S02](tasks/55_automateExcelMigration.md) | MERGED | VERIFIED_IN_SCOPE | `3a6b97fc9c44941e68bb390772a5eb13906bf1ff` | [test_excel_migration.py](../tests/test_excel_migration.py), [172_automateExcelMigration.md](changes/172_automateExcelMigration.md) | [# 156](https://github.com/p-rum/kgmaker/pull/156) | Validace a lokální export Markdown a Jira CSV. Externí živý import má vlastní ověření. |
+| [T055-S03](tasks/55_automateExcelMigration.md) | MERGED | VERIFIED_IN_SCOPE | `3a6b97fc9c44941e68bb390772a5eb13906bf1ff` | [test_excel_migration.py](../tests/test_excel_migration.py), [172_automateExcelMigration.md](changes/172_automateExcelMigration.md), [174_reconcileMergedDelivery.md](changes/174_reconcileMergedDelivery.md) | [# 156](https://github.com/p-rum/kgmaker/pull/156) | Skutečný Java 17 worker, instalace a upgrade skillu, zákaz maker. Živý hostitel má vlastní ověření. |
+| [T056-S01](tasks/56_extractExcelBehavior.md) | MERGED | PARTIAL | `cb02463098c6cd3145b5b269154daf07586687a0` | [Test](../tests/test_excel_migration.py), [fixture a worker](changes/177_extractExcelBehavior.md), [reprodukce](changes/183_reconcileExcelCompletionInventory.md) | [#161](https://github.com/p-rum/kgmaker/pull/161) | Skutečný worker ověřil tři statické zdroje, query tabulku a VBA v konkrétních fixture. Nepoužitý definovaný název může potlačit cestu k výstupu. |
+| [T056-S02](tasks/56_extractExcelBehavior.md) | MERGED | PARTIAL | `cb02463098c6cd3145b5b269154daf07586687a0` | [Test](../tests/test_excel_migration.py), [pokrytí toku](changes/178_fixExcelBehaviorLineage.md), [reprodukce](changes/183_reconcileExcelCompletionInventory.md) | [#161](https://github.com/p-rum/kgmaker/pull/161) | Lokátory, IFERROR a alternativy definic v doložených fixture. Filtrovaný `Worksheet_Change` může vynechat podmínku zobrazeného zápisu. |
+| [T056-S03](tasks/56_extractExcelBehavior.md) | MERGED | PARTIAL | `cb02463098c6cd3145b5b269154daf07586687a0` | [Test](../tests/test_excel_migration.py), [CLI a distribuce](changes/177_extractExcelBehavior.md), [reprodukce](changes/183_reconcileExcelCompletionInventory.md) | [#161](https://github.com/p-rum/kgmaker/pull/161) | Lokální příprava, redakce, kompatibilita a distribuce skillu mají doklady. Filtrovaný report může přidat zdroj nesouvisejícího sešitu. Odvození úloh živým Copilotem NOT_RUN. |
 
 ### Historické PR checkpointy — 2026-11-07
 

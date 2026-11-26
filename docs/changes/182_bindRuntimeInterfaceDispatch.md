@@ -136,3 +136,28 @@ python -m pytest -q -p no:cacheprovider --tb=short \
   tests/test_runtime_trace_producer.py tests/test_build_aware.py \
   -k 'interface_dispatch or runtime_import_validates_payload_once or runtime_keeps_callable or runtime_observation_stays_visible or runtime_import_is_bound_to_context or actual_maven_public_runtime'
 ```
+
+## Přenos opravy po sloučení #167
+
+T003-S13-W02-AC01–AC04. Opravu `a765c6b98955c1c94f5339644c3647ae700a38a6`
+spojuje přenos s aktuálním `main` `d9379b210d6d4e245c958024484bc864ddb1105a`.
+Zdroje a testy W02 mají shodné bajty s prvním rodičem. Inventář z [Change183](183_reconcileExcelCompletionInventory.md)
+drží 129 položek, 100 MERGED a 29 PLANNED. Přímé srovnání s `main`
+potvrdilo shodné údaje všech položek včetně ověření a závislostí i pořadí
+dispatch. Otisk dokladu je
+`6e7a6124b0b532afe41c34169f41519e383f444630d23419533ba813d20ea5b7`.
+
+Na spojeném stromu prošlo 20 testů za 66,38 s bez chyb nebo přeskočení.
+Mimo výběr bylo 90 položek. Skutečný JDK 21.0.6+7 s povinným JVM workerem
+ověřil obě přijímané varianty, oba tvary chybějícího řádku při capture i
+importu a obnovu výstupů při pozdní změně bytecode. Součástí bylo 13 testů
+plánovače. JUnit SHA-256
+`5fccb33cc1306fcc69249826eec8879c7149a27b7350fab92e25205e82411a89`,
+shodný manifest vstupů před a po má SHA-256
+`0930ab93c5bc2d1e5572488cc81c75f92db5af5ab7bdea36985e167d2b5b8b37`.
+
+```sh
+python -m pytest -q -p no:cacheprovider --tb=short \
+  tests/test_runtime_trace_producer.py tests/test_completion.py \
+  -k 'interface_dispatch_binds_concrete or rejects_unlocated_instruction or interface_dispatch_rolls_back or test_completion'
+```
