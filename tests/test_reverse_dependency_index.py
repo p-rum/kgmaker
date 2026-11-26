@@ -1,14 +1,17 @@
+from dataclasses import replace
 import hashlib
 import json
 import os
+from pathlib import Path
 import subprocess
 import sys
 from unittest.mock import patch
 
 import pytest
 
-from kgmaker import feature, workspace
-from kgmaker.analysis_model import AnalysisError, inventory_candidate, read_json, write_json
+from kgmaker import feature, inspection, store, workspace
+from kgmaker.analysis_model import AnalysisError, digest, inventory_candidate, read_json, write_json
+from kgmaker.callgraph import callees
 from kgmaker.cli import main, scan
 from kgmaker.graph_provider import dependency_impact, validate_context_snapshot
 from kgmaker.inspection import command, inspect_jvm
@@ -36,6 +39,306 @@ def _require_javac_worker():
         if os.environ.get("KGMAKER_REQUIRE_WORKERS") == "1":
             raise
         pytest.skip(str(error))
+
+
+def _native_jvm_peer_fixture(root, backend, *, overlap=False, edit_peer=True, control_class=False):
+    try:
+        argv = command('jvm', kotlin_backend=backend)
+        stdlib = Path(argv[-1]).parent / 'lib' / 'kotlin-stdlib.jar'
+        if not stdlib.is_file():
+            raise WorkerError('Matching Kotlin stdlib unavailable', 'TOOLCHAIN_UNAVAILABLE')
+    except WorkerError as error:
+        if os.environ.get('KGMAKER_REQUIRE_WORKERS') == '1' or (
+                backend == 'k2' and os.environ.get('KGMAKER_REQUIRE_K2') == '1'):
+            raise
+        pytest.skip(str(error))
+    peers = {}
+    for module in ('edited', 'selected', 'control'):
+        peers[module] = _write(root, f'{module}/src/main/kotlin/Example.kt',
+                                f'package {module}\nfun target(value: Int): Int = value\n'
+                                'fun run(value: Int): Int = target(value)\n')
+    java = _write(root, 'edited/src/main/java/Witness.java', 'package edited;\nclass Witness {}\n')
+    extra = {'edited': [java.relative_to(root).as_posix()]}
+    if overlap:
+        extra['selected'] = extra['edited']
+    if control_class:
+        path = 'control/src/main/java/Independent.java'
+        _write(root, path, 'package control;\nclass Independent {}\n')
+        extra['control'] = [path]
+    model = {'source_sets': [
+        {'module': module, 'id': 'main', 'scope': 'production',
+         'files': [file.relative_to(root).as_posix(), *extra.get(module, [])]}
+        for module, file in peers.items()]}
+    options = {'repo_id': 'peers', 'project_model': model, 'kotlin_backend': backend,
+               'classpath': [str(stdlib)]}
+    for module in peers:
+        assert inspect_jvm(root, module=module, **options)['exit_code'] == 0
+    initial = store.load_graph(root)
+    if edit_peer:
+        _write(root, peers['edited'], 'package edited\nfun target(value: Boolean): Int = if (value) 1 else 0\n'
+               'fun run(value: Int): Int = target(value)\n')
+    _write(root, peers['selected'], 'package selected\nfun replacement(value: Int): Int = value\n'
+           'fun run(value: Int): Int = replacement(value)\n')
+    return options, peers, java, initial
+
+
+def _compiler_layer(graph, context_id):
+    def in_scope(items):
+        return [item for item in items if item.get('context_id') == context_id]
+
+    return ([context for context in graph.contexts if context.get('id') == context_id],
+            in_scope(graph.symbols), in_scope(graph.call_sites), in_scope(graph.cfgs),
+            [edge for edge in graph.edges if context_id in edge.context_ids],
+            [item for item in graph.evidence if context_id in item.get('context_ids', [])])
+
+
+@pytest.mark.parametrize('backend', ['k1', 'k2'])
+def test_actual_jvm_isolated_stale_peer_publication_and_guards(tmp_path, backend):
+    options, peers, java, initial = _native_jvm_peer_fixture(tmp_path, backend)
+    ids = {context['module']: context['id'] for context in initial.contexts
+           if context.get('analyzer_version')}
+    edited, selected, control = (ids[key] for key in ('edited', 'selected', 'control'))
+    diagram = tmp_path / store.MERMAID_FILE
+    diagram.write_bytes(diagram.read_bytes() + b'%% previous output rollback witness\n')
+    previous = _store_bytes(tmp_path)
+    request = inspection.request_worker
+
+    def selected_drifts(*args, **kwargs):
+        response = request(*args, **kwargs)
+        assert response['coverage']['calls_resolved'] == 1
+        peers['selected'].write_bytes(peers['selected'].read_bytes() + b'// changed after analyze\n')
+        return response
+
+    selected_bytes = peers['selected'].read_bytes()
+    with patch.object(inspection, 'request_worker', selected_drifts), \
+            pytest.raises(WorkerError, match='snapshot changed') as error:
+        inspect_jvm(tmp_path, module='selected', **options)
+    assert error.value.status == 'STALE' and _store_bytes(tmp_path) == previous
+    peers['selected'].write_bytes(selected_bytes)
+
+    changed_classpath = next(context for context in initial.contexts if context.get('id') == edited)
+    dependency = changed_classpath['classpath'][0]
+    unbound = tmp_path / 'unbound-library.jar'
+    unbound.write_bytes(Path(dependency['path']).read_bytes())
+    for key, value in [('sha256', '0' * 64), ('path', str(unbound))]:
+        original = dependency[key]
+        dependency[key] = value
+        store.save_graph(initial, tmp_path)
+        tampered = _store_bytes(tmp_path)
+        with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+            inspect_jvm(tmp_path, module='selected', **options)
+        assert error.value.status == 'STALE' and _store_bytes(tmp_path) == tampered
+        dependency[key] = original
+
+    old_site = next(site for site in initial.call_sites if site['context_id'] == edited)
+    target = next(node.id for node in initial.nodes if node.kind == 'file' and node.path == old_site['path'])
+    initial.analysis_annotations.append({'id': 'annotation:shared', 'origin': 'LLM_ANNOTATION',
+                                         'target_ids': [target], 'evidence_ids': old_site['evidence_ids']})
+    store.save_graph(initial, tmp_path)
+    with_annotation = _store_bytes(tmp_path)
+    with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+        inspect_jvm(tmp_path, module='selected', **options)
+    assert error.value.status == 'STALE' and _store_bytes(tmp_path) == with_annotation
+    initial.analysis_annotations.clear()
+    for path, data in previous.items():
+        (tmp_path / path).write_bytes(data)
+
+    replace = store.os.replace
+    java_bytes = java.read_bytes()
+    replaced = []
+
+    def peer_drifts_after_first_replace(source, destination):
+        replace(source, destination)
+        if destination == tmp_path / store.MERMAID_FILE and not replaced:
+            replaced.append(destination)
+            assert destination.read_bytes() != previous[store.MERMAID_FILE]
+            java.write_bytes(java_bytes.replace(b'\n', b'\r\n'))
+
+    with patch.object(store.os, 'replace', peer_drifts_after_first_replace), \
+            pytest.raises(WorkerError, match='source-stage inputs changed before commit') as error:
+        inspect_jvm(tmp_path, module='selected', **options)
+    assert error.value.status == 'STALE' and len(replaced) == 1
+    assert _store_bytes(tmp_path) == previous
+    java.write_bytes(java_bytes)
+
+    result = inspect_jvm(tmp_path, module='selected', **options)
+    graph = store.load_graph(tmp_path)
+    stale, symbols, calls, cfgs, edges, evidence = _compiler_layer(graph, edited)
+    assert stale[0]['freshness'] == 'STALE' and 'source/config inputs changed' in stale[0]['stale_reason']
+    assert not any((symbols, calls, cfgs, edges, evidence))
+    assert not _compiler_layer(graph, selected)[0]
+    assert _compiler_layer(graph, control) == _compiler_layer(initial, control)
+    assert graph.to_dict() == result['graph']
+    new_id = result['context']['id']
+    new_site, = [site for site in graph.call_sites if site['context_id'] == new_id]
+    new_target = next(symbol for symbol in graph.symbols if symbol['id'] == new_site['declared_target'])
+    assert new_target['name'] == 'replacement' and new_target.get('logical_key')
+    assert new_site['sha256'] == hashlib.sha256(selected_bytes).hexdigest()
+    assert not any(entry['key']['context']['id'] == edited
+                   for entry in graph.extraction_cache.get('entries', []))
+
+
+def test_actual_jvm_overlapping_stale_peer_still_aborts(tmp_path):
+    options, _, _, _ = _native_jvm_peer_fixture(tmp_path, 'k1', overlap=True)
+    previous = _store_bytes(tmp_path)
+    with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+        inspect_jvm(tmp_path, module='selected', **options)
+    assert error.value.status == 'STALE' and _store_bytes(tmp_path) == previous
+
+
+def test_actual_jvm_stale_peer_requires_unambiguous_runtime_proof_owner(tmp_path):
+    options, _, _, initial = _native_jvm_peer_fixture(tmp_path, 'k1')
+    ids = {context['module']: context['id'] for context in initial.contexts
+           if context.get('analyzer_version')}
+    peer, control = ids['edited'], ids['control']
+    site = next(item for item in initial.call_sites if item['context_id'] == control)
+    request = inspection.request_worker
+    resolutions = []
+
+    def resolved_selected(*args, **kwargs):
+        response = request(*args, **kwargs)
+        resolutions.append(response['coverage']['calls_resolved'])
+        return response
+
+    # Use the runtime importer's stored evidence shape over real compiler nodes.
+    # The capture is intentionally unbound and has no runtime execution receipt.
+    cases = [({'context_id': peer}, False, False),
+             ({'context_id': control, 'context_ids': None}, False, False),
+             ({'context_id': control, 'context_ids': [peer]}, False, False),
+             ({'context_id': control}, True, False),
+             ({'context_id': control}, False, True)]
+    for fields, peer_endpoint, allowed in cases:
+        nodes, target = initial.nodes, site['declared_target']
+        if peer_endpoint:
+            node = Node('runtime:stored-endpoint', 'method', 'stored endpoint', '<runtime>',
+                        scope='production', metadata={'context_id': peer})
+            nodes, target = [*nodes, node], node.id
+        record = {'kind': 'RUNTIME_OBSERVED', 'source': site['caller'], 'target': target,
+                  'relation': 'observed_dispatch_to', 'runtime_id': 'scope-fixture',
+                  'build_id': 'synthetic-build', 'scenario': '', 'async': False,
+                  'observation_source': None, **fields}
+        proof = {'id': 'evidence:' + digest(record), **record}
+        edge = Edge(record['source'], record['target'], record['relation'], evidence_kind='RUNTIME_OBSERVED',
+                    context_ids=(control,), evidence_ids=(proof['id'],))
+        stored = replace(initial, nodes=nodes, evidence=[*initial.evidence, proof], edges=[*initial.edges, edge])
+        store.save_graph(stored, tmp_path, generate_docs=False)
+        previous = _store_bytes(tmp_path)
+        with patch.object(inspection, 'request_worker', resolved_selected):
+            if allowed:
+                assert inspect_jvm(tmp_path, module='selected', **options)['exit_code'] == 0
+                after = store.load_graph(tmp_path)
+                assert proof in after.evidence and edge in after.edges
+                assert _compiler_layer(after, peer)[0][0]['freshness'] == 'STALE'
+                assert any(row['kind'] == 'RUNTIME_OBSERVED' and row['evidence_ids'] == [proof['id']]
+                           for row in callees(after, site['caller'])['results'])
+            else:
+                with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+                    inspect_jvm(tmp_path, module='selected', **options)
+                assert error.value.status == 'STALE' and _store_bytes(tmp_path) == previous
+    assert resolutions == [1] * len(cases)
+
+
+def test_actual_jvm_stale_peer_checks_cfg_and_typed_proof_references(tmp_path):
+    options, _, _, initial = _native_jvm_peer_fixture(tmp_path, 'k1', control_class=True)
+    captures = {context['module']: context['id'] for context in initial.contexts
+                if context.get('analyzer_version')}
+    peer, control = captures['edited'], captures['control']
+    peer_site = next(item for item in initial.call_sites if item['context_id'] == peer)
+    control_site = next(item for item in initial.call_sites if item['context_id'] == control)
+    classes = {symbol['context_id']: symbol for symbol in initial.symbols
+               if symbol['kind'] == 'class' and str(symbol.get('path', '')).endswith('.java')}
+
+    def compiler_source(context_id):
+        symbol = classes[context_id]
+        return {'symbol_id': symbol['id'], 'sha256': symbol['sha256'],
+                'path': symbol['path'], 'context_id': context_id}
+
+    framework = {'kind': 'FRAMEWORK_DERIVED', 'relation': 'produces_bean',
+                 'context_ids': [control], 'source_file': control_site['path'], 'source_line': 3,
+                 'detail': 'Stored compiler provenance fixture', 'framework_rules': {}}
+    runtime = {'kind': 'RUNTIME_OBSERVED', 'relation': 'observed_dispatch_to', 'context_id': control,
+               'runtime_id': 'scope-reference-fixture', 'build_id': 'synthetic-build',
+               'scenario': '', 'async': False, 'observation_source': None}
+    control_cfg = next(cfg for cfg in initial.cfgs if cfg['context_id'] == control)
+    cases = {
+        'cfg-null': None,
+        'compiler-sources': {**framework, 'compiler_sources': [compiler_source(peer)]},
+        'compiler-symbol': {**framework, 'compiler_symbol_id': classes[peer]['id']},
+        'compiler-call-site': {**framework, 'compiler_symbol_id': peer_site['id']},
+        'runtime-call-site': {**runtime, 'call_site': peer_site['id'], 'receiver_type': classes[control]['id']},
+        'runtime-receiver': {**runtime, 'call_site': control_site['id'], 'receiver_type': classes[peer]['id']},
+        'independent-compiler': {**framework, 'compiler_sources': [compiler_source(control)],
+                                 'compiler_symbol_id': classes[control]['id']},
+        'independent-compiler-site': {**framework, 'relation': 'may_traverse_proxy',
+                                      'compiler_symbol_id': control_site['id']},
+        'independent-runtime': {**runtime, 'call_site': control_site['id'], 'receiver_type': classes[control]['id']},
+    }
+    outcomes, resolutions = {}, []
+    request = inspection.request_worker
+
+    def resolved_selected(*args, **kwargs):
+        response = request(*args, **kwargs)
+        resolutions.append(response['coverage']['calls_resolved'])
+        return response
+
+    for case, record in cases.items():
+        proof = None
+        if record is None:
+            stored = replace(initial, cfgs=[{**cfg, 'evidence_ids': None} if cfg == control_cfg else cfg
+                                           for cfg in initial.cfgs])
+        else:
+            record = {**record, 'source': control_site['caller'], 'target': control_site['declared_target']}
+            proof = {'id': 'evidence:' + digest(record), **record}
+            edge = Edge(record['source'], record['target'], record['relation'], evidence_kind=record['kind'],
+                        context_ids=(control,), evidence_ids=(proof['id'],))
+            stored = replace(initial, evidence=[*initial.evidence, proof], edges=[*initial.edges, edge])
+        store.save_graph(stored, tmp_path, generate_docs=False)
+        before = _store_bytes(tmp_path)
+        with patch.object(inspection, 'request_worker', resolved_selected):
+            try:
+                inspected = inspect_jvm(tmp_path, module='selected', **options)
+            except WorkerError as error:
+                outcomes[case] = (error.status, _store_bytes(tmp_path) == before)
+            except TypeError:
+                outcomes[case] = ('TypeError', _store_bytes(tmp_path) == before)
+            else:
+                assert inspected['exit_code'] == 0
+                after = store.load_graph(tmp_path)
+                assert _compiler_layer(after, peer)[0][0]['freshness'] == 'STALE'
+                assert proof is not None and proof in after.evidence and edge in after.edges
+                if record['kind'] == 'RUNTIME_OBSERVED':
+                    assert any(row.get('call_site') == record['call_site']
+                               and row.get('receiver_type') == record['receiver_type']
+                               for row in callees(after, control_site['caller'])['results'])
+                outcomes[case] = ('PUBLISHED', False)
+    assert resolutions == [1] * len(cases)
+    assert outcomes == {case: ('PUBLISHED', False) if case.startswith('independent-') else ('STALE', True)
+                        for case in cases}
+
+
+@pytest.mark.parametrize('retire_peer', [False, True], ids=['no-retirement', 'isolated-retirement'])
+def test_actual_jvm_uncaptured_eol_drift_during_peer_publication(tmp_path, retire_peer):
+    options, _, _, _ = _native_jvm_peer_fixture(tmp_path, 'k1', edit_peer=retire_peer)
+    path = 'outside/src/main/java/Uncaptured.java'
+    outside = _write(tmp_path, path, 'class Uncaptured { }\n')
+    before = _store_bytes(tmp_path)
+    replace = store.os.replace
+    edited = []
+
+    def outside_drifts_after_first_replace(source, destination):
+        replace(source, destination)
+        if destination == tmp_path / store.MERMAID_FILE and not edited:
+            outside.write_bytes(b'class Uncaptured { }\r\n')
+            edited.append(destination)
+
+    with patch.object(store.os, 'replace', outside_drifts_after_first_replace):
+        result = inspect_jvm(tmp_path, module='selected', **options)
+    assert result['exit_code'] == 0 and len(edited) == 1
+    assert _store_bytes(tmp_path)[GRAPH_FILE] != before[GRAPH_FILE]
+    captures = [context for context in result['graph']['contexts'] if context.get('analyzer_version')]
+    assert all(path not in context['source_files'] for context in captures)
+    peer = next(context for context in captures if context['module'] == 'edited')
+    assert peer['freshness'] == ('STALE' if retire_peer else 'CONTENT_VERIFIED')
 
 
 def test_actual_javac_signature_change_reaches_transitive_callers_without_workers(tmp_path):
