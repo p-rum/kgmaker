@@ -359,6 +359,34 @@ contains `path`, `location` and `quote` or `value`, with the existing line/JSON
 pointer contract. The checker supplies source hashes and delegates reference
 validation to the normal feature validator.
 
+### Runtime presence in data-check
+
+For a local transfer between static Java `String` fields, import the v4 runtime
+observation, then prepare a packet with the exact compiler `--context` and its `--scope`.
+Use an explicit target field ID in `candidate_entity_ids` and an effective
+approved mapping for that input, field and exact metadata. The `freshness`
+field needs a positive duration using hours, minutes or seconds, for example
+`PT15M`. The observed run start sets the time window.
+
+```json
+{
+  "kind": "RUNTIME_PRESENT_VALUE_PATH",
+  "runtime_evidence_id": "evidence:ID_FROM_RUNTIME_IMPORT",
+  "mapping_decision_id": "approved-status"
+}
+```
+
+Put this object in the input's `availability_proof`. The checker resolves
+the record from the current selected graph and packet and revalidates the
+compiler assignment, both static field declarations, hook and order of both
+argument bindings. It also checks the ordered physical field transfer and
+hook operands against the selected build artifacts. A fresh `PRESENT` can yield
+`PARTIAL` availability and `UNASSESSED` usability. A call-only record, `ABSENT`,
+expired proof, missing bytecode proof or mismatched mapping leaves availability
+`UNKNOWN`. Use the result live in `feature data-check`. `feature apply`
+rejects candidates carrying a runtime-presence proof before
+writing any analysis files. [Runtime capture and import](runtime-trace.md#přítomnost-hodnoty-po-přímém-přiřazení-v-javě).
+
 Each input contains `id`, `name`, non-empty `requirement_ids`, and every metadata
 field from InputRequirement: `definition`, `data_type`, `unit`, `currency`,
 `granularity`, `keys`, `as_of`, `validity_interval`, `horizon`, `freshness`,

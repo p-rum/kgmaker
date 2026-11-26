@@ -1,4 +1,4 @@
-# Explicitní runtime capture — T003-S13-W01 a W02
+# Explicitní runtime capture — T003-S13-W01 až W03
 
 Dodán je omezený synchronní producer pro **JDK 21 na POSIX**, zdroj
 [`RuntimeTrace.java`](../tooling/runtime/java/org/kgmaker/runtime/RuntimeTrace.java).
@@ -115,6 +115,7 @@ neslibuje. Povolená pole factu jsou přesná:
 | condition | owner (class nebo method ID), predicate (method ID), matched (boolean) |
 | mapping | owner, handler (method ID), method (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS), route_sha256 |
 | interface_dispatch (v3) | caller_owner, caller_name, caller_descriptor, source_line, receiver_type, target_owner, target_name, target_descriptor |
+| value_presence (v4) | caller_owner, caller_name, caller_descriptor, source_line, presence (`PRESENT`/`ABSENT`) |
 
 Všechny symboly musí být ve vybraném kontextu i graph nodes a mít cestu v jeho
 source snapshotu. `status` je `COMPLETE`, `PARTIAL` nebo `UNKNOWN` a nikdy se
@@ -186,6 +187,44 @@ Podporovaný vzorek dokládá vstup do metody instrumentované aplikace. Jde o
 dodaný záznam vybraného běhu. Otisk konfigurace vyjadřuje deklarovanou variantu.
 Děděné a výchozí metody, proxy, reflexe, async a dostupnost dat mají vlastní rozsah.
 [Přeložená fixture a ověření](changes/182_bindRuntimeInterfaceDispatch.md).
+
+## Přítomnost hodnoty po přímém přiřazení v Javě
+
+V explicitně instrumentovaném běhu použijte přímočarou Java metodu `void` pro
+přímé přiřazení mezi dvěma statickými poli `String`. Zavolejte SDK ze statického
+pole třídy na stejném řádku hned po přiřazení.
+
+```java
+private static final RuntimeTrace TRACE = new RuntimeTrace();
+
+static void copyStatus() {
+    Target.status = Source.status; TRACE.observeValuePresence(Source.status, Target.status);
+}
+```
+
+Vybraný `EXECUTION_BOUND` kontext musí doložit deklarace obou statických polí
+a stejný tok v přeložené metodě. Ověření vyžaduje přesné pořadí čtení zdroje,
+zápisu cíle, načtení SDK, čtení zdroje a cíle pro hook, volání SDK a návratu.
+Větvení, obsluha výjimek, další instrukce a instanční pole jsou mimo tento
+rozsah. Nepřítomný nebo nejednoznačný doklad skončí `RUNTIME_VALUE_BYTECODE`.
+U dříve indexovaného buildu zopakujte explicitní inspekci vybraného buildu
+a kontextu aktuálním `kgmaker inspect code`.
+
+Pozorování platí pro hodnoty načtené v hooku daného běhu. SDK zaznamená jen
+`PRESENT` pro shodný nenulový odkaz a `ABSENT` pro dvě hodnoty `null`. Při
+nesouhlasu je výsledek neúplný. SDK ukládá pouze stav přítomnosti a identitu
+volajícího rámce. Při spuštění předávejte data
+aplikaci jejím běžným vstupem a vynechte je z argumentů příkazu capture.
+
+`runtime produce` vytvoří RuntimeManifest v4 s právě jedním `value_presence`
+a UTC časem začátku běhu. `runtime import` znovu ověří odkaz na compiler důkaz
+a vrátí `value_evidence_ids`. Graf používá oddělenou hranu `runtime_value_presence`
+bez vlivu na statické cesty. Pro stejný běh a přiřazení použijte stejný export
+při opakovaném importu. Pro nový běh použijte nové ID. Důvěra vychází z
+výslovné spolupráce instrumentované aplikace a lokálního exportu.
+
+[Živá kontrola dostupnosti](feature-analysis.md#runtime-presence-in-data-check)
+· [Změna a ověření](changes/187_bindRuntimeValuePresence.md).
 
 ## Opakovaný import a navigace
 

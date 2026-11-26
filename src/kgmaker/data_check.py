@@ -13,6 +13,7 @@ from . import feature
 from .analysis_model import AnalysisError, INPUT_METADATA, inventory_candidate, safe_path
 from .analysis_report import render_report
 from .dataflow import impact_paths
+from .runtime_value import PROOF as RUNTIME_PRESENCE_PROOF, valid_proof_reference
 from .store import query_nodes
 
 DATA_SCHEMA_VERSION = 1
@@ -181,9 +182,13 @@ def data_check(root: Path, analysis_id: str, specification: dict) -> dict:
             'owner_role': item.get('owner_role'), 'verification_scope': 'Supplied single repository root; packet coverage and exclusions apply.',
             'next_step': 'Specify the required definition, keys, units and temporal meaning; delivery is not yet confirmed.',
         })
-        if item.get('availability_proof') is not None:
+        proof = item.get('availability_proof')
+        runtime_proof = isinstance(proof, dict) and proof.get('kind') == RUNTIME_PRESENCE_PROOF
+        if runtime_proof and (not explicit or not valid_proof_reference(proof)):
+            tool_gaps.append({'input_id': item['id'], 'kind': 'PROOF_REJECTED',
+                              'reason': 'Runtime presence requires an explicit candidate field and a supported proof reference.'})
+        elif proof is not None:
             candidate['input_requirements'][-1]['availability_proof'] = copy.deepcopy(item['availability_proof'])
-            proof = item['availability_proof']
             if isinstance(proof, dict):
                 for key in ('evidence_id', 'observation_evidence_id'):
                     if isinstance(proof.get(key), str):
@@ -207,6 +212,8 @@ def data_check(root: Path, analysis_id: str, specification: dict) -> dict:
             item['next_step'] = 'Use only within the validated evidence scope; recheck freshness before implementation.'
             ambiguities = [a for a in ambiguities if a['input_id'] != item['id'] or a['kind'] != 'BUSINESS_EQUIVALENCE']
         except (AnalysisError, KeyError, TypeError, ValueError) as exc:
+            if isinstance(item['availability_proof'], dict) and item['availability_proof'].get('kind') == RUNTIME_PRESENCE_PROOF:
+                item.pop('availability_proof')
             tool_gaps.append({'input_id': item['id'], 'kind': 'PROOF_REJECTED', 'reason': str(exc)})
     # Let the normal validator check references, citations, metadata, and cycles.
     for reason in packet['coverage']['limitations']:

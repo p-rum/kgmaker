@@ -422,7 +422,14 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
     context_id = selected_context["id"]
 
     from .kafka_code import declaration_witness, call_witness
-    kafka_symbols = {s["id"]: s for s in metadata}
+    from .runtime_value import is_physical_value_hook, physical_field_operands
+    symbols_by_id = {s["id"]: s for s in metadata}
+    presence_hooks = {}
+    if selected_context.get("freshness") == "EXECUTION_BOUND" and selected_context.get("language") == "jvm":
+        for site in call_sites:
+            if is_physical_value_hook(site, selected_context, symbols_by_id):
+                presence_hooks.setdefault(site["caller"], []).append(site)
+    presence_accesses = {caller: [] for caller, hooks in presence_hooks.items() if len(hooks) == 1}
     # Preserve the original compiler realm only for prospective Kafka declarations.
     kafka_sources = {s.get("id") for s in metadata
                      if any(isinstance(a, dict) and str(a.get("name", "")).rsplit(".", 1)[-1]
@@ -457,7 +464,7 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
                                         for key in ("repo_id", "module", "source_set", "scope")}
             record["compiler_declaration"] = declaration_witness(fact)
         if relation == "declares_call" and fact.get("declared_target") in kafka_targets:
-            record["compiler_call"] = call_witness(fact, kafka_symbols[fact["declared_target"]])
+            record["compiler_call"] = call_witness(fact, symbols_by_id[fact["declared_target"]])
         if fact.get("argument_mapping_version") == 1:
             record.update({key: fact.get(key) for key in ("argument_mapping_version", "call_site", "argument_index",
                           "parameter_index", "parameter_name", "transformation", "binding_kind")})
@@ -467,6 +474,8 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
             record.update(value_flow_version=1, runtime_execution="NOT_OBSERVED", availability="UNKNOWN")
             if fact.get("ui_adapter"):
                 record["ui_adapter"] = fact["ui_adapter"]
+        if relation == "control_flow" and "physical_field_operands" in fact:
+            record["physical_field_operands"] = fact["physical_field_operands"]
         identity = "evidence:" + digest(record)
         evidence[identity] = {"id": identity, **record}
         return identity
@@ -524,6 +533,8 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
                                    scope=caller.scope, role="unknown", origin="unknown")
             relation(site["id"], boundary, "unresolved_boundary", site, "UNRESOLVED")
     for fact in sanitize(response["facts"]):
+        if fact["source"] in presence_accesses and fact["kind"] in {"reads_field", "writes_field"}:
+            presence_accesses[fact["source"]].append(fact)
         if fact.get("kind") == "handles_event" and selected_context.get("ui_framework") == "react":
             adapter = fact.get("ui_adapter")
             wrapper = adapter.get("wrapper") if isinstance(adapter, dict) else None
@@ -560,6 +571,12 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
         if cfg.get("representation") == "BYTECODE":
             source_fact = {"resolution_reason": "ASM_BYTECODE_INSTRUCTIONS", "representation": "BYTECODE",
                            "artifact_hashes": selected_context.get("bytecode_artifacts", [])}
+            method = cfg["method"]
+            if method in presence_accesses:
+                operands = physical_field_operands(cfg, presence_hooks[method][0], selected_context,
+                                                   symbols_by_id, presence_accesses[method])
+                if operands is not None:
+                    source_fact["physical_field_operands"] = operands
         cfg["evidence_ids"] = [proof(source_fact, "SYNTAX_CANDIDATE", source=cfg["method"], target=cfg["method"], relation="control_flow")]
     selected_context = {**selected_context, "project": response.get("project"), "coverage": response["coverage"], "status": response["status"],
                         "diagnostics": selected_context.get("diagnostics", []) + response["diagnostics"]}
