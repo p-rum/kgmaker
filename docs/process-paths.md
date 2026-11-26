@@ -74,7 +74,8 @@ with `--expected-fingerprint` (64 lowercase hexadecimal characters) returns exit
 3. Errors 2 and 3 write a JSON diagnostic to stderr and leave stdout empty.
 The T025 result retains its technical status, selected context and provenance.
 List, packet generation, validation, apply, review and other formats remain
-outside this slice. [Evidence and remaining acceptance](changes/193_renderLocalProcess.md).
+outside this slice. [Implementation evidence](changes/193_renderLocalProcess.md) ·
+[Verified merge and remaining acceptance](changes/196_recordProcessRenderMerge.md).
 
 ## Input and evidence boundaries
 

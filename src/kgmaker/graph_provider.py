@@ -15,9 +15,27 @@ from .worker_protocol import WorkerError
 
 
 class _JvmSourceDrift(WorkerError):
-    def __init__(self, changed: dict[str, str]):
+    def __init__(self, changed: dict[str, str], deleted: set[str]):
         super().__init__("STALE_INDEX: source/config inputs changed; inspect again", "STALE")
         self.changed = changed
+        self.deleted = deleted
+
+
+def _compiler_input_absent(root: Path, path: str) -> bool:
+    """Require physical absence, independently of source discovery and decoding."""
+    from .analysis_model import safe_path
+
+    # Recheck the confined path after a missing stat so a dangling symlink or
+    # a disappearing path does not supply an absence observation on its own.
+    for _ in range(2):
+        try:
+            safe_path(root, path).lstat()
+        except FileNotFoundError:
+            continue
+        except (OSError, ValueError, RuntimeError):
+            return False
+        return False
+    return True
 
 
 def _compiler_contexts(graph: KnowledgeGraph, *, include_stale: bool = True) -> list[dict]:
@@ -256,12 +274,17 @@ def validate_context_snapshot(root: Path, context: dict) -> tuple[dict, ...]:
         current_files = source_snapshot(root, current, context)
         recorded_files = context.get("source_files", {})
         if current_files != recorded_files:
-            if snapshot_version == JVM_RAW_SOURCE_SNAPSHOT and current_files.keys() == recorded_files.keys():
-                changed = {path: value for path, value in current_files.items() if recorded_files[path] != value}
-                if (changed.keys() <= set(context["compiler_inputs"])
-                        and changed.keys() <= current.files.keys()
-                        and unsupported_kotlin_source(current.raw_file_hashes, context["compiler_inputs"]) is None):
-                    raise _JvmSourceDrift(changed)
+            if snapshot_version == JVM_RAW_SOURCE_SNAPSHOT and unsupported_kotlin_source(
+                    current.raw_file_hashes, context['compiler_inputs']) is None:
+                inputs = set(context['compiler_inputs'])
+                changed = {path: value for path, value in current_files.items() if recorded_files.get(path) != value}
+                deleted = recorded_files.keys() - current_files.keys()
+                if (current_files.keys() == recorded_files.keys()
+                        and changed.keys() <= inputs and changed.keys() <= current.files.keys()):
+                    raise _JvmSourceDrift(changed, deleted)
+                if (current_files.keys() < recorded_files.keys() and not changed and deleted <= inputs
+                        and all(_compiler_input_absent(root, path) for path in deleted)):
+                    raise _JvmSourceDrift(changed, deleted)
             raise WorkerError("STALE_INDEX: source/config inputs changed; inspect again", "STALE")
         if snapshot_version == JVM_RAW_SOURCE_SNAPSHOT:
             if normalized_source_projection(current.files, current_files) != context.get("normalized_source_files"):
@@ -523,9 +546,35 @@ def _isolated_peer_evidence(graph: KnowledgeGraph, context: dict) -> bool:
                    for item in graph.symbols)
 
 
+def _owns_deleted_jvm_inputs(initial: KnowledgeGraph, stored: KnowledgeGraph,
+                             context: dict, deleted: set[str]) -> bool:
+    from .classification import source_set_contains
+
+    previous = defaultdict(list)
+    for node in stored.nodes:
+        if node.kind == 'file' and node.path in deleted:
+            previous[node.path].append(node)
+    module, source_set, scope = (context[key] for key in ('module', 'source_set', 'scope'))
+    membership = (module + ':' + source_set,)
+    unanalyzed = [row['path'] for row in initial.diagnostics if row.get('code') == 'SOURCE_NOT_ANALYZED']
+    for path in deleted:
+        owners = [item for item in context['project_model']['source_sets'] if source_set_contains(item, path)]
+        if len(owners) != 1:
+            return False
+        owner, = owners
+        if ((owner['module'], owner['id'], owner['scope']) != (module, source_set, scope)
+                or path not in owner.get('files', [])
+                or any(source_set_contains(owner, unscanned) for unscanned in unanalyzed)
+                or len(previous[path]) != 1
+                or (previous[path][0].build_membership, previous[path][0].scope) != (membership, scope)
+                or compiler_source_digest(stored.files, context, path) is None):
+            return False
+    return True
+
+
 def _isolated_jvm_peer(initial: KnowledgeGraph, fresh: KnowledgeGraph, stored: KnowledgeGraph,
                        context: dict, peers: list[dict], selected: dict, error: _JvmSourceDrift) -> bool:
-    if initial.raw_file_hashes is None or any(
+    if initial.raw_file_hashes is None or error.deleted.intersection(initial.files) or any(
             initial.raw_file_hashes.get(path, initial.files.get(path)) != value
             for path, value in error.changed.items()):
         return False
@@ -553,7 +602,8 @@ def _isolated_jvm_peer(initial: KnowledgeGraph, fresh: KnowledgeGraph, stored: K
                                                      'generated_source_roots', 'bytecode_artifacts'))
                     or not item.get('compiler_inputs')
                     or any(files.get(path) != ((module + ':' + source_set,), item['scope'])
-                           for path in item['source_files'])):
+                           for path in item['source_files']
+                           if item['id'] != context['id'] or path not in error.deleted)):
                 return False
             if item['id'] != context['id'] and (item['module'] == context['module']
                     or context['source_files'].keys() & item['source_files'].keys()):
@@ -568,26 +618,29 @@ def _isolated_jvm_peer(initial: KnowledgeGraph, fresh: KnowledgeGraph, stored: K
                 return False
     except (OSError, RuntimeError):
         return False
+    if error.deleted and not _owns_deleted_jvm_inputs(initial, stored, context, error.deleted):
+        return False
     return _isolated_peer_evidence(stored, context) and _isolated_peer_evidence(fresh, context)
 
 
 def merge_compiler_context(root: Path, fresh: KnowledgeGraph, selected_context: dict) -> KnowledgeGraph:
     """Publish one context while preserving other valid module/variant contexts."""
-    graph, _ = _prepare_compiler_context(root, fresh, selected_context)
+    graph, _, _ = _prepare_compiler_context(root, fresh, selected_context)
     return graph
 
 
 def _prepare_compiler_context(root: Path, fresh: KnowledgeGraph, selected_context: dict, *,
-                              initial_scan: KnowledgeGraph | None = None) -> tuple[KnowledgeGraph, set[str]]:
-    """Compose the candidate and report source paths of peers newly retired by it."""
+                              initial_scan: KnowledgeGraph | None = None) -> tuple[KnowledgeGraph, set[str], set[str]]:
+    """Compose the candidate and report retired source paths and confirmed deletions."""
     stored = load_graph(root)
     if stored is None or not _compiler_contexts(stored):
-        return fresh, set()
+        return fresh, set(), set()
     selection = _selection_key(selected_context)
     preserved = [context for context in _compiler_contexts(stored)
                  if _selection_key(context) != selection]
     published, active_ids, omissions = [], set(), {}
     retired_paths = set()
+    deleted_paths = set()
     for context in preserved:
         if context.get("freshness") == "STALE":
             published.append(context)
@@ -598,15 +651,19 @@ def _prepare_compiler_context(root: Path, fresh: KnowledgeGraph, selected_contex
             if initial_scan is None or not _isolated_jvm_peer(initial_scan, fresh, stored, context,
                                                                preserved, selected_context, error):
                 raise
-            published.append(_stale_context(context, str(error)))
+            reason = str(error)
+            if error.deleted:
+                reason += "; deleted compiler inputs: " + ", ".join(sorted(error.deleted))
+            published.append(_stale_context(context, reason))
             retired_paths.update(context['source_files'])
+            deleted_paths.update(error.deleted)
             continue
         published.append(context)
         if omitted:
             omissions[context["id"]] = omitted
         active_ids.add(context["id"])
     graph = _merge_contexts(fresh, stored, published, layer_context_ids=active_ids, source_omissions=omissions)
-    return graph, retired_paths
+    return graph, retired_paths, deleted_paths
 
 
 def retain_compiler_layer(root: Path, syntax: KnowledgeGraph) -> KnowledgeGraph:
