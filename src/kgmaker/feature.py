@@ -78,7 +78,7 @@ def source_inventory(root: Path) -> tuple[dict, list]:
     return sources, excluded
 
 
-def current_graph(root: Path, workspace: Path | None = None):
+def current_graph(root: Path, workspace: Path | None = None, *, _named_fk_columns: bool = True):
     """Current AS_IS graph in memory; shared by packets and deterministic audits."""
     if workspace is not None:
         from .workspace import snapshot_workspace
@@ -95,11 +95,11 @@ def current_graph(root: Path, workspace: Path | None = None):
     configured = any('path' in p for p in cfg['provenance'])
     if (root / DEFAULT_LOCATION).is_dir() or configured:
         schema = reconstruct(root)
-        graph = attach_schema(graph, schema, root)
+        graph = attach_schema(graph, schema, root, _named_fk_columns=_named_fk_columns)
     return graph, counts, error
 
 
-def attach_schema(graph, schema, root: Path | None = None):
+def attach_schema(graph, schema, root: Path | None = None, *, _named_fk_columns: bool = False):
     """Replace migration-union SQL entities with the effective target schema."""
     from .schema_replay import graph_entities
     from .model import KnowledgeGraph
@@ -112,7 +112,7 @@ def attach_schema(graph, schema, root: Path | None = None):
             persistence_pair(realm.get('database_id'), realm.get('stream_id')) == pair)
     removed = {n.id for n in graph.nodes if n.path in migration_paths and same_or_unqualified(n)
                and (n.kind.startswith('db_') or n.kind in {'database', 'migration', 'migration_operation'})}
-    nodes, edges = graph_entities(schema)
+    nodes, edges = graph_entities(schema, include_named_fk_columns=_named_fk_columns)
     new_nodes = {n.id: n for n in nodes}
     old_nodes = {n.id: n for n in graph.nodes}
     remaining = {n.id: n for n in graph.nodes if n.id not in removed}
