@@ -184,3 +184,63 @@ KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfDat
 
 Úplná standardní sada nového společného stromu, nativní Excel worker,
 skutečný běh mimo Linux a GitHub Actions mají při tomto předání stav `NOT_RUN`.
+
+## Oprava po nezávislé revizi #169 — kroky 3 až 5
+
+T003-S10-W02-AC01 až AC04 a T003-AC10. Výchozí publikovaný head je
+`8d20da4a96c3cf06eaac6a8ed4df2cc718c9182a`. Se skutečným K1 workerem překladač
+vyřešil jedno nové volání ve všech sedmi pokusech. Uložené CFG s
+`evidence_ids: null` způsobilo `TypeError`. Čtyři další pokusy publikovaly graf
+s odkazem framework nebo runtime důkazu ze zachovávaného kontextu na vyřazovaný
+kontext. Dva nezávislé kontrolní záznamy zůstaly dostupné. Regrese nad výchozím
+zdrojem měla očekávaný exit 1. SHA-256 JUnit je
+`66920f3cdb518b31d0b344bc9068ba8959e9da5b7e02e8379279bd78f3a01c6f`.
+
+`graph_provider.py` při ověření izolace kontroluje typ seznamů důkazů a volání
+v zachovávaném CFG. Vyhledá compiler symbol, compiler call site používaný
+framework proxy důkazem, položky `compiler_sources` a obě identity v runtime
+důkazu v3. Neplatný nebo propletený odkaz vrátí původní typovaný `STALE` a
+uloženou generaci zachová. Nezávislý platný odkaz se zachová spolu s důkazem.
+`test_actual_jvm_stale_peer_checks_cfg_and_typed_proof_references` ověřuje šest
+odmítnutí s bajtovým porovnáním všech výstupů a tři platné kontrolní záznamy.
+Hraniční obálky jsou uměle sestavené nad skutečnými K1 symboly a call sites.
+Pokrývají načtení uloženého grafu a jeho publikaci po změně zdroje. Vznik běžných
+runtime pozorování a jejich vstupní kontrakt popisuje dokumentace
+[runtime stopy](../runtime-trace.md).
+
+[Příklad Python API a hranice](../compiler-inspection.md#obnova-izolovaného-jvm-kontextu)
+doplňuje kontrolu uložených odkazů. [Acceptance](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy)
+a [stavová matice](../production-analysis-progress.md) zaznamenávají rozsah.
+Úvodní příklad v [README](../../README.md#selektivní-dopad-změněných-souborů-t003-s10-w02)
+popisuje podporovaný způsob volání. Revize zadání a závislosti jsou stejné.
+W02 zůstává `MERGED/PARTIAL` a W03 čeká na `VERIFIED_IN_SCOPE`. Aktuální
+výřez plánu má 129 položek a 32 připravených úloh, SHA-256
+`50b5774f8c00a006934326b2b4c95b7bb04b84b54a462a2861c95a3b0bbc72e3`.
+
+Nativní `kgmaker inspect code --manifest <manifest modulu>` se zdrojovým
+modelem s původem `SUPPLIED_EXPORT_UNVERIFIED` po změně jiného modulu vrací
+exit 3 a `STALE`. Předchozí generace i všechny její zachycené kontexty mají
+shodné bajty. `scan` následovaný opakováním inspekce obnoví vybraný modul,
+vyřadí staré důkazy a zachová nezávislý kontext. SHA-256 výsledku je
+`7cae45d3a4b1b622b94a0ae2e67e60fd2c2d2f5fcdd2a80891139a4699448d7e`.
+
+Na Linuxu s CPython 3.12.14, JDK 21.0.6+7, K1 a K2 prošlo **57 PASS / 0 SKIP**
+za 240,72 s. Sada pokrývá kontrolované tvary uložených důkazů, publikaci
+s oběma Kotlin backendy, pozdní změnu bajtů, překrývající se moduly,
+transitivní Javac callery, souběžnou publikaci, formáty grafu v1–v3 a
+kompatibilitu runtime importu v1/v2. Pytest, sestavení manifestu a jeho
+porovnání mají exit 0. SHA-256 JUnit je `82f06f5c8b155c07b813ecc9eb18f3dc0b36f2d84aeaaa8b61f9969bd64b8356`.
+Shodné 580řádkové manifesty mají SHA-256 `794d12aca585b5c358c8afc935366dd19246273b2ef26b7714a6324361ee9032`.
+
+```bash
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData \
+  python -m pytest -n 2 --dist load --maxschedchunk=1 -q --tb=short -ra \
+    -p no:cacheprovider -o tmp_path_retention_policy=failed \
+    tests/test_reverse_dependency_index.py tests/test_completion.py \
+    tests/test_graph_provider.py tests/test_graph_publication_concurrency.py \
+    tests/test_stage_content_cache_actual.py tests/test_runtime_trace_producer.py \
+    -k 'test_completion or test_graph_provider or test_graph_publication_concurrency or test_actual_jvm_isolated_stale_peer or test_actual_jvm_stale_peer_requires_unambiguous_runtime_proof_owner or test_actual_jvm_stale_peer_checks_cfg_and_typed_proof_references or test_actual_jvm_uncaptured_eol_drift or test_actual_jvm_overlapping_stale_peer or test_actual_javac_signature_change or test_overlapping_real_workers_do_not_overwrite_newer_publication or test_runtime_keeps_callable_and_framework_observations_and_legacy_import or test_runtime_import_validates_payload_once_and_rechecks_inputs_per_publication_step or test_v1_cli_rechecks_worker_before_graph or test_legacy_and_unproven_name_matches_never_gain_positive_evidence'
+```
+
+Úplná standardní sada této revize, běh mimo Linux a GitHub Actions mají při
+lokálním předání stav `NOT_RUN`.

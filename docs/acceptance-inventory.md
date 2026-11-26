@@ -139,7 +139,10 @@ vlastněnými zdroji. Nativní K1/K2 fixture obnovuje jeden modul, odebere
 staré compiler důkazy změněného nezávislého modulu a zachová důkaz kontrolního
 modulu. Kontroly společné cesty, classpath, smíšené anotace a pozdní změny
 pokrývají odmítnutí se zachováním grafu. Kontroly LF↔CRLF mimo zachycené
-vstupy ověřují běžnou i izolovanou publikaci. Celé W02-AC01 zůstává `PARTIAL`.
+vstupy ověřují běžnou i izolovanou publikaci. Nativní test
+`test_actual_jvm_stale_peer_checks_cfg_and_typed_proof_references` ověřuje
+typovaný `STALE` a shodné uložené bajty při neplatném CFG nebo závislosti
+framework či runtime důkazu na vyřazovaném kontextu. Celé W02-AC01 zůstává `PARTIAL`.
 [Přesné ověření a hranice](changes/185_publishIsolatedJvmContext.md).
 
 ## T045 — doplňující automatická kontrola PR

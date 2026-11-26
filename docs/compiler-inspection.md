@@ -1672,6 +1672,11 @@ pokrývá vstupy kontextu označeného v této publikaci jako `STALE`. Pozdní
 změna těchto bajtů, nejasné vlastnictví nebo propletené důkazy zachovají
 předchozí generaci a vrátí `STALE`.
 
+Kontrola vlastnictví zahrnuje odkazy v uloženém CFG, odkazy framework důkazů
+na compiler symboly, místa volání a zdroje i dvojici `call_site` a `receiver_type` v runtime
+důkazu v3. Porušený tvar nebo vazba na vyřazovaný kontext v zachovávaném
+důkazu vrátí `STALE` před zápisem. Ověřené nezávislé odkazy se zachovají.
+
 ```python
 from pathlib import Path
 from kgmaker.inspection import inspect_jvm

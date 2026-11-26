@@ -41,7 +41,7 @@ def _require_javac_worker():
         pytest.skip(str(error))
 
 
-def _native_jvm_peer_fixture(root, backend, *, overlap=False, edit_peer=True):
+def _native_jvm_peer_fixture(root, backend, *, overlap=False, edit_peer=True, control_class=False):
     try:
         argv = command('jvm', kotlin_backend=backend)
         stdlib = Path(argv[-1]).parent / 'lib' / 'kotlin-stdlib.jar'
@@ -58,10 +58,16 @@ def _native_jvm_peer_fixture(root, backend, *, overlap=False, edit_peer=True):
                                 f'package {module}\nfun target(value: Int): Int = value\n'
                                 'fun run(value: Int): Int = target(value)\n')
     java = _write(root, 'edited/src/main/java/Witness.java', 'package edited;\nclass Witness {}\n')
+    extra = {'edited': [java.relative_to(root).as_posix()]}
+    if overlap:
+        extra['selected'] = extra['edited']
+    if control_class:
+        path = 'control/src/main/java/Independent.java'
+        _write(root, path, 'package control;\nclass Independent {}\n')
+        extra['control'] = [path]
     model = {'source_sets': [
         {'module': module, 'id': 'main', 'scope': 'production',
-         'files': [file.relative_to(root).as_posix(), *(
-             [java.relative_to(root).as_posix()] if module == 'edited' or (overlap and module == 'selected') else [])]}
+         'files': [file.relative_to(root).as_posix(), *extra.get(module, [])]}
         for module, file in peers.items()]}
     options = {'repo_id': 'peers', 'project_model': model, 'kotlin_backend': backend,
                'classpath': [str(stdlib)]}
@@ -230,6 +236,84 @@ def test_actual_jvm_stale_peer_requires_unambiguous_runtime_proof_owner(tmp_path
                     inspect_jvm(tmp_path, module='selected', **options)
                 assert error.value.status == 'STALE' and _store_bytes(tmp_path) == previous
     assert resolutions == [1] * len(cases)
+
+
+def test_actual_jvm_stale_peer_checks_cfg_and_typed_proof_references(tmp_path):
+    options, _, _, initial = _native_jvm_peer_fixture(tmp_path, 'k1', control_class=True)
+    captures = {context['module']: context['id'] for context in initial.contexts
+                if context.get('analyzer_version')}
+    peer, control = captures['edited'], captures['control']
+    peer_site = next(item for item in initial.call_sites if item['context_id'] == peer)
+    control_site = next(item for item in initial.call_sites if item['context_id'] == control)
+    classes = {symbol['context_id']: symbol for symbol in initial.symbols
+               if symbol['kind'] == 'class' and str(symbol.get('path', '')).endswith('.java')}
+
+    def compiler_source(context_id):
+        symbol = classes[context_id]
+        return {'symbol_id': symbol['id'], 'sha256': symbol['sha256'],
+                'path': symbol['path'], 'context_id': context_id}
+
+    framework = {'kind': 'FRAMEWORK_DERIVED', 'relation': 'produces_bean',
+                 'context_ids': [control], 'source_file': control_site['path'], 'source_line': 3,
+                 'detail': 'Stored compiler provenance fixture', 'framework_rules': {}}
+    runtime = {'kind': 'RUNTIME_OBSERVED', 'relation': 'observed_dispatch_to', 'context_id': control,
+               'runtime_id': 'scope-reference-fixture', 'build_id': 'synthetic-build',
+               'scenario': '', 'async': False, 'observation_source': None}
+    control_cfg = next(cfg for cfg in initial.cfgs if cfg['context_id'] == control)
+    cases = {
+        'cfg-null': None,
+        'compiler-sources': {**framework, 'compiler_sources': [compiler_source(peer)]},
+        'compiler-symbol': {**framework, 'compiler_symbol_id': classes[peer]['id']},
+        'compiler-call-site': {**framework, 'compiler_symbol_id': peer_site['id']},
+        'runtime-call-site': {**runtime, 'call_site': peer_site['id'], 'receiver_type': classes[control]['id']},
+        'runtime-receiver': {**runtime, 'call_site': control_site['id'], 'receiver_type': classes[peer]['id']},
+        'independent-compiler': {**framework, 'compiler_sources': [compiler_source(control)],
+                                 'compiler_symbol_id': classes[control]['id']},
+        'independent-compiler-site': {**framework, 'relation': 'may_traverse_proxy',
+                                      'compiler_symbol_id': control_site['id']},
+        'independent-runtime': {**runtime, 'call_site': control_site['id'], 'receiver_type': classes[control]['id']},
+    }
+    outcomes, resolutions = {}, []
+    request = inspection.request_worker
+
+    def resolved_selected(*args, **kwargs):
+        response = request(*args, **kwargs)
+        resolutions.append(response['coverage']['calls_resolved'])
+        return response
+
+    for case, record in cases.items():
+        proof = None
+        if record is None:
+            stored = replace(initial, cfgs=[{**cfg, 'evidence_ids': None} if cfg == control_cfg else cfg
+                                           for cfg in initial.cfgs])
+        else:
+            record = {**record, 'source': control_site['caller'], 'target': control_site['declared_target']}
+            proof = {'id': 'evidence:' + digest(record), **record}
+            edge = Edge(record['source'], record['target'], record['relation'], evidence_kind=record['kind'],
+                        context_ids=(control,), evidence_ids=(proof['id'],))
+            stored = replace(initial, evidence=[*initial.evidence, proof], edges=[*initial.edges, edge])
+        store.save_graph(stored, tmp_path, generate_docs=False)
+        before = _store_bytes(tmp_path)
+        with patch.object(inspection, 'request_worker', resolved_selected):
+            try:
+                inspected = inspect_jvm(tmp_path, module='selected', **options)
+            except WorkerError as error:
+                outcomes[case] = (error.status, _store_bytes(tmp_path) == before)
+            except TypeError:
+                outcomes[case] = ('TypeError', _store_bytes(tmp_path) == before)
+            else:
+                assert inspected['exit_code'] == 0
+                after = store.load_graph(tmp_path)
+                assert _compiler_layer(after, peer)[0][0]['freshness'] == 'STALE'
+                assert proof is not None and proof in after.evidence and edge in after.edges
+                if record['kind'] == 'RUNTIME_OBSERVED':
+                    assert any(row.get('call_site') == record['call_site']
+                               and row.get('receiver_type') == record['receiver_type']
+                               for row in callees(after, control_site['caller'])['results'])
+                outcomes[case] = ('PUBLISHED', False)
+    assert resolutions == [1] * len(cases)
+    assert outcomes == {case: ('PUBLISHED', False) if case.startswith('independent-') else ('STALE', True)
+                        for case in cases}
 
 
 @pytest.mark.parametrize('retire_peer', [False, True], ids=['no-retirement', 'isolated-retirement'])
