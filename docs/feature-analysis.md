@@ -379,7 +379,9 @@ field needs a positive duration using hours, minutes or seconds, for example
 Put this object in the input's `availability_proof`. The checker resolves
 the record from the current selected graph and packet and revalidates the
 compiler assignment, both static field declarations, hook and order of both
-argument bindings. It also checks the ordered physical field transfer and
+argument bindings. The assignment may be on the hook line or the immediately
+preceding line. The checker uses the stored compiler hook reference to recover
+the exact hook line. It also checks the ordered physical field transfer and
 hook operands against the selected build artifacts. A fresh `PRESENT` can yield
 `PARTIAL` availability and `UNASSESSED` usability. A call-only record, `ABSENT`,
 expired proof, missing bytecode proof or mismatched mapping leaves availability

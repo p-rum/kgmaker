@@ -62,13 +62,18 @@ a absenci aktivních prvků a odkazů z dodaného textu. Reálný cílený běh 
 T021 (28), T023 (69) a jednu původní kontrolu fan-outu T028. SHA-256 JUnit
 `4dc00fea63063eca471d577114de3a6d0c912c0795442677d85caac10f4f09d0`.
 
+Tento místní doklad patří stromu `437cc36b71520e601b194d88f9b614e7303d8558`,
+který byl zveřejněn při otevření [draftu #183](https://github.com/p-rum/kgmaker/pull/183)
+jako head `ab02b75d254ce52b224086953fd59d22f817eec3` nad `c4a1edb5`.
+
 ## T035-S05 a AC06 — dokumentace a předání
 
 [README](../../README.md#local-technical-process-paths-t025) a
 [Python příklad](../process-paths.md#mermaid-for-a-supplied-processview-t035)
 ukazují cílové použití čistého rendereru. [Revize zadání](../tasks/T-035_render-business-process-mermaid.md),
 [acceptance](../acceptance-inventory.md#t035--mermaid-nad-dodaným-typovaným-processview)
-a [stavová matice](../production-analysis-progress.md) drží širší úkol odděleně
-od místního výřezu. Úplná sada, nezávislé review a hostované CI mají při tomto
-ověření stav NOT_RUN. Zbývá připojení CLI, autorita schválených popisků z T032
-(AC02) a navazující vysvětlení a export.
+a [stavová matice](../production-analysis-progress.md) vedou otevřený výřez
+ve stavu `PR_OPEN / PARTIAL`. Úplná sada, nezávislé review a hostované CI
+měly v uvedeném místním ověření stav NOT_RUN. T036 stále čeká na dodání T035.
+Zbývá připojení CLI, autorita schválených popisků z T032 (AC02) a navazující
+vysvětlení a export.

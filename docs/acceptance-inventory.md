@@ -260,9 +260,9 @@ Příkazy a přesné revize uvádí [change151](changes/151_preserveRuntimeObser
 
 | Acceptance | Ověření | Důkaz a rozsah |
 |---|---|---|
-| T003-S13-W03-AC01 | PARTIAL | `test_actual_java_value_presence_affects_only_matching_live_data_check` ověřuje čerstvý `PRESENT` mezi dvěma statickými Java `String` poli a schválené mapování. Pozorování doloží `PARTIAL/UNASSESSED` pro jeden běh. `ABSENT`, obyčejný call a prošlý vzorek nechají dostupnost `UNKNOWN`. |
+| T003-S13-W03-AC01 | PARTIAL | `test_actual_java_value_presence_affects_only_matching_live_data_check` ověřuje čerstvý `PRESENT` mezi dvěma statickými Java `String` poli a schválené mapování. Samostatné Javac varianty ověřují hook na stejném nebo následujícím řádku. Pozorování doloží `PARTIAL/UNASSESSED` pro jeden běh. `ABSENT`, obyčejný call a prošlý vzorek nechají dostupnost `UNKNOWN`. |
 | T003-S13-W03-AC02, AC03 | PARTIAL | `test_actual_java_value_requires_selected_physical_proof` ověřuje chybějící nebo nejednoznačný fyzický doklad a offline import se zachováním výstupů. Testy v4 pokrývají také jiné příjemce, nesprávná přiřazení, cizí konfiguraci, budoucí čas, zastaralý zdroj a zakázaná pole. Živé čtení znovu ověřuje zdrojovou vazbu, přímočarý bytecode pro přiřazení, fyzické operandy hooku a identifikátory běhu a služby. V1–v3 a graph/store v3 používají existující schémata. |
-| T003-S13-W03-AC04 | PARTIAL | [Změna 187](changes/187_bindRuntimeValuePresence.md) odkazuje na skutečnou fixture a výchozí revizi. Rozsah se týká živého čtení `data-check`. |
+| T003-S13-W03-AC04 | PARTIAL | [Původní ověření](changes/187_bindRuntimeValuePresence.md) a [kontrola následujícího řádku](changes/197_bindAdjacentRuntimeValueHook.md) odkazují na skutečnou fixture a výchozí revize. Rozsah se týká živého čtení `data-check`. |
 
 ## T051 — projektové workflows, 2026-11-15
 
@@ -1551,7 +1551,7 @@ See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
 | T035-AC03 | VERIFIED_IN_SCOPE | Golden a skutečný parser Mermaid 11.4.1 se SVG ověřují přesné vrcholy, orientované hrany a jejich násobnost, lanes a vazby na původní výskyty. |
 | T035-AC04 | VERIFIED_IN_SCOPE | Neplatný typ, cizí scope/kontext, nebezpečný obsah a překročený rozpočet odmítne čisté API. Vstup a poslední uložený artefakt zůstávají beze změny. |
 | T035-AC05 | VERIFIED_IN_SCOPE | Dokumenty `PARTIAL`, `TRUNCATED` a `UNKNOWN` zachovávají původní důkazy, hranice a hlášené vynechání. |
-| T035-AC06 | PARTIAL | První čisté Python API má místní cílené doklady. Další napojení, úplná sada a nezávislý verdikt mají samostatné doklady. [Change199](changes/199_renderSuppliedProcessMermaid.md). |
+| T035-AC06 | PARTIAL | První čisté Python API je v [draftu #183](https://github.com/p-rum/kgmaker/pull/183). Otevírací strom má 109 cílených PASS / 0 SKIP. Další napojení, úplná sada a nezávislý verdikt mají samostatný rozsah. [Přesný doklad](changes/199_renderSuppliedProcessMermaid.md). |
 
 
 ## T014 — current-parent descendant-result transfer
