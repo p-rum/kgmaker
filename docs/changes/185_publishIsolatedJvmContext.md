@@ -244,3 +244,42 @@ KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfDat
 
 Úplná standardní sada této revize, běh mimo Linux a GitHub Actions mají při
 lokálním předání stav `NOT_RUN`.
+
+## Přenos opravy po sloučení #170 — kroky 4 a 5
+
+První rodič je `7f72d203d42e060505be1412a5dda1431b5aae32` se stromem
+`d41adaa70021bcde782f777b2b7deb6d8ff6a770`. Druhý je skutečný `main`
+`18ce70a077f603f1800036dc97c38553f91a506a` se stromem
+`3cc6dd50abe1625d6411bdf0db4f6a47804aa07c`.
+Porovnání všech 441 vstupů kódu, workerů, nástrojů, fixture a testů má
+shodné Git objekty před a po #170. Složený strom má u těchto vstupů
+objekty prvního rodiče. Shoduje se i všech 455 nedokumentačních položek
+manifestu předchozí 57testové sady a všechny vstupy zkoušky CLI s manifestem.
+
+Zadání T050 a T053, registr a dokument změn mají přesné bajty druhého
+rodiče. Společné acceptance a stavová matice odpovídají nezávislému
+třícestnému sloučení. [Change186](186_reconcileInstallationCompletionInventory.md).
+Plán má 135 položek, 106 `MERGED` a 29 `PLANNED`. Každá položka včetně šesti
+kroků T050 a T053 i pořadí 32 úloh pro dispatch mají shodné hodnoty se
+skutečným `main`. T050-S02 a W02 mají `MERGED/PARTIAL`. W03 stále čeká, až
+W02 dosáhne `VERIFIED_IN_SCOPE`. SHA-256 výřezu plánu je
+`e7becf20140074a924524c5d2a4722b469c2b871321cd8ac6be7279fc9b5509b`.
+
+Čerstvá cílená sada s JDK 21.0.6+7 a oběma Kotlin workery má
+**17 PASS / 0 SKIP** za 175,05 s. Ověřila vlastnictví a tvary
+uložených důkazů, izolovanou publikaci, rollback a plánovač na společném
+vstupu. Pytest, sestavení manifestu a jeho porovnání mají exit 0.
+SHA-256 JUnit je `0f18c8dfa6db428c8d83c7b95c7134020176dfbc17c34e1558051da483bdcede` a shodné 581řádkové manifesty
+mají SHA-256 `dd07906700993b9e52c1f05cf59651db33543b579f7179b8dcdbb100f41d1072`.
+
+```bash
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData \
+  python -m pytest -n 2 --dist load --maxschedchunk=1 -q --tb=short -ra \
+    -p no:cacheprovider -o tmp_path_retention_policy=failed \
+    tests/test_reverse_dependency_index.py tests/test_completion.py \
+    -k 'test_completion or test_actual_jvm_stale_peer_checks_cfg_and_typed_proof_references or test_actual_jvm_isolated_stale_peer_publication_and_guards or test_actual_jvm_stale_peer_requires_unambiguous_runtime_proof_owner'
+```
+
+Graf zachovává všech 457 historických epizod obou rodičů. Úplná standardní
+sada společného stromu, běh mimo Linux a GitHub Actions mají při tomto
+lokálním předání stav `NOT_RUN`.

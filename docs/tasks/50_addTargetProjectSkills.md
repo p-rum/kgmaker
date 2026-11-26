@@ -29,10 +29,21 @@ commit/push/merge, nové modelové API či změna graph/store/packet schématu.
 
 ## Kroky, acceptance a ověření
 
-| Krok | Výstup | Acceptance |
-|---|---|---|
-| T050-S01 | Templates a návody pro pět samostatných workflow, spravované kopie, CLI init integrace s preflightem; README a návod. | T050-AC01, AC02, AC03 |
-| T050-S02 | Regrese ochrany souborů a parity, kontrola wheelu mimo checkout, validace skillů; change note, matice a acceptance inventář. | T050-AC01 až AC05 |
+### T050-S01 — Distribuce skillů a instalace
+
+- Závislosti: T046-S03 a T046-S04.
+
+Templates a návody pro pět samostatných workflow, spravované kopie, CLI init
+integrace s preflightem, README a návod. Pokrytí T050-AC01 až T050-AC03.
+
+### T050-S02 — Ověření cílových skillů
+
+- Závislosti: T050-S01.
+
+Regrese ochrany souborů a parity, kontrola wheelu mimo checkout, validace
+skillů, change note, matice a acceptance inventář. Pokrytí T050-AC01 až T050-AC05.
+
+### Kritéria ověření
 
 - **T050-AC01:** init v prázdném cíli vytvoří celý explicitní seznam skillů a
   references; bajty odpovídají templates. Wheel bez zdrojového checkoutu dodá totéž.
