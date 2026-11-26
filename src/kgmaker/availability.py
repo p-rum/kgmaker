@@ -13,6 +13,54 @@ from .analysis_model import AnalysisError, INPUT_METADATA
 from .dataflow import impact_paths
 
 
+def _approved_mapping(packet, item, target, decision_id):
+    answer = next((a for a in packet['answers'] if a['decision_id'] == decision_id), None)
+    if not answer or answer['approval_status'] != 'APPROVED':
+        raise AnalysisError('Positive availability needs an approved business mapping decision')
+    try:
+        decision = json.loads(answer['answer'])
+    except ValueError as exc:
+        raise AnalysisError('Mapping decision must contain structured JSON') from exc
+    requested = {key: item[key] for key in INPUT_METADATA}
+    if decision != {'input_id': item['id'], 'entity_id': target, 'metadata': requested}:
+        raise AnalysisError('Approved mapping does not match this exact input definition and metadata')
+    return requested
+
+
+def _freshness_seconds(value):
+    duration = re.fullmatch(r'PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?', value or '')
+    if duration and any(duration.groups()):
+        return sum(int(number or 0) * factor for number, factor in zip(duration.groups(), (3600, 60, 1)))
+    return None
+
+
+def _evaluate_runtime_presence(root, packet, item, proof, graph):
+    from .runtime_value import current_record, run_start, valid_proof_reference
+
+    if not valid_proof_reference(proof):
+        raise AnalysisError('Unsupported runtime presence proof fields')
+    if graph is None:
+        from .feature import graph_for_packet
+        graph = graph_for_packet(root, packet)
+    record = current_record(graph, packet, proof['runtime_evidence_id'])
+    if record.get('presence') != 'PRESENT':
+        raise AnalysisError('Runtime presence did not observe a populated reference')
+    source, target = record['source'], record['target']
+    if source not in packet['allowed_graph_ids'] or target not in packet['allowed_graph_ids'] or target not in item['source_ids']:
+        raise AnalysisError('Runtime presence must bind the exact selected input field')
+    requested = _approved_mapping(packet, item, target, proof['mapping_decision_id'])
+    if requested['data_type'] not in ('string', 'String', 'java.lang.String'):
+        raise AnalysisError('Runtime presence supports a mapped String input only')
+    max_age = _freshness_seconds(requested['freshness'])
+    age = (datetime.now(timezone.utc) - run_start(record.get('run_started_at'))).total_seconds()
+    if max_age is None or max_age <= 0 or not 0 <= age <= max_age:
+        raise AnalysisError('Runtime presence is stale or lacks an explicit supported freshness window', 3)
+    scope = (f"Runtime run {record['runtime_id']} for {record['service_id']} {record['service_version']} "
+             f"in context {record['context_id']} (evidence {record['id']})")
+    return {'availability': 'PARTIAL', 'usability': 'UNASSESSED', 'scope': scope,
+            'provenance': 'RUNTIME_PRESENCE_WITH_APPROVED_MAPPING'}
+
+
 def observation_staleness(candidate: dict) -> list[str]:
     result = []
     evidence = {e.get('id'): e for e in candidate.get('evidence', []) if isinstance(e, dict)}
@@ -40,6 +88,9 @@ def evaluate_proof(root, packet, candidate, item, graph=None) -> dict:
         raise AnalysisError('Positive availability requires a supported availability_proof')
     citations = {e['id']: e for e in candidate['evidence']}
     kind = proof.get('kind')
+    from .runtime_value import PROOF
+    if kind == PROOF:
+        return _evaluate_runtime_presence(root, packet, item, proof, graph)
     if kind == 'APPROVED_MISSING':
         if set(proof) != {'kind', 'decision_id', 'scope'}:
             raise AnalysisError('Invalid approved-missing proof fields')
@@ -115,16 +166,7 @@ def evaluate_proof(root, packet, candidate, item, graph=None) -> dict:
             raise ValueError('expired/future observation')
     except (KeyError, TypeError, ValueError) as exc:
         raise AnalysisError('Observation is stale or has invalid collection/freshness provenance') from exc
-    answer = next((a for a in packet['answers'] if a['decision_id'] == proof['mapping_decision_id']), None)
-    if not answer or answer['approval_status'] != 'APPROVED':
-        raise AnalysisError('Positive availability needs an approved business mapping decision')
-    try:
-        decision = json.loads(answer['answer'])
-    except ValueError as exc:
-        raise AnalysisError('Mapping decision must contain structured JSON') from exc
-    requested = {key: item[key] for key in INPUT_METADATA}
-    if decision != {'input_id': item['id'], 'entity_id': target, 'metadata': requested}:
-        raise AnalysisError('Approved mapping does not match this exact input definition and metadata')
+    requested = _approved_mapping(packet, item, target, proof['mapping_decision_id'])
     metadata = observation.get('metadata')
     if not isinstance(metadata, dict) or set(metadata) - set(INPUT_METADATA):
         raise AnalysisError('Observation metadata must use the InputRequirement contract')
@@ -143,10 +185,8 @@ def evaluate_proof(root, packet, candidate, item, graph=None) -> dict:
             raise AnalysisError('Input data type conflicts with the parsed source declaration')
     else:
         complete = False
-    freshness = requested.get('freshness')
-    duration = re.fullmatch(r'PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?', freshness or '')
-    if duration and any(duration.groups()):
-        seconds = sum(int(value or 0) * factor for value, factor in zip(duration.groups(), (3600, 60, 1)))
+    seconds = _freshness_seconds(requested.get('freshness'))
+    if seconds is not None:
         if maximum_age > seconds or age > seconds:
             raise AnalysisError('Observation freshness is weaker than the required freshness')
     else:

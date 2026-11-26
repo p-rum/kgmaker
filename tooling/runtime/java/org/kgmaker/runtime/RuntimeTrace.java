@@ -72,6 +72,23 @@ public final class RuntimeTrace {
             + ",\"target_descriptor\":" + quote(target.getDescriptor()) + "}");
     }
 
+    /** Place on the same source line immediately after the direct assignment. */
+    public void observeValuePresence(String source, String target) {
+        if (!enabled) return;
+        var caller = StackWalker.getInstance(Set.of(StackWalker.Option.RETAIN_CLASS_REFERENCE,
+            StackWalker.Option.SHOW_HIDDEN_FRAMES)).walk(stack -> stack.skip(1).findFirst());
+        if (source != target || caller.isEmpty() || caller.get().getLineNumber() <= 0) {
+            incomplete = true;
+            return;
+        }
+        var frame = caller.get();
+        record("{\"kind\":\"value_presence\",\"caller_owner\":" + quote(frame.getClassName())
+            + ",\"caller_name\":" + quote(frame.getMethodName())
+            + ",\"caller_descriptor\":" + quote(frame.getDescriptor())
+            + ",\"source_line\":" + frame.getLineNumber()
+            + ",\"presence\":\"" + (source == null ? "ABSENT" : "PRESENT") + "\"}");
+    }
+
     public <T> T bean(String factory, String beanType, Supplier<T> action) {
         if (!enabled) return action.get();
         String base = "{\"kind\":\"bean\",\"factory\":" + quote(factory) + ",\"bean_type\":" + quote(beanType);

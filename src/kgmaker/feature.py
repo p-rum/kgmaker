@@ -427,6 +427,11 @@ def apply(root: Path, analysis_id: str, candidate: dict) -> dict:
     result = validate(root, analysis_id, candidate)
     if not result["valid"]:
         return result
+    from .runtime_value import PROOF
+    if any(isinstance(item.get("availability_proof"), dict) and item["availability_proof"].get("kind") == PROOF
+           for item in candidate["input_requirements"]):
+        return {**result, "valid": False, "exit_code": 2,
+                "diagnostics": ["Runtime presence can be checked live with feature data-check. Its positive result cannot be applied."]}
     target = safe_path(root, f".kgmaker/analyses/{analysis_id}/analysis.json")
     if target.exists():
         previous = read_json(target)
