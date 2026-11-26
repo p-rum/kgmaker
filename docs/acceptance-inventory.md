@@ -44,8 +44,8 @@ Dodání MERGED v [#155](https://github.com/p-rum/kgmaker/pull/155) jako
 
 | Acceptance | Ověření | Důkaz a limit |
 |---|---|---|
-| T053-AC01 | VERIFIED_IN_SCOPE | Manifest skutečně instalovaných souborů, zachování cizího obsahu, idempotentní init a template páry |
-| T053-AC02 | VERIFIED_IN_SCOPE | Simulovaná změna distribuce ve všech kategoriích, nové/chybějící/retired výstupy, legacy otisky, zachování grafu a poznámek |
+| T053-AC01 | VERIFIED_IN_SCOPE | Manifest skutečně instalovaných souborů, zachování cizího obsahu, idempotentní init a template páry. [Pravidlo názvů v čisté instalaci](changes/181_useAssignedTaskNames.md). |
+| T053-AC02 | VERIFIED_IN_SCOPE | Simulovaná změna distribuce ve všech kategoriích, nové/chybějící/retired výstupy, legacy otisky, zachování grafu a poznámek. [Upgrade instrukcí názvů s manifestem i bez něj](changes/181_useAssignedTaskNames.md). |
 | T053-AC03 | VERIFIED_IN_SCOPE | Odstranění integrace a dat, opakovaný uninstall, přesné zachování cizích souborů a ignore bajtů; po review opravené převzetí legacy ignore při init (4 RED → GREEN) |
 | T053-AC04 | VERIFIED_IN_SCOPE | Dry-run a konflikty, vadný manifest, symlinky, rollback při I/O chybě, CLI s odděleným cwd/root. Windows upgrade a uninstall, živý reload hostitelů a crash scénáře NOT_RUN |
 

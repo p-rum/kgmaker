@@ -66,6 +66,9 @@ mají vlastní stav a ověření.
 [Kontrakty a příklady](project-installation.md) ·
 [Záznam kroků](changes/170_manageProjectInstallation.md) · [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
 
+Instalované instrukce pro Copilot a Junie používají přidělené ID úkolu
+s anglickým názvem za pomlčkou. Ověřeno při čistém init i při upgradu projektů
+s manifestem a se známým obsahem bez manifestu. [Změna a ověření](changes/181_useAssignedTaskNames.md).
 
 
 ## T052 — první běh dokončení 2026-11-19
