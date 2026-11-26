@@ -51,9 +51,14 @@ def _selected_trigger(graph, inventory, trigger_id):
     if len(contexts) != 1:
         _fail('TRIGGER_CONTEXT_MISMATCH', 'Trigger context is missing or ambiguous')
     context = contexts[0]; scope = inventory.scope
-    selected = any(row.get('context_id') == cid and row.get('status') == 'CURRENT'
-        for service in inventory.context_selection.get('services', {}).values()
-        for row in service.get('contexts', []))
+    selected = {}
+    for service_id, service in inventory.context_selection.get('services', {}).items():
+        # Keep unbound coverage rows of the selected service without importing
+        # another service or compiler context into this local process view.
+        rows = [row for row in service.get('contexts', []) if row.get('context_id') is None
+                or (row.get('context_id') == cid and row.get('status') == 'CURRENT')]
+        if any(row.get('context_id') == cid for row in rows):
+            selected[service_id] = {**service, 'contexts': rows}
     if (attrs.get('scope') != scope or context.get('scope') != scope
             or context.get('mode') not in ('BUILD_IMPORT', 'SYMBOL_RESOLVED')
             or context.get('freshness') not in ('CURRENT', 'CONTENT_VERIFIED', 'EXECUTION_BOUND') or not selected):
@@ -115,7 +120,8 @@ def _selected_trigger(graph, inventory, trigger_id):
                     and e.source_file == method.path and e.source_line == binding.get('source_line')
                     for e in graph.edges)):
             _fail('TRIGGER_PROOF_MISMATCH', 'Trigger declaration evidence no longer matches the supplied graph')
-    return trigger, context, method, {ref: deepcopy(proofs[ref]) for ref in trigger.evidence_refs}
+    selection = {**inventory.context_selection, 'services': selected}
+    return trigger, context, method, {ref: deepcopy(proofs[ref]) for ref in trigger.evidence_refs}, selection
 
 
 def _cfg_proofs(graph, context, nodes, symbols):
@@ -234,7 +240,7 @@ def _build_local_process(graph, trigger_inventory, trigger_id, *, process_id, re
         json.dumps(graph.to_dict(),allow_nan=False)
         graph = KnowledgeGraph.from_dict(deepcopy(graph.to_dict()))
         inventory = ViewDocument.from_dict(deepcopy(trigger_inventory.to_dict() if isinstance(trigger_inventory, ViewDocument) else trigger_inventory))
-        trigger, context, entry, provenance = _selected_trigger(graph, inventory, trigger_id)
+        trigger, context, entry, provenance, selection = _selected_trigger(graph, inventory, trigger_id)
         selected = project(graph, inventory.scope, context_id=context['id'])
         nodes = {n.id:n for n in selected.nodes}; symbols = {s['id']:s for s in selected.symbols}
         cfgs, cfg_proofs = _cfg_proofs(selected, context, nodes, symbols)
@@ -351,13 +357,13 @@ def _build_local_process(graph, trigger_inventory, trigger_id, *, process_id, re
     bound_snapshot['files']=snapshot['files']
     baseline=digest({'inventory':inventory.content_fingerprint,'graph':bound_snapshot,
         'trigger':trigger.id,'limits':[max_depth,max_nodes]})
-    view=ViewDocument(process_id,'process',baseline,VERSION,inventory.scope,deepcopy(inventory.context_selection),
+    view=ViewDocument(process_id,'process',baseline,VERSION,inventory.scope,selection,
         nodes=tuple(technical_nodes),edges=tuple(technical_edges),diagnostics=tuple(diagnostics),
         coverage={'status':'PARTIAL','truncated':bool(max_nodes==1 or report and report['truncated'])},
         provenance=tuple(provenance.values()),limits=('Static source topology; no observed execution or business equivalence.',
             'Input provider freshness is supplied; physical checkout is not read or refreshed.'))
     definition=ProcessDefinition.from_dict({'schema_version':1,'process_id':process_id,'revision':revision,
-        'baseline_fingerprint':baseline,'scope':inventory.scope,'context_selection':deepcopy(inventory.context_selection),
+        'baseline_fingerprint':baseline,'scope':inventory.scope,'context_selection':selection,
         'context_ids':[context['id']],'trigger_ids':[trigger.id],'semantic_review_status':'PROPOSED'})
     return ProcessView.from_dict({'schema_version':1,'process_id':process_id,'revision':revision,
         'definition':definition.to_dict(),'definition_fingerprint':definition.content_fingerprint,
