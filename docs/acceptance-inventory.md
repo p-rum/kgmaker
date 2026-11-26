@@ -1209,6 +1209,11 @@ pohled a T030 souhlasí na vybraném kontextu a vstupní graf, inventář a soub
 zůstávají shodné. Dříve čitelný ProcessView s cizím výběrem T030 stále odmítne.
 [Change190](changes/190_bindLocalProcessContext.md).
 
+Sloučený [#174](https://github.com/p-rum/kgmaker/pull/174) na `cb9848520b05`
+má 19 cílených PASS bez SKIP, včetně Javacu, Kotlin K1, striktní validace
+obálky výběru a čtení starších grafů. Širší T025 zůstává PARTIAL.
+[Doklad sloučení a kontroly](changes/192_recordLocalProcessContextMerge.md).
+
 ## T011 — typed HTTP consumer inventory
 
 AC01 lazy/static intent, AC02 dynamic URI/source identity, AC03 actual Feign and
@@ -1543,7 +1548,7 @@ See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
 | T034-AC03 | VERIFIED_IN_SCOPE | Stejný test ověřuje původní `flow render --view process` s Javac a CFG schema 1. |
 | T034-AC04 | VERIFIED_IN_SCOPE | Shoda bajtů vstupů, indexů a posledního validního JSON při chybném výběru, revizi, souboru, pinování a chybějícím původním indexu. Chybný výslovný pin druhé služby skončí u obou selektorů exit 2. Historický jinak platný ProcessView se stejným baseline skončí exit 3. |
 | T034-AC05 | VERIFIED_IN_SCOPE | Přesný kontext `orders`, scope, provenance a obě větve zůstávají v PARTIAL výsledku. Cizí scope nevydá JSON, `--strict` vydá stejný JSON s exit 4. |
-| T034-AC06 | PARTIAL | Výchozí CLI selhalo na chybějícím příkazu. Cílená sada s JDK21 a K1/K2 má 237 PASS / 0 SKIP. [Change193](changes/193_renderLocalProcess.md) uvádí výsledky kandidáta a zbývající release kontroly. |
+| T034-AC06 | PARTIAL | [PR #177](https://github.com/p-rum/kgmaker/pull/177) je sloučené do `main` na `a2adbe2e8666fbc76bf87b0aa2fd2be288bdf6bc`. Schválený head má 51 PASS / 0 SKIP a cílená sada na sloučeném stromu 16 PASS / 0 SKIP s Javac 21. Původní selhání při chybějícím příkazu a následných 237 PASS / 0 SKIP patří dřívějšímu výřezu. [Implementace](changes/193_renderLocalProcess.md) · [Přesný doklad](changes/196_recordProcessRenderMerge.md). |
 
 
 ## T014 — current-parent descendant-result transfer
@@ -1797,7 +1802,7 @@ reviewovaným rodičům PASS; runtime/W06 sady se tímto výsledkem znovu nedokl
 | T043-AC01, T043-AC02 | PARTIAL | Regrese ověřují nejdelší přípustný prefix CFG, sdílené hranice a počet návštěv hran při dvojnásobném větvení. Topologie 100 služeb a 10 000 vazeb má doložený uzlový a skokový limit. Proces zachovává přesnou hranici hloubky. CFG a proces ponechávají prvních 256 zdrojových diagnostik na seznam a zveřejňují počty vynechaných řádků. Souhrnný rozpočet velikosti reportu a vztahové pohledy zůstávají mimo doložený rozsah. |
 | T043-AC03 | VERIFIED_IN_SCOPE | Stejný syntetický vstup a shodné výstupy na stejném Cloud runneru. Cold, warm a maximum alokací Pythonu prošly relativní hranicí 25 %. [Měření a postup](changes/189_reduceBoundedCfgTraversal.md). |
 | T043-AC04, T043-AC05 | PARTIAL | Regrese ověřují neměnnost vstupu, shodu výstupu, původní ID, rozlišení kontextu a zobrazené výstupní hranice. Nadlimitní diagnostika zachovává důvody `UNKNOWN`, strukturální mezery a předchozí soubor při chybě. Ve zkoumaných reportech zůstává `NOT_OBSERVED`. |
-| T043-AC06 | PARTIAL | Opravu a její ověření sleduje [PR #173](https://github.com/p-rum/kgmaker/pull/173). [Change189](changes/189_reduceBoundedCfgTraversal.md). |
+| T043-AC06 | PARTIAL | [PR #173](https://github.com/p-rum/kgmaker/pull/173) je sloučené na `8290606eace7d7c94497cca143fa8e70c0042d38`. Nezávislá kontrola schváleného headu má 26 PASS / 0 SKIP, cílená sada na sloučeném stromu 33 PASS / 0 SKIP. [Implementace](changes/189_reduceBoundedCfgTraversal.md) · [Přesné doklady sloučení](changes/192_recordLocalProcessContextMerge.md#t043--sloučené-omezení-toku-a-diagnostiky). |
 
 ## T028 — Potential asynchronous process paths
 
