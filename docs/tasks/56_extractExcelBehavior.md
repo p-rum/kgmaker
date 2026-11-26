@@ -15,11 +15,23 @@
 
 ## Kroky a akceptace
 
-| Krok | Závislost | Akceptace |
-|---|---|---|
-| T056-S01 | T054 | **T056-AC01** Výstup obsahuje tři doložené zdroje syntetického 15listého sešitu včetně XLSX query table. Všechny tři lze sledovat přes mezilistové odkazy do výstupu. Podporovaný VBA HTTP požadavek má vazbu na čtení odpovědi, výpočet a výstup. |
-| T056-S02 | T056-S01 | **T056-AC02** Citace ukazují buňku, modul a řádek. Report popíše `IFERROR` a více možných přiřazení s podmínkami a hranicemi statické inference. Nejasná metadata ani běh sešitu se nepovažují za potvrzené výsledky. |
-| T056-S03 | T056-S02, T055 | **T056-AC03** Lokální `prepare` a `behavior --sheet` vytvoří report, zdrojové údaje jsou ve výchozím režimu redigované. Inventář, Jira šablona a export se nadále validují. Distribuovaný Copilot skill z reportu odvozuje konkrétní úlohy a příslušné testy. |
+### T056-S01 — Zdroje a doklady
+
+- Závislosti: T054-S01.
+
+**T056-AC01** Výstup obsahuje tři doložené zdroje syntetického 15listého sešitu včetně XLSX query table. Všechny tři lze sledovat přes mezilistové odkazy do výstupu. Podporovaný VBA HTTP požadavek má vazbu na čtení odpovědi, výpočet a výstup.
+
+### T056-S02 — Statická inference toku
+
+- Závislosti: T056-S01.
+
+**T056-AC02** Citace ukazují buňku, modul a řádek. Report popíše `IFERROR` a více možných přiřazení s podmínkami a hranicemi statické inference. Nejasná metadata ani běh sešitu se nepovažují za potvrzené výsledky.
+
+### T056-S03 — Příprava reportu a předání skillu
+
+- Závislosti: T056-S02, T055-S01, T055-S02 a T055-S03.
+
+**T056-AC03** Lokální `prepare` a `behavior --sheet` vytvoří report, zdrojové údaje jsou ve výchozím režimu redigované. Inventář, Jira šablona a export se nadále validují. Distribuovaný Copilot skill z reportu odvozuje konkrétní úlohy a příslušné testy.
 
 ## Kontrakty, hranice ověření a dokončení
 

@@ -1,3 +1,4 @@
+from dataclasses import replace
 import hashlib
 import json
 import os
@@ -9,7 +10,8 @@ from unittest.mock import patch
 import pytest
 
 from kgmaker import feature, inspection, store, workspace
-from kgmaker.analysis_model import AnalysisError, inventory_candidate, read_json, write_json
+from kgmaker.analysis_model import AnalysisError, digest, inventory_candidate, read_json, write_json
+from kgmaker.callgraph import callees
 from kgmaker.cli import main, scan
 from kgmaker.graph_provider import dependency_impact, validate_context_snapshot
 from kgmaker.inspection import command, inspect_jvm
@@ -176,6 +178,58 @@ def test_actual_jvm_overlapping_stale_peer_still_aborts(tmp_path):
     with pytest.raises(WorkerError, match='source/config inputs changed') as error:
         inspect_jvm(tmp_path, module='selected', **options)
     assert error.value.status == 'STALE' and _store_bytes(tmp_path) == previous
+
+
+def test_actual_jvm_stale_peer_requires_unambiguous_runtime_proof_owner(tmp_path):
+    options, _, _, initial = _native_jvm_peer_fixture(tmp_path, 'k1')
+    ids = {context['module']: context['id'] for context in initial.contexts
+           if context.get('analyzer_version')}
+    peer, control = ids['edited'], ids['control']
+    site = next(item for item in initial.call_sites if item['context_id'] == control)
+    request = inspection.request_worker
+    resolutions = []
+
+    def resolved_selected(*args, **kwargs):
+        response = request(*args, **kwargs)
+        resolutions.append(response['coverage']['calls_resolved'])
+        return response
+
+    # Use the runtime importer's stored evidence shape over real compiler nodes.
+    # The capture is intentionally unbound and has no runtime execution receipt.
+    cases = [({'context_id': peer}, False, False),
+             ({'context_id': control, 'context_ids': None}, False, False),
+             ({'context_id': control, 'context_ids': [peer]}, False, False),
+             ({'context_id': control}, True, False),
+             ({'context_id': control}, False, True)]
+    for fields, peer_endpoint, allowed in cases:
+        nodes, target = initial.nodes, site['declared_target']
+        if peer_endpoint:
+            node = Node('runtime:stored-endpoint', 'method', 'stored endpoint', '<runtime>',
+                        scope='production', metadata={'context_id': peer})
+            nodes, target = [*nodes, node], node.id
+        record = {'kind': 'RUNTIME_OBSERVED', 'source': site['caller'], 'target': target,
+                  'relation': 'observed_dispatch_to', 'runtime_id': 'scope-fixture',
+                  'build_id': 'synthetic-build', 'scenario': '', 'async': False,
+                  'observation_source': None, **fields}
+        proof = {'id': 'evidence:' + digest(record), **record}
+        edge = Edge(record['source'], record['target'], record['relation'], evidence_kind='RUNTIME_OBSERVED',
+                    context_ids=(control,), evidence_ids=(proof['id'],))
+        stored = replace(initial, nodes=nodes, evidence=[*initial.evidence, proof], edges=[*initial.edges, edge])
+        store.save_graph(stored, tmp_path, generate_docs=False)
+        previous = _store_bytes(tmp_path)
+        with patch.object(inspection, 'request_worker', resolved_selected):
+            if allowed:
+                assert inspect_jvm(tmp_path, module='selected', **options)['exit_code'] == 0
+                after = store.load_graph(tmp_path)
+                assert proof in after.evidence and edge in after.edges
+                assert _compiler_layer(after, peer)[0][0]['freshness'] == 'STALE'
+                assert any(row['kind'] == 'RUNTIME_OBSERVED' and row['evidence_ids'] == [proof['id']]
+                           for row in callees(after, site['caller'])['results'])
+            else:
+                with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+                    inspect_jvm(tmp_path, module='selected', **options)
+                assert error.value.status == 'STALE' and _store_bytes(tmp_path) == previous
+    assert resolutions == [1] * len(cases)
 
 
 @pytest.mark.parametrize('retire_peer', [False, True], ids=['no-retirement', 'isolated-retirement'])

@@ -85,3 +85,62 @@ W02-AC01 zůstává `PARTIAL`. Obnova přes CLI `--manifest`, sdílené rozsahy,
 frontend a selektivní přepis dalších druhů důkazů a revizí mají vlastní
 ověření. Úplná standardní sada, skutečný běh mimo Linux a GitHub Actions
 mají při předání stav `NOT_RUN`.
+
+## Přenos po sloučení #167 a #166 — kroky 3 až 5
+
+První rodič `76a343c6140ebe2feabcd31936b16c3b1b2cde88` nese předchozí
+ověřenou JVM publikaci. Druhý rodič je skutečný `main`
+`80db9cb63b07ca653c53801406823eb5fb61e339` se stromem
+`eb814f7bad157e5166d45909490497a95bbbb298`. Runtime zdroj, Java nástroj,
+fixture a testy mají bajty druhého rodiče, stejně jako Excel registry
+#167. Společné README, compiler dokumentace a inventáře mají přesné
+sloučení obou rodičů. Historie grafu zachovává všech 448 předchozích epizod.
+[Change182](182_bindRuntimeInterfaceDispatch.md), [Change183](183_reconcileExcelCompletionInventory.md).
+
+Nezávislý K1 test na prvním rodiči našel dva případy v načitatelném
+uloženém grafu s runtime tvarem důkazu. Hrana aktivního kontextu si
+ponechala důkaz s vlastníkem v právě vyřazeném kontextu, když pole
+vlastníka bylo jednotné `context_id`. Výslovné `context_ids: null` vyvolalo
+`TypeError` po úspěšném výpočtu workeru. SHA-256 výsledků reprodukce je
+`d86a34d1d177a9bf38a77de998e03789336e563d706625f8f1916badf54e1715` a
+`dec72788ed962451fa02ebdebf11ad10f7cba97a84d178de773ab6472e254d91`.
+
+`graph_provider.py` nyní bere v úvahu obě uložené podoby kontextového
+vlastníka důkazu i typovaného vlastníka uzlu v metadata. Chybné nebo
+rozporné pole vlastníka a důkaz vyřazovaného modulu na nezávislé hraně
+zachovají předchozí generaci s `STALE`. Odpovídající nezávislý doklad se
+zachová. Kontrola používá skutečný K1 worker, jeho compiler graf a záměrně
+sestavené uložené runtime záznamy pro test tvaru a vazby vlastníka. Nativní
+runtime import v tomto nebuildovém API rozsahu má samostatné ověření.
+
+Čerstvá cílená sada společného stromu má **21 PASS / 0 SKIP** za 157,07 s
+se skutečnými Javacem 21.0.6+7, K1 a K2. Ověřila uvedené tvary vlastníka,
+nezávislý doklad také v `callees`, izolovanou publikaci a rollback po
+pozdní změně raw zdroje, běžnou pozdní změnu LF→CRLF mimo capture,
+tranzitivní callery, souběh skutečných workerů a plánovač. Pytest,
+sestavení a porovnání manifestu mají exit 0. SHA-256 JUnit je
+`19f9a51930a5552321c2e84739ed1280cfafbc41c77d94c5bfb371cf9b711f82`.
+Shodné 576řádkové manifesty mají SHA-256
+`a840a0d7e3d373ebf3511658dde5bf1b524d749dac00f5482f6d0b6fcaaeb30b`.
+
+Skutečná kontrola `kgmaker inspect code --manifest` s deklarovaným
+manifestem a K1 vrací při zastaralém jiném modulu `STALE`, exit 3,
+a zachovává uloženou generaci. Po offline `scan` následná inspekce uspěla.
+SHA-256 JSON kontroly je
+`befa35952c0e442cdfb228585ae0377bdf2a51c419987e86f070544bb47f4dd4`.
+Plán načetl 129 položek, z toho 100 `MERGED` a 29 `PLANNED`.
+S10-W02 a S13-W02 mají `MERGED/PARTIAL` a S10-W03 čeká na ověření W02.
+SHA-256 výřezu plánu je
+`a897e4f4826749e76dba7bca0beda974aecd0ea98e03d601849811f395a5182f`.
+
+```bash
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData \
+  python -m pytest -n 2 --dist load --maxschedchunk=1 -q --tb=short -ra \
+    -p no:cacheprovider -o tmp_path_retention_policy=failed \
+    tests/test_reverse_dependency_index.py tests/test_completion.py \
+    tests/test_stage_content_cache_actual.py \
+    -k 'test_completion or test_actual_jvm_isolated_stale_peer or test_actual_jvm_overlapping_stale_peer or test_actual_javac_signature_change or test_actual_jvm_uncaptured_eol_drift or test_overlapping_real_workers_do_not_overwrite_newer_publication or test_actual_jvm_stale_peer_requires_unambiguous_runtime_proof_owner'
+```
+
+Úplná standardní sada společného stromu, skutečný běh mimo Linux a GitHub
+Actions mají při lokálním předání stav `NOT_RUN`.

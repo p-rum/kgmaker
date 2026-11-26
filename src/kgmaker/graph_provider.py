@@ -402,32 +402,58 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
     return result
 
 
+def _proof_owners(proof: dict) -> set[str] | None:
+    """Read compiler arrays and the runtime importer's singular owner."""
+    plural = proof.get('context_ids', [])
+    if not isinstance(plural, (list, tuple)) or any(not isinstance(item, str) or not item for item in plural):
+        return None
+    owners = set(plural)
+    if len(owners) != len(plural):
+        return None
+    if 'context_id' not in proof:
+        return owners
+    singular = proof['context_id']
+    if not isinstance(singular, str) or not singular:
+        return None
+    if 'context_ids' in proof and owners != {singular}:
+        return None
+    return {singular}
+
+
 def _isolated_peer_evidence(graph: KnowledgeGraph, context: dict) -> bool:
     if graph.analysis_annotations:
         return False
     peer = context['id']
     paths = context['source_files'].keys()
     other_ids = {item['id'] for item in _compiler_contexts(graph) if item['id'] != peer}
-    peer_nodes = {node.id for node in graph.nodes if node.path in paths}
-    peer_nodes.update(item['id'] for item in [*graph.symbols, *graph.call_sites]
-                      if item.get('context_id') == peer)
-    peer_evidence = {item['id'] for item in graph.evidence if peer in item.get('context_ids', [])
-                     or item.get('source_file') in paths or item.get('source') in peer_nodes
-                     or item.get('target') in peer_nodes}
+    known_ids = {item['id'] for item in graph.contexts if isinstance(item.get('id'), str)}
+    peer_nodes = {item['id'] for item in [*graph.symbols, *graph.call_sites] if item.get('context_id') == peer}
+    for node in graph.nodes:
+        metadata = node.metadata if node.metadata is not None else {}
+        if not isinstance(metadata, dict):
+            return False
+        support = _proof_owners(metadata)
+        if support is None or not support <= known_ids or (peer in support and support != {peer}):
+            return False
+        if node.path in paths or peer in support:
+            peer_nodes.add(node.id)
+    peer_evidence = set()
+    for item in graph.evidence:
+        support = _proof_owners(item)
+        source, target, path = (item.get(key) for key in ('source', 'target', 'source_file'))
+        if (support is None or not support <= known_ids
+                or any(value is not None and not isinstance(value, str) for value in (source, target, path))):
+            return False
+        if peer in support or source in peer_nodes or target in peer_nodes or path in paths:
+            if other_ids.intersection(support) or (peer in support and support != {peer}):
+                return False
+            peer_evidence.add(item['id'])
     for edge in graph.edges:
         if peer in edge.context_ids and edge.context_ids != (peer,):
             return False
         if other_ids.intersection(edge.context_ids) and (
                 edge.source in peer_nodes or edge.target in peer_nodes or edge.source_file in paths
                 or peer_evidence.intersection(edge.evidence_ids)):
-            return False
-    for item in graph.evidence:
-        support = item.get('context_ids', [])
-        if peer in support and support != [peer]:
-            return False
-        if other_ids.intersection(support) and (
-                item.get('source') in peer_nodes or item.get('target') in peer_nodes
-                or item.get('source_file') in paths):
             return False
     for site in graph.call_sites:
         if site.get('context_id') in other_ids and (

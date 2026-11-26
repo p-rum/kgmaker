@@ -15,11 +15,23 @@
 
 ## Implementace a akceptace
 
-| Krok | Akceptace |
-|---|---|
-| **T055-S01** | **T055-AC01** `excel migrate prepare` nad dvěma sešity vytvoří packet se šablonou a úplný seznam subjektů. Přímý výběr spojuje pouze zadané jedinečné názvy. Bez `--include-source` packet vynechá hodnoty, vzorce a makrotext. |
-| **T055-S02** | **T055-AC02** `excel migrate export` použije validátor a Jira šablonu z T054. Z platného kandidáta vytvoří Markdown, CSV a mapování. Zastaralé zdroje, nevalidní kandidát a kolize výstupu chrání předchozí soubory. |
-| **T055-S03** | **T055-AC03** `init` a `upgrade` doručí shodný skill. Příkazový postup projde nad skutečným statickým workerem bez spuštění maker. Zákaz je uvedený přímo v instalovaném skillu. |
+### T055-S01 — Výběr a příprava
+
+- Závislosti: T054-S01.
+
+**T055-AC01** `excel migrate prepare` nad dvěma sešity vytvoří packet se šablonou a úplný seznam subjektů. Přímý výběr spojuje pouze zadané jedinečné názvy. Bez `--include-source` packet vynechá hodnoty, vzorce a makrotext.
+
+### T055-S02 — Validace a export
+
+- Závislosti: T054-S02 a T054-S03.
+
+**T055-AC02** `excel migrate export` použije validátor a Jira šablonu z T054. Z platného kandidáta vytvoří Markdown, CSV a mapování. Zastaralé zdroje, nevalidní kandidát a kolize výstupu chrání předchozí soubory.
+
+### T055-S03 — Instalace a používání skillu
+
+- Závislosti: T050-S01, T053-S01, T053-S02, T055-S01 a T055-S02.
+
+**T055-AC03** `init` a `upgrade` doručí shodný skill. Příkazový postup projde nad skutečným statickým workerem bez spuštění maker. Zákaz je uvedený přímo v instalovaném skillu.
 
 Dokončení zahrnuje regresní kontroly CLI a instalace, skutečný Java worker a
 uživatelský příklad. Hostitelské chování Copilotu a živý Jira import mají vlastní
