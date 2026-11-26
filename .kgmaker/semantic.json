@@ -310862,9 +310862,9 @@
     },
     {
       "base_commit": "fd8d5e958bf45b67775c04f78e817cc7d41ebfe9",
-      "head_commit": "fd8d5e958bf45b67775c04f78e817cc7d41ebfe9",
-      "worktree_fingerprint": "c12727a0928e80c8ac543d9a3fcad392a01f9af1cc63a9f2ec16732dcf1aa673",
-      "title": "Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06",
+      "head_commit": "71f9fdc77e3f6012ad4b54a7efc3ca19150c1de9",
+      "worktree_fingerprint": "7d00f0abd105a99f67f3223bf4bbc0a7078f36712faf552fdcb1310d7f69afa6",
+      "title": "Record merged topology Markdown and scoped runtime evidence",
       "changed_files": [
         {
           "path": "docs/acceptance-inventory.md",
@@ -311107,10 +311107,7 @@
         "section:docs/production-analysis-progress.md:T055 — Copilot skill pro migraci Excelu, 2026-11-25::32",
         "section:docs/production-analysis-progress.md:T056 — Funkce a toky dat v Excelu, 2026-11-25::3",
         "section:docs/production-analysis-progress.md:Větve bez PR a historický PR4::380",
-        "section:docs/production-analysis-progress.md:W07/T014 — first-call purity correction (note108)::1566",
-        "workbook:fixtures/excel-migration/Rates.xlsx:Rates.xlsx",
-        "workbook_cell:fixtures/excel-migration/Rates.xlsx:Rates!B2",
-        "workbook_sheet:fixtures/excel-migration/Rates.xlsx:Rates"
+        "section:docs/production-analysis-progress.md:W07/T014 — first-call purity correction (note108)::1566"
       ],
       "graph_delta": {
         "added": [
@@ -311121,11 +311118,7 @@
           "section:docs/changes/201_recordTopologyMarkdownMerge.md:T022 / #179::14",
           "section:docs/changes/201_recordTopologyMarkdownMerge.md:Záznam sloučení Markdown topologie a dílčího důkazu S13-W03::1"
         ],
-        "removed": [
-          "workbook:fixtures/excel-migration/Rates.xlsx:Rates.xlsx",
-          "workbook_cell:fixtures/excel-migration/Rates.xlsx:Rates!B2",
-          "workbook_sheet:fixtures/excel-migration/Rates.xlsx:Rates"
-        ],
+        "removed": [],
         "changed": []
       },
       "validations": [
@@ -311142,7 +311135,7 @@
           "status": "passed"
         }
       ],
-      "id": "episode:bdea0bde38c63d96632b92d36ea37e529a275431c788da2be154402f8d32b51f"
+      "id": "episode:2277d3720a783602b37feb637d102f0dd90c7eb24a1efb3a96b106ac60913c96"
     }
   ]
 }
