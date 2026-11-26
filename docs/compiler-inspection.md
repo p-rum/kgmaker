@@ -1665,6 +1665,8 @@ call sites. V2 pozorování `call` a `dispatch` vyžadují volatelné symboly
 obou konců ve vybraném compiler kontextu. V3 `interface_dispatch` přidává
 `call_site` a `receiver_type`, když skutečný Java stack frame označí jedinou
 instrukci `INTERFACE` a cíl odpovídá statickému kandidátovi stejného kontextu.
+Každá fyzická instrukce volání volající metody musí mít řádek svázaný s jejím
+bytecode. Chybějící pozice omezuje v3 pozorování pro danou metodu.
 Pozorování zachová všechny statické kandidáty. Import ověří čerstvost také
 při publikaci grafu. Původ dokladů opakovaného importu uvádí
 [kontrakt runtime importu](runtime-trace.md#opakovaný-import-a-navigace).

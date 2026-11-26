@@ -175,7 +175,11 @@ v RuntimeManifestu v2 i společně s `interface_dispatch` ve v3.
 
 Pro důkaz musí mít vybraný `EXECUTION_BOUND` JVM kontext aktuální bytecode.
 Signatura volající metody a řádek musí označit jedinou instrukci volání
-`INTERFACE`. Zaznamenaný příjemce musí být konkrétní třída z vybraných Java
+`INTERFACE`. Všechny fyzické instrukce volání ve volající metodě musí mít
+kladné číslo řádku svázané s vybraným bytecode. Pokud compiler graf například
+u `INVOKEDYNAMIC` řádek neobsahuje, capture i offline import vrátí
+`RUNTIME_DISPATCH_SITE` pro tuto metodu a zachovají poslední výstupy.
+Zaznamenaný příjemce musí být konkrétní třída z vybraných Java
 zdrojů a cíl její přímá implementace ve statických kandidátech daného místa.
 Nejednoznačný řádek, cizí typ nebo neshodná signatura vedou k odmítnutí.
 Podporovaný vzorek dokládá vstup do metody instrumentované aplikace. Jde o

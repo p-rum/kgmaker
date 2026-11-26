@@ -67,6 +67,7 @@ class _InterfaceDispatch:
         self.symbols = symbols
         self.classes = defaultdict(list)
         self.sites = defaultdict(list)
+        self.unlocated_callers = set()
         self.candidates = {}
         for item in symbols.values():
             if item.get("kind") == "class" and item["id"] in nodes and self._java_source(item):
@@ -75,7 +76,13 @@ class _InterfaceDispatch:
             caller = symbols.get(site.get("caller"), {})
             if (site.get("context_id") == context["id"] and site.get("representation") == "BYTECODE"
                     and caller.get("kind") == "bytecode_method"):
-                self.sites[(*_jvm_signature(caller), site.get("source_line"))].append(site)
+                signature = _jvm_signature(caller)
+                line = site.get("source_line")
+                if (type(line) is not int or line <= 0
+                        or site.get("artifact_hashes") != context["bytecode_artifacts"]):
+                    self.unlocated_callers.add(signature)
+                else:
+                    self.sites[(*signature, line)].append(site)
 
     def _java_source(self, symbol: dict) -> bool:
         path = symbol.get("path")
@@ -87,6 +94,8 @@ class _InterfaceDispatch:
                 for field in _INTERFACE_DISPATCH_FIELDS - {"kind", "source_line"})):
             raise AnalysisError("RUNTIME_DISPATCH_FACT: invalid frame or receiver identity", 3)
         caller = fact["caller_owner"], fact["caller_name"], fact["caller_descriptor"]
+        if caller in self.unlocated_callers:
+            raise AnalysisError("RUNTIME_DISPATCH_SITE: selected caller has an instruction without a bound source line", 3)
         sites = self.sites.get((*caller, line), ())
         if len(sites) != 1:
             raise AnalysisError("RUNTIME_DISPATCH_SITE: expected one selected interface instruction at the frame line", 3)
@@ -95,7 +104,7 @@ class _InterfaceDispatch:
         mapped_callers = [self.symbols.get(identity, {}) for identity in physical.get("source_mapping_ids", ())]
         if (site.get("invocation_kind") != "INTERFACE" or site.get("evidence_kind") != "SYMBOL_RESOLVED"
                 or physical.get("synthetic") or physical.get("bridge")
-                or site.get("artifact_hashes") != self.context["bytecode_artifacts"] or len(mapped_callers) != 1
+                or len(mapped_callers) != 1
                 or mapped_callers[0].get("kind") != "method" or not self._java_source(mapped_callers[0])
                 or _jvm_signature(mapped_callers[0]) != caller):
             raise AnalysisError("RUNTIME_DISPATCH_SITE: missing selected Java caller proof", 3)

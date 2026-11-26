@@ -571,8 +571,9 @@ kgmaker runtime produce --root PROJECT --context CONTEXT_ID --runtime-id run-1 \
 
 Jde o explicitně instrumentovaný JDK21/POSIX rozsah. `observeInterfaceDispatch(this)`
 uvnitř přímé implementace Java rozhraní umožní uložit pozorovaný typ příjemce a
-přesné místo synchronního volání. RuntimeManifest v3 vznikne pouze s tímto
-typem důkazu. Formáty v1 a v2 zůstávají použitelné a `PARTIAL/UNKNOWN` se
+přesné místo synchronního volání. Volající metoda musí mít v compiler grafu
+zachycené řádky všech fyzických instrukcí volání. RuntimeManifest v3 vznikne
+pouze s tímto typem důkazu. Formáty v1 a v2 zůstávají použitelné a `PARTIAL/UNKNOWN` se
 nepovýší. Výstupy jsou omezeny na `.kgmaker/runtime/*.json` a stdout.
 [Příklad instrumentace](docs/runtime-trace.md#synchronní-dispatch-java-rozhraní).
 [Změna a provedené kontroly](docs/changes/122_runtimeTraceProducer.md).

@@ -474,6 +474,40 @@ def test_jdk21_interface_dispatch_rejects_indistinguishable_sites_before_capture
     assert saved(root) == before
 
 
+@pytest.mark.parametrize("method", ["concatenate", "lambda"])
+@pytest.mark.parametrize("operation", ["produce", "import"])
+def test_jdk21_interface_dispatch_rejects_unlocated_instruction_in_same_caller(jdk_dispatch, method, operation):
+    from kgmaker.store import GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE
+
+    root, argv, contexts = jdk_dispatch
+    context = contexts["alpha"]
+    graph = load_graph(root)
+    _, (interface,) = selected_dispatch_sites(graph, context, method)
+    dynamic, = [site for site in graph.call_sites if site["caller"] == interface["caller"]
+                and site.get("invocation_kind") == "INVOKEDYNAMIC"]
+    assert dynamic.get("source_line") is None
+    assert dynamic["instruction_index"] != interface["instruction_index"]
+    options = dispatch_options(context)
+    manifest = produce_manifest(root, [*argv, "alpha", "direct"], **options, output=ARTIFACT)
+    assert manifest["schema_version"] == 3 and manifest["facts"][0]["caller_name"] == "invoke"
+    argv = [*argv, "alpha", method]
+    path_bytes = {path: (root / path).read_bytes() for path in (GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE, ARTIFACT)}
+    if operation == "produce":
+        with pytest.raises(AnalysisError, match="^RUNTIME_DISPATCH_SITE"):
+            produce_manifest(root, argv, **options, output=ARTIFACT)
+    else:
+        env = {**os.environ, "KGMAKER_RUNTIME_TRACE": "1"}
+        raw = subprocess.run(argv, cwd=root, env=env, capture_output=True, check=True).stdout
+        capture = json.loads(raw)
+        fact, = capture["facts"]
+        assert fact["caller_name"] == method and fact["source_line"] == interface["source_line"]
+        manifest.update(capture, producer={"command_fingerprint": digest(argv), "opt_in": True})
+        with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+            with pytest.raises(AnalysisError, match="^RUNTIME_DISPATCH_SITE"):
+                import_manifest(root, manifest)
+    assert {path: (root / path).read_bytes() for path in path_bytes} == path_bytes
+
+
 def test_jdk21_interface_dispatch_revalidates_sanitized_fact_offline(jdk_dispatch):
     root, argv, contexts = jdk_dispatch
     context = contexts["alpha"]

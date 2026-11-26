@@ -101,3 +101,38 @@ python -m pytest -q -p no:cacheprovider --tb=short \
   tests/test_build_aware.py tests/test_availability.py \
   -k 'interface_dispatch or runtime_import_validates_payload_once or runtime_keeps_callable or runtime_observation_stays_visible or runtime_import_is_bound_to_context or actual_maven_public_runtime or concurrency'
 ```
+
+## Oprava po nezávislém review #166
+
+T003-S13-W02-AC01 a AC03. Obě nezávislé revize commitu
+`8941f62d7c00f1b5f838e6ec35af406ea4cdb835` doložily chybějící řádek
+`INVOKEDYNAMIC` v compiler grafu. Skutečný `javap` zařadil volání přes
+rozhraní a konkatenaci nebo vytvoření lambdy na stejný řádek. Původní
+capture i offline import tato pozorování přijaly. Nová sledovaná regrese
+na tomto výchozím kódu skončila raw exit 1 se 4 očekávanými FAIL, 0 SKIP,
+93 položkami mimo výběr a 50,17 s. JUnit SHA-256
+`7809d6e71b8fbe0029225bfd264b01262da4b7a6ebccbb83161916e16c9ff3b9`.
+Záznam s offsety z `javap` a pozicemi z workeru má SHA-256
+`a98d01cc8d65aa7d881f40d904ff708a8628be5ddd8cb751e2935454f8b1ac73`.
+
+Při průchodu compiler instrukcemi označí `_InterfaceDispatch` přesnou
+signaturu volajícího, pokud některá instrukce má chybějící, nekladný nebo
+nesvázaný řádek. Capture i offline import v3 pro takovou metodu vrátí
+`RUNTIME_DISPATCH_SITE` před publikací. Jiná metoda může doložit svoji
+jednoznačnou instrukci ve stejném compiler kontextu. Import si vystačí
+s existujícím JVM worker protokolem a verzemi RuntimeManifestu v1–v3.
+
+Na opraveném kódu prošlo 16 cílených testů bez chyb nebo přeskočení za
+108,65 s. Mimo výběr bylo 86 položek. Běh s Temurin JDK 21.0.6+7 a
+povinným JVM workerem ověřil oba zamítnuté tvary v capture i importu,
+stejné bajty grafu, views a artefaktu, kladné Java kontroly ve stejném
+výběru a skutečný Maven 3.9.9 s legacy v2 deklarovanou konfigurací.
+JUnit SHA-256 `0cb09a511cfc0fedf440a61d3c2ff95b1957d76efa1716ecebe28533b439d079`.
+Shodné manifesty vstupů mají SHA-256
+`5b54ac670672e110480dc57613a7410b1d8fa6c7f13375e98199dc8da9c783e8`.
+
+```sh
+python -m pytest -q -p no:cacheprovider --tb=short \
+  tests/test_runtime_trace_producer.py tests/test_build_aware.py \
+  -k 'interface_dispatch or runtime_import_validates_payload_once or runtime_keeps_callable or runtime_observation_stays_visible or runtime_import_is_bound_to_context or actual_maven_public_runtime'
+```

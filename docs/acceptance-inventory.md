@@ -216,7 +216,7 @@ Příkazy a přesné revize uvádí [change151](changes/151_preserveRuntimeObser
 | Acceptance | Ověření | Důkaz a rozsah |
 |---|---|---|
 | T003-S13-W02-AC01 | VERIFIED_IN_SCOPE | `test_jdk21_interface_dispatch_binds_concrete_receiver_and_call_site` používá dvě skutečné Java implementace, dva vybrané compiler kontexty, CLI capture a offline import. `callgraph callees` ukáže přesný bytecode call site, cílovou metodu a příjemce. Oba statické kandidáty zachovává. |
-| T003-S13-W02-AC02, AC03 | VERIFIED_IN_SCOPE | `test_jdk21_interface_dispatch_revalidates_sanitized_fact_offline` pokrývá neplatné údaje, cizí konfiguraci, přidaná pozorování a vydávání v3 factu za v2. Další testy ověřují dvě instrukce na témže řádku, zastaralý zdroj před spuštěním a obnovu výstupů po změně bytecode v průběhu publikace. |
+| T003-S13-W02-AC02, AC03 | VERIFIED_IN_SCOPE | `test_jdk21_interface_dispatch_revalidates_sanitized_fact_offline` pokrývá neplatné údaje, cizí konfiguraci, přidaná pozorování a vydávání v3 factu za v2. `test_jdk21_interface_dispatch_rejects_unlocated_instruction_in_same_caller` ověřuje odmítnutí skutečné konkatenace a lambdy s chybějícím řádkem `INVOKEDYNAMIC` v capture i offline importu se zachováním grafu, pohledů a artefaktu. Další testy ověřují dvě instrukce na témže řádku, zastaralý zdroj před spuštěním a obnovu výstupů po změně bytecode v průběhu publikace. |
 | T003-S13-W02-AC04 | PARTIAL | [Change182](changes/182_bindRuntimeInterfaceDispatch.md) zaznamenává baseline a ověření přesného rozsahu. Širší receiver/type kontrakt a T003-AC13 zůstávají PARTIAL. |
 
 ## T051 — projektové workflows, 2026-11-15

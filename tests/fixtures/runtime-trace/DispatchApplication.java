@@ -40,15 +40,28 @@ public final class DispatchApplication {
         return service.greet() + ((Alpha) service).greet();
     }
 
+    static int concatenate(Service service) {
+        String text = "v=" + service.greet();
+        return text.charAt(2) - '0';
+    }
+
+    static int lambda(Service service) {
+        Runnable deferred = () -> {}; int value = service.greet();
+        return value;
+    }
+
     public static void main(String[] args) {
         boolean alpha = "alpha".equals(args[0]);
         Service service = alpha ? new Alpha() : new Beta();
         int result = switch (args[1]) {
             case "ambiguous" -> ambiguous(service);
             case "mixed" -> mixed(service);
+            case "concatenate" -> concatenate(service);
+            case "lambda" -> lambda(service);
             default -> invoke(service);
         };
-        if (result != (alpha ? 1 : 2) * ("direct".equals(args[1]) ? 1 : 2)) {
+        boolean repeated = "ambiguous".equals(args[1]) || "mixed".equals(args[1]);
+        if (result != (alpha ? 1 : 2) * (repeated ? 2 : 1)) {
             throw new IllegalStateException("The selected receiver did not execute");
         }
         TRACE.writeTo(System.out);
