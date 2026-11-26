@@ -156,9 +156,16 @@ framework či runtime důkazu na vyřazovaném kontextu. Celé W02-AC01 zůstáv
 fyzickém odstranění zachyceného a stále výhradně deklarovaného vstupu.
 Nativní K1 a K2 zachovají celý nezávislý důkaz, čtecí report ukáže pouze
 doloženého volajícího a návrat souboru během výměny výstupů obnoví předchozí
-generaci. Překryv vlastnictví, nedostupná cesta nebo smíšené změny nedodají
-důkaz odstranění. W02-AC01 zůstává `PARTIAL`.
+generaci. Překryv vlastnictví, nedostupná cesta, změna konfigurace nebo
+přidání vstupu neposkytnou důkaz odstranění. W02-AC01 zůstává `PARTIAL`.
 [Ověření odstranění JVM vstupu](changes/194_retireDeletedCompilerPeer.md).
+
+`test_actual_jvm_retirement_after_mixed_owned_peer_changes` ověřuje na K1 i K2
+současné smazání a úpravu zachycených vstupů téhož izolovaného kontextu.
+Důvod `STALE` zahrnuje obě cesty, nezávislý kontrolní kontext se zachová a
+nová cesta vyvolá odmítnutí. Návrat smazaného souboru nebo změna bajtů
+přežívajícího souboru po první výměně výstupu obnoví poslední platnou generaci.
+[Ověření kombinované změny](changes/200_retireMixedOwnedCompilerInputs.md).
 
 `test_explicit_composite_fk_columns_join_historical_migration_operations`
 ověřuje uložené sloupce složeného cizího klíče, přesné cesty operací,

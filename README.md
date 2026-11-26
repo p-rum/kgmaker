@@ -1396,7 +1396,9 @@ Při explicitním volání Python API `inspect_jvm` s oddělenými moduly může
 nová inspekce zveřejnit vybraný kontext ve stejné generaci, v níž označí
 prokazatelně zastaralý nezávislý kontext jako `STALE`. To zahrnuje dříve
 zachycený smazaný vstup, který má v modelu uvedenou cestu a jediného
-vlastníka. Platné důkazy dalších modulů se zachovají.
+vlastníka, i současnou úpravu jiného zachyceného vstupu téhož modulu.
+Při této kombinaci důvod `STALE` uvede smazané i změněné cesty. Platné důkazy
+dalších modulů se zachovají.
 [Podporovaný rozsah a příklad API](docs/compiler-inspection.md#obnova-izolovaného-jvm-kontextu).
 
 ### Doklad skutečného testovacího běhu (T047-S10)

@@ -1664,15 +1664,18 @@ inventory for freshness checks.
 Python API `inspect_jvm` s explicitním `project_model` může publikovat nový
 vybraný modul i tehdy, když jinému modulu už při začátku inspekce nesedí
 bajty zachyceného `.java` nebo `.kt` souboru. Model musí doložit výhradní
-vlastnictví všech zachycených souborů bez překryvu. Při změně bajtů musí
-souhlasit seznam cest. Samostatným podporovaným případem je pouze odstranění
-zachycených vstupů vyjmenovaných v `files` nezměněného modelu. Uložená
-generace musí doložit otisk a stejného jediného vlastníka každé smazané cesty.
+vlastnictví všech zachycených souborů bez překryvu. Původní compiler vstupy
+téhož modulu mohou mít nové bajty, mohou fyzicky chybět nebo mohou nastat oba
+případy. Seznam cest může zůstat stejný nebo se zmenšit. U smazané cesty
+vyjmenované v `files` nezměněného modelu musí uložená generace doložit její
+otisk a stejného jediného vlastníka. Přežívající změněný compiler vstup musí
+aktuální scanner načíst se shodným vlastnictvím a otiskem nových bajtů.
 Podporovaný případ používá
 stejnou distribuci workeru a classpath omezený na její obsahově ověřené
 knihovny. Stará compiler evidence dotčeného modulu se vyřadí a v grafu
 zůstane záznam `STALE_COMPILER_CONTEXT` s důvodem. Vybraný a ostatní platné
-kontexty se ověří před atomickou publikací. Opětovná kontrola bajtů navíc
+kontexty se ověří před atomickou publikací. Při souběhu obou změn diagnostika
+uvádí smazané i změněné cesty. Opětovná kontrola bajtů navíc
 pokrývá vstupy kontextu označeného v této publikaci jako `STALE` a u smazaného
 vstupu vyžaduje jeho fyzickou nepřítomnost. Pozdní změna bajtů nebo návrat
 souboru, nejasné vlastnictví nebo propletené důkazy zachovají
@@ -1699,7 +1702,8 @@ inspect_jvm(Path("./service"), module="shipping", project_model=project_model)
 Tento rozsah platí pro publikující volání bez `build_context`, explicitního
 výběru `sources` a bytecode výstupů. CLI s manifestem, frontend a sdílené
 moduly mají vlastní omezení. [Ověření změny bajtů](changes/185_publishIsolatedJvmContext.md) ·
-[Ověření odstranění vstupu](changes/194_retireDeletedCompilerPeer.md).
+[Ověření odstranění vstupu](changes/194_retireDeletedCompilerPeer.md) ·
+[Ověření kombinované změny](changes/200_retireMixedOwnedCompilerInputs.md).
 
 ## Pozorované hrany a statické cesty
 
