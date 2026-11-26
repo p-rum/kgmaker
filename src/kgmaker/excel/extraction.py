@@ -131,14 +131,21 @@ def _close_block(blocks, text):
     match = BLOCK_END.match(text)
     if not match:
         return
-    kind = match[1].casefold()
+    kind = " ".join(match[1].casefold().split())
+    closures = 1
+    if kind == "next":
+        counters = text[match.end():].split(",")
+        if all(SYMBOL.fullmatch(counter.strip()) for counter in counters):
+            closures = len(counters)
     kind = "if" if kind == "end if" else "select" if kind == "end select" else (
         "for" if kind == "next" else "loop" if kind == "loop" else "while"
     )
     for index in range(len(blocks) - 1, -1, -1):
-        if blocks[index] == kind:
+        if blocks[index][0] == kind:
             del blocks[index:]
-            return
+            closures -= 1
+            if not closures:
+                return
 
 
 def vba_observations(inventory, owner, proc):
@@ -210,8 +217,6 @@ def vba_observations(inventory, owner, proc):
                 tokens = {match[1].casefold() for match in VALUE_TOKEN.finditer(action)}
                 if not non_mutating:
                     _forget_opaque_writes(tokens, variables, clients, requests)
-            if block_start:
-                blocks.append(block_start)
             continue
         rhs = vba.mask(expression)
         functions = sorted({match[1] for match in vba.FUNCTION_CALL.finditer(rhs)}, key=str.casefold)
@@ -220,6 +225,12 @@ def vba_observations(inventory, owner, proc):
                              operators=operators(rhs), functions=functions, conditional=branch_flow)
         operations[index] = item
         inventory.link(owner, item, "contains")
+        if blocks:
+            kind, previous = blocks[-1]
+            inventory.link(item, previous, "guarded-by")
+            if ((kind == "if" and re.match(r"^\s*Else(?:If)?\b", text, re.I))
+                    or (kind == "select" and re.match(r"^\s*Case\b", text, re.I))):
+                blocks[-1] = (kind, item)
         alternatives = {}
         tokens = sorted({match[1].casefold() for match in VALUE_TOKEN.finditer(rhs)})
         for token in tokens:
@@ -276,7 +287,7 @@ def vba_observations(inventory, owner, proc):
             elif not non_mutating:
                 literals.clear()
         if block_start:
-            blocks.append(block_start)
+            blocks.append((block_start, item))
     if proc.kind == "function":
         for result in variables.get(proc.name.casefold(), ())[-MAX_ALTERNATIVES:]:
             inventory.link(owner, result, "returns")
