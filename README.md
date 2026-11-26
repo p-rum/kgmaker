@@ -1015,6 +1015,19 @@ proof during scope projection. The process definition and technical view carry
 the selected trigger's current compiler context, including when the workspace
 inventory has several services. See [API, selected-snapshot proof and limits](docs/process-paths.md).
 
+Render one current local technical process as JSON from an exact T024 trigger
+and an existing workspace. The second command revalidates the caller-supplied
+view against the same workspace and selects its exact `process_id`.
+
+```bash
+kgmaker process render --workspace workspace.json --entry "$ENTRY_ID" --format json > process.json
+kgmaker process render --workspace workspace.json --process "$PROCESS_ID" --process-view process.json
+```
+
+Use the same `--scope` and `--context-selection` for both commands when supplying
+them. IDs, evidence and incomplete boundaries are preserved. See
+[read-only process render options and limits](docs/process-paths.md#read-only-process-render-t034).
+
 ### Kafka interface catalogue
 
 The pure [Kafka catalogue](docs/kafka-interfaces.md) projects explicit upstream
@@ -1117,7 +1130,8 @@ PROPOSED candidate template for existing targets. It preserves selected identity
 provenance and uncertainty, reports complete serialized cost/mandatory overflow,
 and hash-omits raw labels, documentation and proof/configuration prose. It performs
 no model/compiler/file I/O or apply. See [contract and privacy limits](docs/process-label-packets.md).
-T031 adds explicit validation and T032 adds local review below; T034 CLI remains planned.
+T031 adds explicit validation and T032 adds local review below. CLI packet
+preparation remains planned.
 
 ## Project templates, test proposals and delivery traceability
 
@@ -1184,7 +1198,7 @@ candidate, documents=(), conflicts=())` rederives the complete current T030 pack
 before checking proposed labels, descriptions, references and grouping. Invalid
 input returns fixed-code diagnostics; valid proposals remain PROPOSED and
 PENDING/CONFLICT for review. No apply, model/API, file I/O or technical changes.
-See [the Python contract](docs/process-annotations.md). T034 CLI remains pending.
+See [the Python contract](docs/process-annotations.md). CLI annotation validation remains pending.
 
 ### Explicit local process review (T032; merged PR78)
 
@@ -1195,7 +1209,7 @@ Stored context selections retain the exact coverage and diagnostic hashes from t
 packet. An invalid initial predecessor fails before creating coordination state.
 See [API, limits and recovery](docs/process-review-store.md) and the
 [verified merge of the normalized-context repair](docs/changes/152_recordNormalizedProcessReviewMerge.md).
-The T034 lifecycle CLI remains planned. Reviewer identity is locally declared.
+CLI apply and review remain planned. Reviewer identity is locally declared.
 
 ### Explicit process catalog (T033; merged PR79)
 

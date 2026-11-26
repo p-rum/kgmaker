@@ -2,8 +2,8 @@
 
 - Task ID: `T034`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-26
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T027](T-027_cross-http-process-boundary.md); [T028](T-028_cross-async-process-boundary.md); [T029](T-029_project-process-failures.md); [T030](T-030_prepare-process-label-packet.md); [T031](T-031_validate-process-annotations.md); [T032](T-032_persist-process-review.md); [T033](T-033_catalog-business-processes.md).
@@ -14,6 +14,15 @@
 ## Cíl a hranice samostatné dodávky
 
 CLI životního cyklu procesů. Výstupem tohoto úkolu je jediný otestovatelný kontrakt popsaný níže. Lze jej sloučit samostatně po splnění deklarovaných závislostí; není nutné dokončit celý T004. Závislosti neimplementuj skrytě v tomto PR. Při chybějícím upstream kontraktu zapiš BLOCKED a odkaz na konkrétní chybějící AC; fallback je povolen pouze jako přiznaný PARTIAL/UNKNOWN, pokud splní všechna zdejší kritéria.
+
+Revize 2 umožňuje dílčí čtecí dodávku T034-S01/S02 před dokončením celého cyklu.
+Opírá se o výběr workspace a pinů T019 a existující lokální modely T023–T025.
+JSON render bere explicitní workspace a buď přesné `--entry`, nebo přesné
+`--process` s dodaným `--process-view`. Ověří celý kanonický obsah proti stejnému
+provideru. Jde o první výřez T034-AC01. Dohledání revize ve store má samostatný rozsah.
+T034-AC02, ostatní příkazy a formáty mají původní závislosti a zůstávají otevřené.
+[Kontrakt výřezu](../process-paths.md#read-only-process-render-t034) ·
+[Důkaz a omezení](../changes/193_renderLocalProcess.md).
 
 ## Podrobný rozsah a implementační kroky
 
