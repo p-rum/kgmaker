@@ -316,33 +316,41 @@ def test_invalid_process_output_never_mutates_store_or_artifact(project, code):
     assert saved(project) == before
 
 
-@pytest.fixture(scope="module")
-def jdk_application(tmp_path_factory):
-    from kgmaker.inspection import inspect_jvm
-    from kgmaker.worker_protocol import WorkerError
-    root = tmp_path_factory.mktemp("runtime-jdk21")
+def compile_runtime_fixture(tmp_path_factory, temp_name, application):
+    root = tmp_path_factory.mktemp(temp_name)
     java_home = Path(os.environ.get("JAVA_HOME", "/usr/lib/jvm/java-21-openjdk-amd64"))
     java, javac = java_home / "bin/java", java_home / "bin/javac"
     if not java.is_file() or not javac.is_file():
         pytest.skip("JDK21 runtime producer fixture requires actual java and javac")
     src = root / "src/main/java"
     src.mkdir(parents=True)
-    shutil.copy(ROOT / "tests/fixtures/runtime-trace/TraceApplication.java", src)
+    shutil.copy(ROOT / "tests/fixtures/runtime-trace" / application, src)
     shutil.copy(ROOT / "tooling/runtime/java/org/kgmaker/runtime/RuntimeTrace.java", src)
     classes = root / "classes"
     classes.mkdir()
     subprocess.run([str(javac), "--release", "21", "-d", str(classes), *map(str, src.glob("*.java"))],
                    check=True, capture_output=True)
+    return root, java, classes
+
+
+def inspect_runtime_fixture(root, classes, build_id, config):
+    from kgmaker.inspection import inspect_jvm
+    from kgmaker.worker_protocol import WorkerError
     try:
-        result = inspect_jvm(root, home=Path(os.environ.get("KGMAKER_WORKERS_HOME", ROOT / "workers")),
-                             bytecode_roots=[str(classes)], build_context={"build_id": "fixture-build",
-                             "config_fingerprint": digest({"fixture_mode": "enabled"}), "freshness": "EXECUTION_BOUND"})
+        return inspect_jvm(root, home=Path(os.environ.get("KGMAKER_WORKERS_HOME", ROOT / "workers")),
+                           bytecode_roots=[str(classes)], build_context={"build_id": build_id,
+                               "config_fingerprint": config, "freshness": "EXECUTION_BOUND"})["context"]
     except WorkerError as error:
         if os.environ.get("KGMAKER_REQUIRE_WORKERS") == "1":
             pytest.fail(str(error))
         pytest.skip(str(error))
+
+
+@pytest.fixture(scope="module")
+def jdk_application(tmp_path_factory):
+    root, java, classes = compile_runtime_fixture(tmp_path_factory, "runtime-jdk21", "TraceApplication.java")
+    selected = inspect_runtime_fixture(root, classes, "fixture-build", digest({"fixture_mode": "enabled"}))
     graph = load_graph(root)
-    selected = result["context"]
     symbols = {s["name"]: s["id"] for s in graph.symbols if (s.get("path") or "").endswith("TraceApplication.java")}
     ids = [symbols[name] for name in ("main", "createService", "TraceApplication$Service", "enabled", "greet")]
     argv = [str(java), "-cp", str(classes), "fixture.TraceApplication", *ids]
@@ -374,6 +382,186 @@ def test_actual_jdk21_capture_is_opt_in_and_records_only_executed_branch(jdk_app
     manifest = produce_manifest(root, argv, **opts)
     assert {f["kind"] for f in manifest["facts"]} == {"bean", "condition"}
     assert next(f for f in manifest["facts"] if f["kind"] == "condition")["matched"] is False
+
+
+@pytest.fixture(scope="module")
+def jdk_dispatch(tmp_path_factory):
+    root, java, classes = compile_runtime_fixture(tmp_path_factory, "runtime-dispatch", "DispatchApplication.java")
+    contexts = {variant: inspect_runtime_fixture(root, classes, "dispatch-" + variant, digest({"variant": variant}))
+                for variant in ("alpha", "beta")}
+    assert contexts["alpha"]["id"] != contexts["beta"]["id"]
+    (root / ARTIFACT).parent.mkdir(exist_ok=True)
+    return root, [str(java), "-cp", str(classes), "fixture.DispatchApplication"], contexts
+
+
+def selected_dispatch_sites(graph, context, method):
+    symbols = {item["id"]: item for item in graph.symbols if item["context_id"] == context["id"]}
+    sites = [site for site in graph.call_sites if site["context_id"] == context["id"]
+             and site.get("invocation_kind") == "INTERFACE" and site.get("representation") == "BYTECODE"
+             and symbols[site["caller"]].get("owner") == "fixture.DispatchApplication"
+             and symbols[site["caller"]].get("name") == method]
+    return symbols, sites
+
+
+def dispatch_options(context):
+    return {**OPTIONS, "context_id": context["id"], "build_id": context["build_id"],
+            "config_fingerprint": context["config_fingerprint"], "runtime_id": context["build_id"]}
+
+
+@pytest.mark.parametrize("variant", ["alpha", "beta"])
+def test_jdk21_interface_dispatch_binds_concrete_receiver_and_call_site(jdk_dispatch, variant, capsys):
+    from kgmaker.callgraph import adjacency, callees
+    from kgmaker.cli import build_parser
+    from kgmaker.inspection_cli import run
+
+    root, argv, contexts = jdk_dispatch
+    context = contexts[variant]
+    command_args = [*argv, variant, "direct"]
+    env = {key: value for key, value in os.environ.items() if key != "KGMAKER_RUNTIME_TRACE"}
+    assert subprocess.run(command_args, cwd=root, env=env, capture_output=True, check=True).stdout == b""
+    graph = load_graph(root)
+    symbols, (site,) = selected_dispatch_sites(graph, context, "invoke")
+    options = dispatch_options(context)
+    args = ["runtime", "produce", "--root", str(root), "--context", options.pop("context_id"), "--output", str(ARTIFACT)]
+    for key, value in options.items():
+        args.extend(("--" + key.replace("_", "-"), value))
+    assert run(build_parser().parse_args([*args, "--", *command_args])) == 0
+    manifest = json.loads(capsys.readouterr().out)
+    assert json.loads((root / ARTIFACT).read_bytes()) == manifest
+    assert manifest["schema_version"] == 3 and manifest["observations"] == [] and manifest["status"] == "PARTIAL"
+    fact, = manifest["facts"]
+    expected_receiver = "fixture.DispatchApplication$" + variant.capitalize()
+    assert fact["receiver_type"] == fact["target_owner"] == expected_receiver
+    assert fact["source_line"] == site["source_line"]
+    assert fact["caller_descriptor"] == symbols[site["caller"]]["descriptor"]
+    assert not any(key in json.dumps(fact) for key in ("argument", "value", "outcome", "exception"))
+    assert manifest["source_hashes"] == context["source_files"]
+    with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+        assert run(build_parser().parse_args(["runtime", "import", "--root", str(root),
+                                              "--manifest", str(root / ARTIFACT)])) == 0
+    assert json.loads(capsys.readouterr().out)["observations_imported"] == 1
+    updated = load_graph(root)
+    receiver, = [symbol for symbol in symbols.values() if symbol.get("kind") == "class"
+                 and symbol.get("owner") == expected_receiver]
+    runtime, = [edge for edge in updated.edges if edge.evidence_kind == "RUNTIME_OBSERVED"
+                and edge.context_ids == (context["id"],)]
+    proof, = [record for record in updated.evidence if record["id"] in runtime.evidence_ids]
+    assert proof["call_site"] == site["id"] and proof["receiver_type"] == receiver["id"]
+    assert proof["config_fingerprint"] == context["config_fingerprint"]
+    assert runtime.target in site["dispatch_candidates"] and symbols[runtime.target]["owner"] == expected_receiver
+    assert {symbols[item]["owner"].rsplit("$", 1)[-1] for item in site["dispatch_candidates"]} == {"Alpha", "Beta"}
+    assert adjacency(updated, include_runtime=False) == adjacency(graph, include_runtime=False)
+    observed, = [row for row in callees(updated, runtime.source)["results"] if row["kind"] == "RUNTIME_OBSERVED"]
+    assert observed["call_site"] == site["id"] and observed["receiver_type"] == receiver["id"]
+    assert not observed["dispatch_complete"]
+
+
+@pytest.mark.parametrize("method", ["ambiguous", "mixed"])
+def test_jdk21_interface_dispatch_rejects_indistinguishable_sites_before_capture_publication(jdk_dispatch, method):
+    root, argv, contexts = jdk_dispatch
+    context = contexts["alpha"]
+    graph = load_graph(root)
+    _, (interface, *_) = selected_dispatch_sites(graph, context, method)
+    sites = [site for site in graph.call_sites if site["caller"] == interface["caller"]]
+    assert len(sites) == 2 and sites[0]["source_line"] == sites[1]["source_line"]
+    assert sites[0]["instruction_index"] != sites[1]["instruction_index"]
+    assert {site["invocation_kind"] for site in sites} == (
+        {"INTERFACE"} if method == "ambiguous" else {"INTERFACE", "VIRTUAL"})
+    (root / ARTIFACT).write_bytes(b"prior capture\n")
+    before = saved(root)
+    with pytest.raises(AnalysisError, match="RUNTIME_DISPATCH_SITE"):
+        produce_manifest(root, [*argv, "alpha", method], **dispatch_options(context), output=ARTIFACT)
+    assert saved(root) == before
+
+
+@pytest.mark.parametrize("method", ["concatenate", "lambda"])
+@pytest.mark.parametrize("operation", ["produce", "import"])
+def test_jdk21_interface_dispatch_rejects_unlocated_instruction_in_same_caller(jdk_dispatch, method, operation):
+    from kgmaker.store import GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE
+
+    root, argv, contexts = jdk_dispatch
+    context = contexts["alpha"]
+    graph = load_graph(root)
+    _, (interface,) = selected_dispatch_sites(graph, context, method)
+    dynamic, = [site for site in graph.call_sites if site["caller"] == interface["caller"]
+                and site.get("invocation_kind") == "INVOKEDYNAMIC"]
+    assert dynamic.get("source_line") is None
+    assert dynamic["instruction_index"] != interface["instruction_index"]
+    options = dispatch_options(context)
+    manifest = produce_manifest(root, [*argv, "alpha", "direct"], **options, output=ARTIFACT)
+    assert manifest["schema_version"] == 3 and manifest["facts"][0]["caller_name"] == "invoke"
+    argv = [*argv, "alpha", method]
+    path_bytes = {path: (root / path).read_bytes() for path in (GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE, ARTIFACT)}
+    if operation == "produce":
+        with pytest.raises(AnalysisError, match="^RUNTIME_DISPATCH_SITE"):
+            produce_manifest(root, argv, **options, output=ARTIFACT)
+    else:
+        env = {**os.environ, "KGMAKER_RUNTIME_TRACE": "1"}
+        raw = subprocess.run(argv, cwd=root, env=env, capture_output=True, check=True).stdout
+        capture = json.loads(raw)
+        fact, = capture["facts"]
+        assert fact["caller_name"] == method and fact["source_line"] == interface["source_line"]
+        manifest.update(capture, producer={"command_fingerprint": digest(argv), "opt_in": True})
+        with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+            with pytest.raises(AnalysisError, match="^RUNTIME_DISPATCH_SITE"):
+                import_manifest(root, manifest)
+    assert {path: (root / path).read_bytes() for path in path_bytes} == path_bytes
+
+
+def test_jdk21_interface_dispatch_revalidates_sanitized_fact_offline(jdk_dispatch):
+    root, argv, contexts = jdk_dispatch
+    context = contexts["alpha"]
+    manifest = produce_manifest(root, [*argv, "alpha", "direct"], **dispatch_options(context), output=ARTIFACT)
+    _, (other,) = selected_dispatch_sites(load_graph(root), context, "alternative")
+    fact, = manifest["facts"]
+    before = saved(root)
+    for field, wrong, code in (
+        ("source_line", other["source_line"], "RUNTIME_DISPATCH_SITE"),
+        ("receiver_type", "fixture.DispatchApplication$Unknown", "RUNTIME_DISPATCH_RECEIVER"),
+        ("target_owner", "fixture.DispatchApplication$Beta", "RUNTIME_DISPATCH_TARGET"),
+        ("target_descriptor", "()V", "RUNTIME_DISPATCH_TARGET"),
+    ):
+        with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+            with pytest.raises(AnalysisError, match=code):
+                import_manifest(root, {**manifest, "facts": [{**fact, field: wrong}]})
+        assert saved(root) == before
+    with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+        with pytest.raises(AnalysisError, match="configuration fingerprint"):
+            import_manifest(root, {**manifest, "config_fingerprint": contexts["beta"]["config_fingerprint"]})
+        with pytest.raises(AnalysisError, match="no supplied observations"):
+            import_manifest(root, {**manifest, "observations": [{"caller": "x", "target": "y", "kind": "dispatch"}]})
+        with pytest.raises(AnalysisError, match="missing or unsupported fields"):
+            import_manifest(root, {**manifest, "schema_version": 2})
+    assert saved(root) == before
+
+
+def test_jdk21_interface_dispatch_rejects_stale_inputs_before_launch(jdk_dispatch):
+    root, argv, contexts = jdk_dispatch
+    context = contexts["alpha"]
+    (root / ARTIFACT).write_bytes(b"prior capture\n")
+    before = saved(root)
+    command_args = [*argv, "alpha", "direct"]
+    source = root / "src/main/java/DispatchApplication.java"
+    original = source.read_bytes()
+    with patch("subprocess.Popen", side_effect=AssertionError("Stale capture spawned a process")):
+        with pytest.raises(AnalysisError, match="configuration fingerprint"):
+            produce_manifest(root, command_args, **{
+                **dispatch_options(context), "config_fingerprint": contexts["beta"]["config_fingerprint"],
+            }, output=ARTIFACT)
+        try:
+            source.write_bytes(original + b"\n// stale probe\n")
+            with pytest.raises(AnalysisError, match="STALE_RUNTIME: source changed"):
+                produce_manifest(root, command_args, **dispatch_options(context), output=ARTIFACT)
+        finally:
+            source.write_bytes(original)
+    assert saved(root) == before
+
+
+def test_jdk21_interface_dispatch_rolls_back_if_bytecode_changes_during_publication(jdk_dispatch, monkeypatch, capsys):
+    root, argv, contexts = jdk_dispatch
+    produce_manifest(root, [*argv, "alpha", "direct"], **dispatch_options(contexts["alpha"]), output=ARTIFACT)
+    changed = Path(argv[2]) / "fixture/DispatchApplication.class"
+    assert_runtime_import_rolls_back_before_graph(root, changed, "STALE_INDEX: classpath", monkeypatch, capsys)
 
 
 @pytest.mark.skipif(os.name != "posix", reason="Explicit Maven and runtime execution require POSIX")

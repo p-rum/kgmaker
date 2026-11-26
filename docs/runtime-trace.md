@@ -1,4 +1,4 @@
-# Explicitní runtime capture — T003-S13-W01
+# Explicitní runtime capture — T003-S13-W01 a W02
 
 Dodán je omezený synchronní producer pro **JDK 21 na POSIX**, zdroj
 [`RuntimeTrace.java`](../tooling/runtime/java/org/kgmaker/runtime/RuntimeTrace.java).
@@ -53,7 +53,7 @@ kgmaker inspect code --root PROJECT --build-id BUILD_ID --context root:main
 
 Inspekce přebírá digest výhradně z vybrané položky. Build import označuje dodaný
 export jako `SUPPLIED_EXPORT_UNVERIFIED`. Manifest bez pole funguje pro
-build import a compiler inspekci. Runtime v2 vyžaduje shodnou deklarovanou
+build import a compiler inspekci. Runtime v2 a v3 vyžadují shodnou deklarovanou
 hodnotu v uloženém kontextu a v `--config-fingerprint`.
 
 Příklad explicitní kompilace SDK a aplikace:
@@ -87,7 +87,7 @@ uložený graf i snapshot a až potom se artefakt atomicky nahradí. Producer s�
 nezapisuje graph store; import je oddělená operace.
 
 Import ověří načtený manifest jednou před publikací. Před nahrazením
-každého výstupu znovu ověří zdrojové hashe a distribuci workeru. U v2
+každého výstupu znovu ověří zdrojové hashe a distribuci workeru. U v2 a v3
 znovu ověří i zachycené vstupy vybraného compiler kontextu včetně bytecode.
 Zjištěný zastaralý vstup zastaví publikaci. Store obnoví dříve nahrazené
 výstupy téže publikace. Současné publikace do grafu hlídá kontrola
@@ -114,6 +114,7 @@ neslibuje. Povolená pole factu jsou přesná:
 | bean | factory (method ID), bean_type (class/interface/object ID), outcome (`CREATED`/`NULL`/`THREW`) |
 | condition | owner (class nebo method ID), predicate (method ID), matched (boolean) |
 | mapping | owner, handler (method ID), method (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS), route_sha256 |
+| interface_dispatch (v3) | caller_owner, caller_name, caller_descriptor, source_line, receiver_type, target_owner, target_name, target_descriptor |
 
 Všechny symboly musí být ve vybraném kontextu i graph nodes a mít cestu v jeho
 source snapshotu. `status` je `COMPLETE`, `PARTIAL` nebo `UNKNOWN` a nikdy se
@@ -140,7 +141,51 @@ observation evidence. Návratový status importu zachová
 status v2, ani prázdný import jej nepovýší. Historický v1 import zůstává kompatibilní
 pro předem sanitizované exporty se svým původním kontraktem; nemá záruky uzavřeného
 v2 formátu. Dřívější nevalidované v2 z této implementační větve je nutné vytvořit
-znovu. Schema v3 manifestu se odmítá; graph/store schema v3 se nemění.
+znovu. Graph/store schema v3 se nemění.
+
+## Synchronní dispatch Java rozhraní
+
+Ve zvolené přímé implementaci rozhraní předejte aktuální instanci.
+
+```java
+public int greet() {
+    trace.observeInterfaceDispatch(this);
+    return 1;
+}
+```
+
+Po explicitním překladu SDK a aplikace s údaji o řádcích zdroje použijte
+stejný `runtime produce` a `runtime import` jako výše.
+
+```bash
+kgmaker runtime produce --root PROJECT --context CONTEXT_ID --runtime-id run-interface \
+  --build-id BUILD_ID --config-fingerprint CONFIG_FINGERPRINT --service-id orders \
+  --service-version 1.2.3 --output .kgmaker/runtime/interface.json \
+  -- java -cp classes example.DispatchApplication
+kgmaker runtime import --root PROJECT --manifest PROJECT/.kgmaker/runtime/interface.json
+```
+
+Při vstupu do metody JDK zjistí typ instance předané přes `this` a signatury
+obou skutečných stack frames. Důvěra vychází z výslovné instrumentace.
+Producer s alespoň jedním `interface_dispatch` vytvoří RuntimeManifest v3.
+`observations` zůstává v souboru prázdné. Offline import z `facts` odvodí
+pozorování znovu proti aktuálnímu vybranému compiler kontextu. Deklarovaný
+otisk příkazu ověří formátově. Původní facts lze nadále zaznamenávat samostatně
+v RuntimeManifestu v2 i společně s `interface_dispatch` ve v3.
+
+Pro důkaz musí mít vybraný `EXECUTION_BOUND` JVM kontext aktuální bytecode.
+Signatura volající metody a řádek musí označit jedinou instrukci volání
+`INTERFACE`. Všechny fyzické instrukce volání ve volající metodě musí mít
+kladné číslo řádku svázané s vybraným bytecode. Pokud compiler graf například
+u `INVOKEDYNAMIC` řádek neobsahuje, capture i offline import vrátí
+`RUNTIME_DISPATCH_SITE` pro tuto metodu a zachovají poslední výstupy.
+Zaznamenaný příjemce musí být konkrétní třída z vybraných Java
+zdrojů a cíl její přímá implementace ve statických kandidátech daného místa.
+Nejednoznačný řádek, cizí typ nebo neshodná signatura vedou k odmítnutí.
+Podporovaný vzorek dokládá vstup do metody instrumentované aplikace. Jde o
+dodaný záznam vybraného běhu. Otisk konfigurace vyjadřuje deklarovanou variantu.
+Děděné a výchozí metody, proxy, reflexe, async a dostupnost dat mají vlastní rozsah.
+[Přeložená fixture a ověření](changes/182_bindRuntimeInterfaceDispatch.md).
 
 ## Opakovaný import a navigace
 
@@ -165,7 +210,8 @@ kgmaker callgraph path --root PROJECT --context CONTEXT_ID --from CALLER_ID --to
 ```
 
 `callers` a `callees` vracejí připojená pozorování jako `RUNTIME_OBSERVED`
-s odkazy na důkazy a `dispatch_complete: false`. `callgraph path` a statické
+s odkazy na důkazy a `dispatch_complete: false`. Pro v3 uvádějí také přesné
+`call_site` a `receiver_type`. `callgraph path` a statické
 cykly flow grafu sledují compiler call sites. Volba
 `--include-dispatch-candidates` zahrne při hledání cesty také statické kandidáty.
 Pro dvojici spojenou výhradně runtime dokladem hlásí statická cesta
@@ -182,8 +228,8 @@ ani call. Test obsahuje credential v argumentu a URL a ověřuje jejich nepřít
 v exportu. Samostatné kontraktové testy používají malé syntetické grafy a JSON;
 nejsou vydávány za runtime producer.
 
-Ověřené prostředí: Linux/POSIX, OpenJDK 21, synchronní callbacks a map router.
-Spring bean/condition registry, automatická instrumentace existujících aplikací,
-Windows runner, RTA, value-flow, async/reflection, deployment a data availability
-zůstávají mimo tuto dodávku. Viz [acceptance](acceptance-inventory.md) a
+Ověřené prostředí je Linux/POSIX s OpenJDK 21. Rozsah zahrnuje synchronní callbacky,
+map router a výslovně instrumentované volání přes Java rozhraní s přímou implementací.
+Spring registry, automatická instrumentace, Windows, širší RTA, hodnotové toky,
+async, reflexe, nasazení a dostupnost dat mají vlastní ověření. Viz [acceptance](acceptance-inventory.md) a
 [stavová matice](production-analysis-progress.md).

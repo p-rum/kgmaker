@@ -569,10 +569,13 @@ kgmaker runtime produce --root PROJECT --context CONTEXT_ID --runtime-id run-1 \
   -- java -cp classes example.TraceApplication MAIN_ID FACTORY_ID TYPE_ID CONDITION_ID HANDLER_ID
 ```
 
-Jde o explicitně instrumentovaný JDK21/POSIX subset; neprokazuje automatický
-Spring capture, RTA/value-flow/async, nasazení ani dostupnost dat. V1 import
-zůstává kompatibilní; v2 musí mít všechny identity a `PARTIAL/UNKNOWN` se
+Jde o explicitně instrumentovaný JDK21/POSIX rozsah. `observeInterfaceDispatch(this)`
+uvnitř přímé implementace Java rozhraní umožní uložit pozorovaný typ příjemce a
+přesné místo synchronního volání. Volající metoda musí mít v compiler grafu
+zachycené řádky všech fyzických instrukcí volání. RuntimeManifest v3 vznikne
+pouze s tímto typem důkazu. Formáty v1 a v2 zůstávají použitelné a `PARTIAL/UNKNOWN` se
 nepovýší. Výstupy jsou omezeny na `.kgmaker/runtime/*.json` a stdout.
+[Příklad instrumentace](docs/runtime-trace.md#synchronní-dispatch-java-rozhraní).
 [Změna a provedené kontroly](docs/changes/122_runtimeTraceProducer.md).
 Import znovu ověřuje zdroje a artefakty při ukládání grafu. Když zjistí zastaralý vstup
 po zahájení publikace, obnoví předchozí uložené výstupy.
@@ -582,7 +585,8 @@ Opakovaný `runtime import` uchovává různé ověřené doklady v jednom compi
 kontextu. `callgraph callers` a `callees` je zobrazí jako `RUNTIME_OBSERVED`.
 `callgraph path` používá statické compiler vazby.
 V2 pozorování `call` a `dispatch` vyžadují metodu, funkci nebo konstruktor
-na obou koncích.
+na obou koncích. U ověřeného v3 dispatch zobrazí navigace také `call_site` a
+`receiver_type`. Statické kandidáty zachová bez ohledu na obsah capture.
 [Příklady importu a navigace](docs/runtime-trace.md#opakovaný-import-a-navigace).
 
 Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,

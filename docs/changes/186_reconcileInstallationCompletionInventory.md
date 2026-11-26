@@ -93,3 +93,20 @@ Strukturu sekcí a graf ověřují `kgmaker semantic update --base d9379b2`,
 
 Pro tuto změnu mají úplná sada, nový wheel, Windows, živý hostitel, hostovaná
 CI a nové nezávislé review stav NOT_RUN.
+
+### Přenesení po #166
+
+Aktuální základ `main` je `80db9cb63b07ca653c53801406823eb5fb61e339`.
+Přenos zachoval rozsah runtime evidence, zdroje, doklady i historii #166.
+[Doklad #166](182_bindRuntimeInterfaceDispatch.md).
+
+- RED — CLI nad tímto základem skončilo kódem 0. Kontrola opět našla šest
+  chybějících řádků a skončila kódem 1. SHA-256 plánu
+  `269d3a96e1d7326f693445e944412f8e07a7cd0e310692d0cae215fadf0df53f`.
+- PASS — přenesený plán zachoval 129 dosavadních položek a všech 32 pozic
+  dispatch. Výsledek má 135 položek, z nich 106 MERGED a 29 PLANNED.
+  T050-S02 zůstává PARTIAL. SHA-256 plánu
+  `06b597dc81c4ace94a7c6813a36f539e02740977c0fe3159f4e9a3bfe05d7704`.
+- PASS — stejné čtyři cílené sady daly na přeneseném stromu 125 PASS a
+  0 SKIP za 3,51 s. SHA-256 JUnit
+  `6dd0634dc929bdfd5503bc7d2a61c793255ba5bdfec93c28318e83d7b82c01c3`.
