@@ -5,21 +5,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.hssf.OldExcelFormatException;
 import org.apache.poi.hssf.record.Record;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.openxml4j.opc.TargetMode;
+import org.apache.poi.openxml4j.opc.ZipPackagePart;
+import org.apache.poi.openxml4j.util.ZipFileZipEntrySource;
+import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.util.XMLHelper;
 import org.w3c.dom.Element;
 import org.apache.poi.poifs.filesystem.DirectoryNode;
@@ -39,6 +50,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.model.ExternalLinksTable;
 import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -48,7 +60,11 @@ public final class ExcelWorker {
         "http://schemas.microsoft.com/office/2006/relationships/vbaProject";
     private static final int MAX_CELLS = 100_000;
     private static final int MAX_VBA = 4 * 1024 * 1024;
-    private static final long MAX_XML_PART = 8L * 1024 * 1024;
+    private static final int MAX_XML_PART = 8 * 1024 * 1024;
+    private static final String PAIRED_BREAK = "<br></br>";
+    private static final Pattern VML_BREAK_MARKUP = Pattern.compile(
+        "<!--.*?(?:-->|\\z)|<!\\[CDATA\\[.*?(?:\\]\\]>|\\z)|<\\?.*?(?:\\?>|\\z)|" + PAIRED_BREAK,
+        Pattern.DOTALL);
     private static final String CONNECTION_REL =
         "http://schemas.openxmlformats.org/officeDocument/2006/relationships/connections";
     private static final String QUERY_TABLE_REL =
@@ -97,6 +113,51 @@ public final class ExcelWorker {
         if (cell != null) value.put("cell", cell);
     }
 
+    private static final class VmlZipEntries extends ZipFileZipEntrySource {
+        private final Set<ZipArchiveEntry> drawings = new HashSet<>();
+
+        VmlZipEntries(ZipSecureFile archive) {
+            super(archive);
+        }
+
+        @Override
+        public InputStream getInputStream(ZipArchiveEntry entry) throws IOException {
+            InputStream input = super.getInputStream(entry);
+            if (!drawings.contains(entry)) return input;
+            try (input) {
+                byte[] bytes = input.readNBytes(MAX_XML_PART + 1);
+                if (bytes.length > MAX_XML_PART) throw new IOException("VML drawing exceeds 8 MiB");
+                // POI replaces literal <br> with <br/> before parsing VML, which leaves a
+                // stray </br> for the valid paired form. ISO-8859-1 preserves the source bytes.
+                String markup = new String(bytes, StandardCharsets.ISO_8859_1);
+                if (!markup.contains(PAIRED_BREAK)) return new ByteArrayInputStream(bytes);
+                String normalized = VML_BREAK_MARKUP.matcher(markup).replaceAll(match ->
+                    match.group().equals(PAIRED_BREAK) ? "<br/>" : Matcher.quoteReplacement(match.group()));
+                return new ByteArrayInputStream(normalized.getBytes(StandardCharsets.ISO_8859_1));
+            }
+        }
+    }
+
+    private static Workbook openWorkbook(Path path, String format) throws IOException, InvalidFormatException {
+        if (format.equals("xls")) return WorkbookFactory.create(path.toFile(), null, true);
+        var entries = new VmlZipEntries(new ZipSecureFile(path.toFile()));
+        try {
+            // A custom ZipEntrySource opens the OPC package read-only and keeps POI ZIP limits.
+            OPCPackage pkg = OPCPackage.open(entries);
+            for (var part : pkg.getPartsByContentType(XSSFRelation.VML_DRAWINGS.getContentType())) {
+                if (part instanceof ZipPackagePart zipPart) entries.drawings.add(zipPart.getZipArchive());
+            }
+            return new XSSFWorkbook(pkg);
+        } catch (IOException | InvalidFormatException | RuntimeException failure) {
+            try {
+                entries.close();
+            } catch (IOException closeFailure) {
+                failure.addSuppressed(closeFailure);
+            }
+            throw failure;
+        }
+    }
+
     private static void readWorkbook(Path path, String format, ObjectNode response, ArrayNode problems)
         throws Exception {
         if (format.equals("xls")) {
@@ -113,7 +174,7 @@ public final class ExcelWorker {
                 }
             }
         }
-        try (Workbook book = WorkbookFactory.create(path.toFile(), null, true)) {
+        try (Workbook book = openWorkbook(path, format)) {
             if (format.equals("xls") != (book instanceof HSSFWorkbook)) {
                 reject(response, "EXCEL_FORMAT_MISMATCH");
                 return;

@@ -123,6 +123,44 @@ def test_real_multi_workbook_evidence_and_data_stays_local(tmp_path, sample, act
     assert not (tmp_path / ".kgmaker").exists()
 
 
+@pytest.mark.parametrize("line_break", [b"<br/>", b"<br></br>"])
+def test_xlsm_vml_control_line_breaks_preserve_source(tmp_path, sample, actual_worker, line_break):
+    workbook = tmp_path / "migration.xlsm"
+    vml = (
+        b'<xml xmlns:v="urn:schemas-microsoft-com:vml" xmlns:x="urn:schemas-microsoft-com:office:excel">'
+        b'<v:shape id="_x0000_s1025"><v:textbox><div>First' + line_break + b'Second</div></v:textbox>'
+        b'<x:ClientData ObjectType="Button"><x:FmlaMacro>[0]!RecalculateInvoice</x:FmlaMacro>'
+        b'</x:ClientData></v:shape></xml>'
+    )
+    with zipfile.ZipFile(workbook) as source, zipfile.ZipFile(tmp_path / "with-vml.xlsm", "w") as output:
+        for entry in source.infolist():
+            body = source.read(entry)
+            if entry.filename == "[Content_Types].xml":
+                body = body.replace(b"</Types>", b'<Default Extension="vml" '
+                                    b'ContentType="application/vnd.openxmlformats-officedocument.vmlDrawing"/></Types>')
+            if entry.filename == "xl/worksheets/sheet1.xml":
+                body = body.replace(b"</worksheet>", b'<legacyDrawing r:id="rId2"/></worksheet>')
+            if entry.filename == "xl/worksheets/_rels/sheet1.xml.rels":
+                body = body.replace(b"</Relationships>",
+                                    b'<Relationship Id="rId2" Target="../drawings/vmlDrawing1.vml" '
+                                    b'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/vmlDrawing"/>'
+                                    b'</Relationships>')
+            output.writestr(entry, body)
+        output.writestr("xl/drawings/vmlDrawing1.vml", vml)
+    (tmp_path / "with-vml.xlsm").replace(workbook)
+    original = workbook.read_bytes()
+
+    result = cli(tmp_path, "analyze", "--manifest", sample, "--out", "inventory.json")
+    assert workbook.read_bytes() == original
+    assert result.returncode == 0, result.stderr
+    observed = plan.load_inventory(tmp_path / "inventory.json")
+    assert observed["status"] == "ANALYZED"
+    assert observed["workbooks"][0]["sha256"] == hashlib.sha256(original).hexdigest()
+    trigger = evidence_at(observed, "entrypoint", control="rId2/1")
+    macro = evidence_at(observed, "vba-procedure", procedure="RecalculateInvoice")
+    edge_sources(observed, trigger, "calls", macro)
+
+
 def test_real_biff8_vba_and_no_dynamic_address_guess(tmp_path, actual_worker):
     shutil.copyfile(FIXTURES / "legacy.xls", tmp_path / "legacy.xls")
     manifest = write_json(tmp_path / "app.json", config("legacy.xls", None))

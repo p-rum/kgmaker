@@ -43,6 +43,10 @@ s nezměněnými Excel vstupy; jde o ověření dané fixture a distribuce.
 [Cílové zadání](tasks/54_addExcelMigration.md) · [Návod](excel-migration.md) ·
 [Evidence implementace](changes/171_addExcelMigration.md) · [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
 
+Oprava čtení VML ověřuje vazbu tlačítka na VBA i s párovou značkou `<br></br>`.
+Normalizace probíhá v proudu VML a inventář dokládá SHA-256 původního XLSM.
+[Regrese a ověření](changes/176_readVmlLineBreaks.md).
+
 ## T053 — správa instalace v cílovém projektu, 2026-11-24
 
 Dodání MERGED v [#154](https://github.com/p-rum/kgmaker/pull/154)
