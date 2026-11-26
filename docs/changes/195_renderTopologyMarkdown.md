@@ -71,6 +71,18 @@ Javacem 21 a 13 testů plánovače. JUnit SHA-256
 `6a83ff3b29ee56054867b493d958bb91603b837e0374e074e55cb2c2cdd8e9e6`.
 Oba běhy ověřily shodu všech 936 sledovaných souborů před a po testech.
 
+Na referenční dvojici `c5db937845a3a9f7296bc789b6eb57f6999675d1` a `main`
+`c4a1edb59f140faeafba0d5e979023bba185f3f1` prošlo **26 cílených testů bez
+přeskočení**, exit 0, včetně skutečného Mermaid a Javacu 21. JUnit SHA-256
+`e5f46db2f423c5bff2322f9fdf2418cf769633b143b3ec3fc4eb4d4dd4a67429`.
+První úplný standardní běh skončil exit 1. Gradle v jednom testu přípravy
+exporteru nedokázal určit použitelnou wildcard IP. JUnit prvního pokusu má
+SHA-256 `3fe67e1d420e3fff810842e623b148e7e44b51b9cb075e0bb35dc415a1ee158c`.
+Nový běh stejného stromu v prostředí s funkčním lokálním loopbackem měl
+**2 662 PASS / 1 396 SKIP / 1 očekávaný XFAIL**, exit 0. JUnit SHA-256
+`185d4738647076babbbff5d59fc627975d237faa891ffc057ded67162227b96c`.
+Před a po úspěšných bězích souhlasilo všech 939 sledovaných souborů.
+
 ## T022-S05 — Příklad a stav dodání (AC06)
 
 ```sh
@@ -80,7 +92,8 @@ kgmaker architecture topology --capture-snapshot topology-inputs.json --max-node
 Aktualizované jsou README, [CLI](../architecture-json-cli.md#architecture-topology-markdown-t022),
 [architektura](../architecture.md), [topologie](../service-topology.md#markdown-report-t022),
 [stav](../production-analysis-progress.md) a [acceptance](../acceptance-inventory.md).
-Samostatné draft PR je otevřené. Další revize čeká na aktuální ověření,
-nezávislé posudky a schválení před integrací. [PR #179](https://github.com/p-rum/kgmaker/pull/179).
+První nezávislé review referenční dvojice požádalo o sjednocení inventáře
+s ověřenými výsledky. Stav zůstává `PR_OPEN / PARTIAL`. Přesné aktuální
+revize, výsledky jejich kontrol a závěry review vede [PR #179](https://github.com/p-rum/kgmaker/pull/179).
 Jde o statický report nad existujícím podkladem. Běh cílové aplikace ani
 dostupnost dat tento výstup nedokládá.

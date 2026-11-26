@@ -2040,11 +2040,12 @@ Příkazy a výsledky tohoto historického checkpointu jsou v [change132](change
 
 ## T022 — Markdown report topologie
 
-Na revizi `44ea3123e618e8fddf1cdeef437cb340e49550ed` nad `a2adbe2e8666fbc76bf87b0aa2fd2be288bdf6bc`
-měla úplná standardní sada **2 660 PASS / 1 393 SKIP / 1 očekávaný XFAIL**, exit 0.
-Samostatně prošlo **26 cílených testů bez přeskočení** se skutečným Mermaid
-11.4.1/jsdom 26.0.0, Markdown-it 3.0.0 a Javacem 21. Nezávislé review čeká.
-[Přesné výsledky a zbývající ověření](changes/195_renderTopologyMarkdown.md).
+Na referenční revizi `c5db937845a3a9f7296bc789b6eb57f6999675d1` nad
+`c4a1edb59f140faeafba0d5e979023bba185f3f1` mělo úplné standardní opakování
+**2 662 PASS / 1 396 SKIP / 1 očekávaný XFAIL**, exit 0. Samostatně prošlo
+**26 cílených testů bez přeskočení**, včetně skutečného Mermaid 11.4.1/jsdom 26.0.0,
+Markdown-it 3.0.0 a Javacu 21. Předchozí dvojici `44ea312` / `a2adbe2` a první
+pokus na `c5db937` dokládá change note. [Přesné historické výsledky](changes/195_renderTopologyMarkdown.md).
 
 | Acceptance | Cílený důkaz | Stav |
 |---|---|---|
@@ -2053,7 +2054,7 @@ Samostatně prošlo **26 cílených testů bez přeskočení** se skutečným Me
 | T022-AC03 | `test_report_is_pure_deterministic_and_abstains_on_missing_source`; stejné bytes, vstup beze změny a zákaz I/O během renderu. | PASS |
 | T022-AC04 | `test_public_rejected_topology_markdown_keeps_last_artifact` a `test_markdown_render_failure_never_publishes_prepared_cache`; původní vstupy i artefakt zůstávají stejné. | PASS |
 | T022-AC05 | `test_foreign_visible_claim_or_proof_is_rejected_without_mutation`, `test_explicit_context_report_does_not_display_uncited_proof_as_selected` a nevyřešená vazba v deterministické fixture. | PASS |
-| T022-AC06 | Draft [#179](https://github.com/p-rum/kgmaker/pull/179), veřejné příklady a [doklady ověření](changes/195_renderTopologyMarkdown.md). Další revize čeká na aktuální ověření a nezávislé review. | PARTIAL |
+| T022-AC06 | Veřejné příklady a [doklady ověření](changes/195_renderTopologyMarkdown.md) patří uvedeným dvojicím revizí. Aktuální revize, jejich ověření a stav nezávislého review vede [PR #179](https://github.com/p-rum/kgmaker/pull/179). | PARTIAL |
 
 ## T003-S10-W06 — souběh publikace a poškozená cache
 
