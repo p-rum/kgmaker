@@ -159,6 +159,12 @@ cesty k souborům. Podporuje odstranění zachycených souborů. `--scope` přij
 `--include-data-flow` vrátí chybu použití s kódem 2. Kontrola `--workspace`
 proběhne před načtením jeho manifestu.
 
+Po reportu lze samostatně obnovit vybraný modul explicitní JVM inspekcí.
+Pokud nezávislý modul přišel výhradně o dříve zachycený vstup se stále
+deklarovaným jediným vlastníkem, inspekce může jeho starou compiler vrstvu
+vyřadit při stejné atomické publikaci. Report sám stále jen čte.
+[Rozsah Python API a příklad](compiler-inspection.md#obnova-izolovaného-jvm-kontextu).
+
 JSON v1 uvádí SHA-256 jedné uložené generace `graph_sha256`, pole `changed_sources`
 s předchozím a zjištěným hashem (při odstranění `after_sha256: null`), pole
 `affected` a `diagnostics`. Každý dotčený záznam má stávající identitu `id`, druh,
