@@ -13,6 +13,8 @@ captured build contextem. Nový příkaz ani automatický build není potřeba:
 kgmaker inspect code --root ./service --repo-id service --module core --source-set main --scope production
 kgmaker inspect code --root ./service --repo-id service --module core --source-set main --scope production
 kgmaker inspect frontend --root ./ui --repo-id ui --module app --source-set main --scope production --tsconfig tsconfig.json
+# Node je dostupný přes ./tools/node v adresáři, odkud spouštíte KGMAKER.
+PATH="./tools:$PATH" kgmaker inspect frontend --root ./ui --tsconfig tsconfig.json
 # Příklad s ASCII cestami na POSIX, Javac 21 a starší sadou platformních symbolů.
 LC_ALL=C kgmaker inspect code --root ./service --java-release 17
 ```
@@ -55,9 +57,10 @@ znamená `INCOMPLETE_INPUT_CLOSURE`, pokud živá inspekce proběhne úspěšně
 Při výběru přes symbolický odkaz `java` tvoří otisk bajty cílové binárky
 a její JDK vstupy, i když má cílová binárka jiné jméno. Spustitelná binárka
 bez práva čtení může provést živou inspekci s `BYPASS/INCOMPLETE_INPUT_CLOSURE`.
-Výběr launcheru z relativního `PATH` se ukotví v pracovním adresáři
+Výběr `java` i `node` z relativního `PATH` se ukotví v pracovním adresáři
 KGMAKERu. Stejná absolutní cesta včetně symbolického odkazu vstupuje do
 spuštění workeru i do otisku, takže změnu cíle lze zjistit.
+[Ověření relativní cesty k Node](changes/188_anchorTypeScriptNodeLauncher.md).
 Prostředí předávané workerům a compiler volby se řídí stávajícím launcherem.
 
 Worker a graph validátory kontrolují čerstvé výsledky vůči vybranému

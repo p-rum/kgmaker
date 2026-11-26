@@ -256,6 +256,51 @@ def test_actual_typescript_preflight_and_analysis_run_on_every_explicit_inspecti
     assert len([c for c in load_graph(root).contexts if c.get('analyzer_version')]) == 1
 
 
+@pytest.mark.skipif(os.name != 'posix', reason='POSIX Node launcher symlink and relative PATH')
+def test_actual_typescript_anchors_relative_node_path_before_worker_cwd(tmp_path):
+    ready('typescript')
+    home = ROOT / 'workers'
+    working = tmp_path / 'working'
+    alias = working / 'tools/node'
+    alias.parent.mkdir(parents=True)
+    alias.symlink_to(Path(inspection.command('typescript', home)[0]).resolve())
+    root = tmp_path / 'frontend'
+    source = root / 'src/main.ts'
+    source.parent.mkdir(parents=True)
+    (root / 'tsconfig.json').write_text(json.dumps({'files': ['src/main.ts']}))
+    command = [sys.executable, '-m', 'kgmaker', 'inspect', 'frontend',
+               '--root', str(root), '--worker-home', str(home)]
+    environment = {**os.environ, 'PYTHONPATH': str(ROOT / 'src')}
+    for name in ('JAVA_TOOL_OPTIONS', '_JAVA_OPTIONS', 'JDK_JAVA_OPTIONS', 'NODE_OPTIONS', 'CLASSPATH'):
+        environment.pop(name, None)
+    inherited_path = environment.get('PATH', os.defpath)
+
+    def inspect(path):
+        return subprocess.run(command, cwd=working, capture_output=True, text=True,
+                              env={**environment, 'PATH': os.pathsep.join((str(path), inherited_path))})
+
+    source.write_text('function twice(x: number) { return x * 2; }\nexport const value = twice(2);\n')
+    absolute = inspect(alias.parent)
+    assert absolute.returncode == 0, absolute.stderr or absolute.stdout
+    before = json.loads(absolute.stdout)
+    outputs = [root / path for path in (store.GRAPH_FILE, store.MARKDOWN_FILE, store.MERMAID_FILE)]
+    saved = [path.read_bytes() for path in outputs]
+
+    source.write_text('function triple(x: number) { return x * 3; }\nexport const value = triple(2);\n')
+    relative = inspect('tools')
+    if relative.returncode != 0:
+        assert [path.read_bytes() for path in outputs] == saved
+    assert relative.returncode == 0, relative.stderr or relative.stdout
+    after = json.loads(relative.stdout)
+    assert before['coverage']['calls_resolved'] == after['coverage']['calls_resolved'] == 1
+    assert before['context']['id'] != after['context']['id']
+    assert {stage['status'] for stage in after['cache']['stages']} == {'BYPASS'}
+    assert {stage['reason'] for stage in after['cache']['stages']} == {'UNVERIFIED_REPLAY'}
+    assert outputs[0].read_bytes() != saved[0]
+    entries = load_graph(root).extraction_cache['entries']
+    assert {entry['key']['launch']['argv'][0] for entry in entries} == {str(alias)}
+
+
 def test_actual_worker_bytes_and_analyzer_rule_change_force_reanalysis(tmp_path, monkeypatch):
     ready('jvm')
     shared = ROOT / 'workers/jvm/target'
