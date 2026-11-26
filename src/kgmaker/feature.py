@@ -83,11 +83,17 @@ def current_graph(root: Path, workspace: Path | None = None, *, _named_fk_column
     if workspace is not None:
         from .workspace import snapshot_workspace
         return snapshot_workspace(workspace, cache_root=root)[3], (0, 0), None
+    return local_graph_from_scan(root, scan_repository(root), _named_fk_columns=_named_fk_columns)
+
+
+def local_graph_from_scan(root: Path, structural, *, _named_fk_columns: bool = True,
+                          semantic_artifact: dict | None = None):
+    """Project an existing structural scan as the standard local graph."""
     from .graph_provider import retain_compiler_layer
     from .templates import attach_templates
     from .workbooks import attach_workbooks
-    syntax = attach_workbooks(root, attach_templates(root, scan_repository(root)))
-    graph, counts, error = apply_semantic_layer(retain_compiler_layer(root, syntax), root)
+    syntax = attach_workbooks(root, attach_templates(root, structural))
+    graph, counts, error = apply_semantic_layer(retain_compiler_layer(root, syntax), root, artifact=semantic_artifact)
     from .schema_replay import reconstruct, graph_entities
     from .flyway import DEFAULT_LOCATION
     from .flyway import configuration

@@ -70,3 +70,17 @@ načti jeho stav, přepočítej plán pro aktuální inventář a ověř zdrojov
 Po integraci aktualizuj existující stavové dokumenty skutečnými výsledky.
 [První běh a neověřené kroky](changes/134_addCompletionOrchestrator.md).
 [Obnova dlouhého kontextu](changes/148_resumeCompletionPacketBudget.md).
+
+## Záznam implementační epizody
+
+Před změnou ulož výchozí graf příkazem `kgmaker scan` bez externího exportu
+Confluence. Po implementaci a skutečných kontrolách použij
+`kgmaker memory capture --base <merge-base> --validation <label>=<status>`.
+Výpočet rozdílu používá stejnou lokální projekci jako scan, včetně šablon,
+workbooků, uchovaných compiler kontextů a lokálního Flyway replay. Capture čte
+tento graf v paměti a přidává epizodu do sémantického artefaktu. Pokud se
+artefakt mezitím změní, příkaz ho nepřepíše. Pak můžeš explicitním scanem
+zveřejnit nový graf. Záznamy existujících epizod se nemění.
+Porovnání s grafem uloženým s externím exportem Confluence nebo s odlišnou
+projekcí workspace do tohoto ověření nespadá.
+[Reprodukce a ověření](changes/202_alignMemoryCaptureProjection.md).

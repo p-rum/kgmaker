@@ -40,9 +40,9 @@ from .semantic import (
     SEMANTIC_UPDATE_FILE,
     SEMANTIC_UPDATE_MARKDOWN,
     SEMANTIC_EXTRACT_MARKDOWN,
+    V1_SEMANTIC_FINGERPRINT_MISMATCH,
     SemanticValidationError,
     apply_semantic_patch,
-    apply_semantic_layer,
     build_semantic_update,
     build_semantic_input,
     validate_semantic_data,
@@ -708,15 +708,26 @@ def query(root: Path, terms: str, limit: int = 10, scope: str = "production",
 
 def memory_capture(root: Path, base: str, validation_values: list[str]) -> int:
     """Capture one idempotent Git-backed implementation episode."""
+    from .analysis_model import atomic_write
+    from .feature import local_graph_from_scan
+
+    semantic_path = root / SEMANTIC_FILE
+
+    def read_snapshot():
+        try:
+            return semantic_path.read_bytes()
+        except FileNotFoundError:
+            return None
+
     try:
         previous_graph = load_graph(root)
         if previous_graph is None:
             raise CaptureError("no readable pre-task graph found; run `kgmaker scan` before implementation")
         validations = parse_validations(validation_values)
         structural = scan_repository(root)
-        semantic_path = root / SEMANTIC_FILE
-        if semantic_path.exists():
-            data = json.loads(semantic_path.read_text(encoding="utf-8"))
+        snapshot = read_snapshot()
+        if snapshot is not None:
+            data = json.loads(snapshot.decode("utf-8"))
             validate_semantic_data(data, structural, root)
         else:
             data = {
@@ -728,10 +739,12 @@ def memory_capture(root: Path, base: str, validation_values: list[str]) -> int:
             }
         if not isinstance(data, dict) or data.get("schema_version") not in {1, 2, 3}:
             raise CaptureError("semantic artifact must use schema_version 1, 2, or 3")
-        current_graph, _, semantic_error = apply_semantic_layer(structural, root)
-        if semantic_error:
+        # A structurally valid v1 artifact can still be excluded by the enriched
+        # scan's fingerprint. Keep that projection and migrate the valid artifact.
+        current, _, semantic_error = local_graph_from_scan(root, structural, semantic_artifact=data)
+        if semantic_error and not (data["schema_version"] == 1 and semantic_error == V1_SEMANTIC_FINGERPRINT_MISMATCH):
             raise CaptureError(f"semantic artifact must be refreshed before capture: {semantic_error}")
-        episode = build_capture_episode(root, base, previous_graph, current_graph, validations)
+        episode = build_capture_episode(root, base, previous_graph, current, validations)
         existing = data.get("episodes", []) if data.get("schema_version") == 3 else []
         if not isinstance(existing, list):
             raise CaptureError("semantic artifact episodes must be an array")
@@ -740,7 +753,12 @@ def memory_capture(root: Path, base: str, validation_values: list[str]) -> int:
              and item.get("worktree_fingerprint") == episode["worktree_fingerprint"]),
             None,
         )
+        def require_same_snapshot():
+            if read_snapshot() != snapshot:
+                raise CaptureError("semantic artifact changed during capture; rerun with the current artifact")
+
         if duplicate is not None:
+            require_same_snapshot()
             print(f"Implementation episode already recorded: {duplicate.get('id', 'unknown')}")
             return 0
         candidate = {
@@ -751,10 +769,8 @@ def memory_capture(root: Path, base: str, validation_values: list[str]) -> int:
             "episodes": [*existing, episode],
         }
         validate_semantic_data(candidate, structural, root)
-        semantic_path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = semantic_path.with_suffix(".json.tmp")
-        temporary.write_text(json.dumps(candidate, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        temporary.replace(semantic_path)
+        atomic_write(semantic_path, json.dumps(candidate, indent=2, ensure_ascii=False) + "\n",
+                     before_replace=require_same_snapshot)
     except (OSError, UnicodeError, json.JSONDecodeError, CaptureError, SemanticValidationError, ValueError) as error:
         print(f"Implementation memory was not captured: {error}", file=sys.stderr)
         return 2

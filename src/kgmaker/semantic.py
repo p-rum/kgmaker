@@ -21,6 +21,7 @@ SEMANTIC_PATCH_FILE = Path(".kgmaker/semantic-patch.json")
 LEGACY_SEMANTIC_SCHEMA_VERSION = 2
 SEMANTIC_SCHEMA_VERSION = 3
 SEMANTIC_UPDATE_SCHEMA_VERSION = 1
+V1_SEMANTIC_FINGERPRINT_MISMATCH = "legacy semantic artifact is stale; run `kgmaker semantic prepare` to upgrade it"
 DEFAULT_SEMANTIC_TOKEN_BUDGET = 4_000
 CHARS_PER_TOKEN_ESTIMATE = 4
 SEMANTIC_RELATIONS = {
@@ -109,7 +110,7 @@ def validate_semantic_data(data: Any, graph: KnowledgeGraph, root: Path) -> tupl
         )
     version = data["schema_version"]
     if version == 1 and data.get("graph_fingerprint") != graph_fingerprint(graph):
-        raise SemanticValidationError("legacy semantic artifact is stale; run `kgmaker semantic prepare` to upgrade it")
+        raise SemanticValidationError(V1_SEMANTIC_FINGERPRINT_MISMATCH)
     snapshots = data.get("files")
     if version in {LEGACY_SEMANTIC_SCHEMA_VERSION, SEMANTIC_SCHEMA_VERSION}:
         if not isinstance(snapshots, dict) or any(
@@ -561,14 +562,15 @@ def apply_semantic_patch(patch: Any, update: Any, graph: KnowledgeGraph, root: P
     return candidate
 
 
-def apply_semantic_layer(graph: KnowledgeGraph, root: Path) -> tuple[KnowledgeGraph, tuple[int, int], str | None]:
-    """Merge a fresh semantic artifact; return the base graph unchanged if stale/invalid."""
+def apply_semantic_layer(graph: KnowledgeGraph, root: Path, *,
+                         artifact: dict[str, Any] | None = None) -> tuple[KnowledgeGraph, tuple[int, int], str | None]:
+    """Project a supplied or persisted artifact and report stale or invalid entries."""
     path = root / SEMANTIC_FILE
-    if not path.exists():
+    if artifact is None and not path.exists():
         return graph, (0, 0), None
     error: str | None = None
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = artifact if artifact is not None else json.loads(path.read_text(encoding="utf-8"))
         if isinstance(data, dict) and data.get("schema_version") in {LEGACY_SEMANTIC_SCHEMA_VERSION, SEMANTIC_SCHEMA_VERSION} \
                 and isinstance(data.get("files"), dict) and isinstance(data.get("nodes"), list) \
                 and isinstance(data.get("edges"), list):
