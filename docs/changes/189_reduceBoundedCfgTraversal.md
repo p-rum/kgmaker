@@ -107,9 +107,54 @@ relativní hranice 25 %. Negativní případy ověřují odmítnutí neplatného
 rozpočtu a neporovnatelných vstupních nebo výstupních otisků. SHA-256 JUnit
 `c470c849db3c53e95bb353968d5e545d8056dd8e1bc9ebb33384fb650645b86d`.
 
-Samostatná sonda zachovala v reportu s jediným uzlem 1 024 zdrojových
-diagnostik a 1 026 položek coverage. Společná mez diagnostiky pro CFG
-a ostatní pohledy má zbývající rozsah T043-S02. SHA-256 sondy
+Samostatná sonda tehdy zachovala v reportu s jediným uzlem 1 024 zdrojových
+diagnostik a 1 026 položek coverage. SHA-256 sondy
 `245f9f1b07a9dbf9335631ab703faa001371d5089e6d6ef4fe617f52ab50a928`.
 Úplná pytest sada, hostované CI a nové spuštění compiler workeru či Mermaid
 parseru mají v tomto doplnění stav NOT_RUN. [PR #173](https://github.com/p-rum/kgmaker/pull/173)
+
+## Omezení zdrojové diagnostiky / T043-S02, T043-AC01, T043-AC04 a T043-AC05
+
+Výchozí revize diagnostické opravy je `7855048d216c655313f36496744c3294b5073576`.
+`flow_report.py` před kopírováním a sestavením coverage ponechá v CFG
+a procesu prvních 256 položek z každého přítomného seznamu `diagnostics`
+a `cfg.diagnostics`. `FLOW_DIAGNOSTIC_LIMIT` zveřejní počty vynechání zvlášť
+pro oba seznamy. U záznamů mimo výřez proběhne kontrola serializovatelnosti.
+Souhrn zachová stav `UNKNOWN` a kódy jeho příčin, například `STALE_EVIDENCE`.
+Strukturální mezery coverage, vybraný scope, kontext, původní ID, provenance
+a uzlový příznak `truncated` zachovávají svůj kontrakt. Z již sestavených
+historických reportů se odvodí diagnostické mezery z ponechaných položek.
+Aktualizace nepotřebuje migraci uloženého grafu nebo reportu.
+
+Pět regresí v `tests/test_t043_bound_view_performance.py` na archivovaném
+výchozím zdroji napoprvé selhalo. Kontrolují jediný uzel se 1 024 diagnostikami,
+přesnou hranici 256, hloubku a provenance procesu, již sestavený historický
+report a zachování předchozího artefaktu při chybné diagnostice za limitem.
+Velký report má 256 detailů na seznam, 768 vynechaných řádků na seznam
+a 259 položek coverage včetně dvou strukturálních mezí a souhrnu. Souhrn
+je v JSON, Markdownu a Mermaid. SHA-256 JUnit výchozího zdroje
+`da66f8642087ef83a032351635bbe1119675106ac1aac27a9a7a0be7cde56018`.
+
+V Cloud Environment prošlo **263 PASS**, bez SKIP a se sedmi nezvolenými
+případy. Běh zahrnuje `test_t043_bound_view_performance.py`,
+`test_unified_flow_views.py`, `test_t037_invalidate_derived_views.py`,
+`test_t025_build_local_process_path.py` a `test_t017_filter_topology_scope.py`
+s filtrem `-k 'not actual and not real'`. SHA-256 JUnit
+`16f677c282231adc8f0a91b729df1dab0220027033c0091269edaaff50225125`.
+Všech 51 dříve porovnaných výstupů JSON, Markdown a Mermaid se bajtově
+shoduje. SHA-256 manifestu
+`1ad9dc7a133602709c8db86e478349df200dff371fb4ab9baf443e3bc616998e`.
+
+Stejný benchmark proti archivované revizi `346536495db749a6a1d79f89b388b55f9db3da83`
+po diagnostické opravě opět vrátil **0**. Topologie měla cold 962,8 → 951,0 ms,
+warm 937,9 → 946,1 ms a špičku alokací 32 679 566 bajtů v obou verzích.
+Cyklický CFG měl cold 137,7 → 18,1 ms, warm 135,2 → 17,0 ms a špičku
+995 600 → 995 640 bajtů. Šest metrik prošlo hranicí 25 % a otisky vstupů
+i výstupů se shodují. SHA-256 zprávy
+`1ec92c0c4f0610fbfde7e1b4fdbadc9d8a84460226cc970b7c33452c380f41f1`.
+
+Limit se vztahuje na počty zdrojových diagnostik v CFG a procesu. Souhrnný
+bajtový rozpočet, strukturální mezery a diagnostika vztahových pohledů
+zůstávají mimo toto ověření. Plný pytest, hostované CI, nový běh compiler
+workeru a skutečný Mermaid parser mají v tomto dílčím kroku stav NOT_RUN.
+[Použití a formáty](../unified-flow-views.md) · [PR #173](https://github.com/p-rum/kgmaker/pull/173)

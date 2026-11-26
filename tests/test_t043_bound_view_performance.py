@@ -1,5 +1,7 @@
 """Deterministic scope and gate checks. Measurements run separately."""
 
+import json
+
 import pytest
 
 from benchmarks.t043_view_performance import (
@@ -15,7 +17,7 @@ from benchmarks.t043_view_performance import (
 from kgmaker import flow
 from kgmaker.analysis_model import AnalysisError, digest
 from kgmaker.topology_filter import TopologyFilterError
-from test_unified_flow_views import nested_process_graph
+from test_unified_flow_views import model_graph, nested_process_graph
 
 
 def test_t043_scale_preserves_all_binding_ids_within_node_and_hop_limits():
@@ -100,3 +102,103 @@ def test_t043_relative_gate_rejects_regressions_and_changed_fixtures():
     for field in ('fixture_sha256', 'output_sha256'):
         with pytest.raises(ValueError, match='mismatched fixture or output identities'):
             compare_samples([sample], [{**sample, field: 'different'}])
+
+
+def source_diagnostics(count):
+    return [{'code': 'SYNTHETIC_CFG_DIAGNOSTIC', 'reason': f'opaque source span {i:04d}'}
+            for i in range(count)]
+
+
+def test_t043_bounds_source_diagnostics_before_mirroring_coverage():
+    graph = cyclic_cfg_fixture()
+    diagnostics = source_diagnostics(1024)
+    diagnostics[-1] = {'code': 'STALE_EVIDENCE', 'reason': 'source evidence no longer matches'}
+    graph.cfgs[0]['diagnostics'] = diagnostics
+    before = digest(graph.to_dict())
+
+    report = cyclic_cfg_report(graph)
+    assert report['diagnostics'] == report['cfg']['diagnostics'] == diagnostics[:256]
+    gaps = report['coverage']['gaps']
+    assert len(gaps) == 259
+    summary, = [gap for gap in gaps if gap['code'] == 'FLOW_DIAGNOSTIC_LIMIT']
+    assert summary['max_diagnostics'] == 256
+    assert summary['omitted_diagnostics'] == summary['omitted_cfg_diagnostics'] == 768
+    assert summary['omitted_unknown_codes'] == ['STALE_EVIDENCE']
+    assert report['status'] == report['coverage']['status'] == 'UNKNOWN'
+    assert report['scope'] == 'production' and report['provenance']['evidence_ids'] == ['cfg-proof']
+    assert report['ordering']['display_order'] == [report['cfg']['blocks'][0]['id']]
+    assert report['cfg']['blocks'][0]['original_ids'] == ['entry', 'error', 'exit', 'method']
+    assert digest(graph.to_dict()) == before
+
+    serialized = json.loads(flow.render(report, 'json'))
+    assert serialized == report
+    assert 'FLOW_DIAGNOSTIC_LIMIT' in flow.render(report, 'markdown')
+    assert 'FLOW_DIAGNOSTIC_LIMIT' in flow.render(report, 'mermaid')
+
+
+def test_t043_diagnostic_overflow_does_not_report_node_truncation():
+    graph = model_graph()
+    graph.cfgs[0]['diagnostics'] = source_diagnostics(256)
+    graph.cfgs[0]['diagnostics'][0]['code'] = 123
+    compatible = flow.build_report(graph, 'method')
+    assert compatible['diagnostics'] == graph.cfgs[0]['diagnostics']
+    assert all(gap['code'] != 'FLOW_DIAGNOSTIC_LIMIT' for gap in compatible['coverage']['gaps'])
+    assert json.loads(flow.render(compatible, 'json')) == compatible
+
+    graph.cfgs[0]['diagnostics'].append({'code': 'SYNTHETIC_CFG_DIAGNOSTIC', 'reason': 'overflow'})
+    report = flow.build_report(graph, 'method')
+    assert report['truncated'] is False
+    assert 'FLOW_DIAGNOSTIC_LIMIT' in {gap['code'] for gap in report['coverage']['gaps']}
+    assert 'NODE_LIMIT' not in {gap['code'] for gap in report['coverage']['gaps']}
+    assert json.loads(flow.render(report, 'json')) == report
+
+
+def test_t043_caps_process_diagnostics_without_changing_call_provenance():
+    graph = nested_process_graph()
+    expected = flow.build_report(graph, 'method', view='process', max_depth=1)
+    diagnostics = source_diagnostics(257)
+    root = next(cfg for cfg in graph.cfgs if cfg['method'] == 'method')
+    root['diagnostics'] = diagnostics
+    before = digest(graph.to_dict())
+
+    report = flow.build_report(graph, 'method', view='process', max_depth=1)
+    assert report['diagnostics'] == diagnostics[:256]
+    assert 'diagnostics' not in report['cfg']
+    summary, = [gap for gap in report['coverage']['gaps'] if gap['code'] == 'FLOW_DIAGNOSTIC_LIMIT']
+    assert summary['omitted_diagnostics'] == 1 and summary['omitted_cfg_diagnostics'] == 0
+    for key in ('cfg', 'ordering', 'boundaries', 'provenance', 'scope', 'status'):
+        assert report[key] == expected[key]
+    assert digest(graph.to_dict()) == before
+
+
+def test_t043_render_caps_already_mirrored_legacy_source_diagnostics():
+    legacy = flow.build_report(model_graph(), 'method')
+    diagnostics = source_diagnostics(480)
+    legacy['diagnostics'] = diagnostics
+    legacy['cfg']['diagnostics'] = diagnostics
+    original_gaps = list(legacy['coverage']['gaps'])
+    legacy['coverage']['gaps'] += [{**item, 'diagnostic': item} for item in diagnostics]
+    legacy_authority = {'code': 'EVIDENCE_FRESHNESS_UNKNOWN', 'reason': 'unavailable source'}
+    legacy['coverage']['gaps'].append({**legacy_authority, 'diagnostic': legacy_authority})
+    before = digest(legacy)
+    report = json.loads(flow.render(legacy, 'json'))
+    assert report['diagnostics'] == report['cfg']['diagnostics'] == diagnostics[:256]
+    assert all(gap in report['coverage']['gaps'] for gap in original_gaps)
+    assert len(report['coverage']['gaps']) == len(original_gaps) + 256 + 1
+    assert report['status'] == 'UNKNOWN'
+    summary, = [gap for gap in report['coverage']['gaps'] if gap['code'] == 'FLOW_DIAGNOSTIC_LIMIT']
+    assert summary['omitted_unknown_codes'] == ['EVIDENCE_FRESHNESS_UNKNOWN']
+    assert digest(legacy) == before
+
+
+def test_t043_overflow_cannot_hide_malformed_diagnostics(tmp_path):
+    report = flow.build_report(model_graph(), 'method')
+    report['diagnostics'] = [*source_diagnostics(256), 'not a diagnostic']
+    output = tmp_path / 'flow.json'
+    output.write_bytes(b'previous report')
+    before = digest(report)
+    with pytest.raises(AnalysisError, match='Invalid flow source diagnostic'):
+        flow.publish(report, 'json', output)
+    assert output.read_bytes() == b'previous report'
+    assert list(tmp_path.iterdir()) == [output]
+    assert digest(report) == before

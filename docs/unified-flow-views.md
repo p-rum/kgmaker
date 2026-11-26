@@ -60,6 +60,15 @@ node. [Scoped performance evidence](changes/189_reduceBoundedCfgTraversal.md)
 `--max-depth` bounds process expansion. Neither limit rewires branches to invented
 steps. Missing compiler/CFG support remains a gap rather than a guessed sequence.
 
+Control-flow and process retain the first 256 source diagnostic rows in each
+of `diagnostics` and `cfg.diagnostics` when the list is present. Coverage reflects
+the retained report diagnostics together with structural and provenance gaps.
+`FLOW_DIAGNOSTIC_LIMIT` records the omitted row count for each list in JSON,
+Markdown, and Mermaid. The counts are separate because a control-flow diagnostic
+can occur in both lists. An omitted diagnostic that requires `UNKNOWN` preserves
+that status and its code in the summary. The `truncated` flag still describes the
+node or process depth limit.
+
 ```sh
 kgmaker flow render --root project --entry METHOD_ID --context CONTEXT_ID --view control-flow --max-nodes 40 --format json
 ```

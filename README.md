@@ -1315,7 +1315,9 @@ same CFG model as JSON and Mermaid, with original IDs, explicit coverage gaps an
 truncation. Expansion requires the current source-body proof of the exact caller
 and callee; reference-only bindings do not establish an execution path. The
 control-flow view counts each omitted endpoint once when finding the longest
-canonical prefix that fits `--max-nodes`. `--output .kgmaker/flows/process.md` publishes atomically after rechecking
+canonical prefix that fits `--max-nodes`. Control-flow and process reports retain
+up to 256 source diagnostic rows per list and disclose omitted counts as
+`FLOW_DIAGNOSTIC_LIMIT`. `--output .kgmaker/flows/process.md` publishes atomically after rechecking
 the loaded index and source snapshot; rendering
 never launches workers. See [flow formats, limits and compatibility](docs/unified-flow-views.md)
 and [change128](docs/changes/128_unifiedFlowViews.md).

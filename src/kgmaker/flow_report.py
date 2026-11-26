@@ -7,11 +7,69 @@ import json
 import math
 import time
 from collections import defaultdict, deque
+from itertools import islice
 from pathlib import Path
 
 from .analysis_model import AnalysisError, atomic_write, canonical, digest
 
 VERSION = 'flow-view-1'
+_SOURCE_DIAGNOSTIC_LIMIT = 256
+_DIAGNOSTIC_LIMIT_CODE = 'FLOW_DIAGNOSTIC_LIMIT'
+_UNKNOWN_GAP_CODES = {'EXECUTION_AUTHORITY_UNKNOWN', 'STALE_EVIDENCE', 'EVIDENCE_FRESHNESS_UNKNOWN'}
+
+
+def _diagnostic_gap(diagnostic):
+    if not isinstance(diagnostic, dict):
+        raise AnalysisError('Invalid flow source diagnostic')
+    code = diagnostic.get('code', 'CFG_DIAGNOSTIC')
+    reason = diagnostic.get('reason') or diagnostic.get('message') or canonical(diagnostic)
+    return {'code': code, 'reason': reason, 'diagnostic': diagnostic}
+
+
+def _bound_source_diagnostics(report):
+    if report.get('view', 'control-flow') not in {'control-flow', 'process'}:
+        return report
+
+    cfg = report['cfg']
+    diagnostics = report.get('diagnostics', ())
+    cfg_diagnostics = cfg.get('diagnostics') or ()
+    if not all(isinstance(rows, (list, tuple)) for rows in (diagnostics, cfg_diagnostics)):
+        raise AnalysisError('Invalid flow source diagnostics collection')
+    omitted = max(0, len(diagnostics) - _SOURCE_DIAGNOSTIC_LIMIT)
+    omitted_cfg = max(0, len(cfg_diagnostics) - _SOURCE_DIAGNOSTIC_LIMIT)
+    if not (omitted or omitted_cfg):
+        return report
+
+    unknown_codes = set()
+    for rows in (diagnostics, cfg_diagnostics):
+        for diagnostic in islice(rows, _SOURCE_DIAGNOSTIC_LIMIT, None):
+            detail = _diagnostic_gap(diagnostic)
+            # Truncation must not hide malformed input that would fail serialization.
+            canonical(detail)
+            if detail['code'] in _UNKNOWN_GAP_CODES:
+                unknown_codes.add(detail['code'])
+
+    result = dict(report)
+    coverage = report.get('coverage', {})
+    gaps = []
+    if omitted:
+        result['diagnostics'] = diagnostics[:_SOURCE_DIAGNOSTIC_LIMIT]
+        # Older finalized reports also contain the diagnostic projection.
+        # Rebuild these rows from retained diagnostics and keep structural gaps.
+        for gap in coverage.get('gaps', ()):
+            if set(gap) != {'code', 'reason', 'diagnostic'}:
+                gaps.append(gap)
+            elif gap['code'] in _UNKNOWN_GAP_CODES and gap['diagnostic'] not in result['diagnostics']:
+                unknown_codes.add(gap['code'])
+    else:
+        gaps.extend(coverage.get('gaps', ()))
+    if omitted_cfg:
+        result['cfg'] = {**cfg, 'diagnostics': cfg_diagnostics[:_SOURCE_DIAGNOSTIC_LIMIT]}
+    gaps.append({'code': _DIAGNOSTIC_LIMIT_CODE, 'reason': 'Some source diagnostic details exceeded the report limit.',
+                 'max_diagnostics': _SOURCE_DIAGNOSTIC_LIMIT, 'omitted_diagnostics': omitted,
+                 'omitted_cfg_diagnostics': omitted_cfg, 'omitted_unknown_codes': sorted(unknown_codes)})
+    result['coverage'] = {**coverage, 'gaps': gaps}
+    return result
 
 
 def ordered_cfg(cfg):
@@ -58,7 +116,7 @@ def ordered_cfg(cfg):
 
 
 def finalize(report, graph=None):
-    result = copy.deepcopy(report)
+    result = copy.deepcopy(_bound_source_diagnostics(report))
     cfg, order, unreachable = ordered_cfg(result['cfg'])
     result['cfg'] = cfg
     result['flow_model_version'] = VERSION
@@ -112,9 +170,10 @@ def finalize(report, graph=None):
         edge.setdefault('context_ids',[cfg['context_id']] if cfg.get('context_id') else [])
         edge.setdefault('evidence_ids',list(cfg.get('evidence_ids',[])))
     for diagnostic in result.get('diagnostics',[]):
-        gap(diagnostic.get('code','CFG_DIAGNOSTIC'),diagnostic.get('reason') or diagnostic.get('message') or canonical(diagnostic),diagnostic=diagnostic)
+        gaps.append(_diagnostic_gap(diagnostic))
     gaps = [json.loads(x) for x in sorted({canonical(g) for g in gaps})]
-    unknown = not cfg['blocks'] or any(g['code'] in {'EXECUTION_AUTHORITY_UNKNOWN','STALE_EVIDENCE','EVIDENCE_FRESHNESS_UNKNOWN'} for g in gaps)
+    unknown = not cfg['blocks'] or any(g['code'] in _UNKNOWN_GAP_CODES
+        or (g['code'] == _DIAGNOSTIC_LIMIT_CODE and g.get('omitted_unknown_codes')) for g in gaps)
     status = 'UNKNOWN' if unknown else 'PARTIAL' if gaps or result.get('status')=='PARTIAL' else result.get('status','COMPLETE_WITHIN_SUPPORTED_SYNTAX')
     result['status'] = status
     result['coverage'] = {'status':status,'gaps':gaps}
