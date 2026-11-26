@@ -59,6 +59,18 @@ použil Markdown-it 3.0.0 a Mermaid 11.4.1 s jsdom 26.0.0 na Node v24.22.3.
 Ověřen byl vložený diagram i původní T021 s HTTP a Kafka. Omezení CLI `explain`
 na JSON dále ověřuje `test_explain_remains_json_only_and_preserves_last_artifact`.
 
+Na publikované revizi `44ea3123e618e8fddf1cdeef437cb340e49550ed` nad `main`
+`a2adbe2e8666fbc76bf87b0aa2fd2be288bdf6bc` prošla úplná standardní sada na
+Pythonu 3.13.18 s výsledkem **2 660 PASS / 1 393 SKIP / 1 očekávaný XFAIL**, exit 0.
+JUnit SHA-256 `6cc570be26c1fab36ca6f926a9d7989605755e6f8b4ea2114a7b88a4544bac24`.
+
+Na stejné dvojici revizí samostatně prošlo **26 cílených testů bez přeskočení**,
+exit 0. Ověření zahrnulo 12 testů T022 se skutečným vykreslením Mermaid
+11.4.1 na jsdom 26.0.0, Markdown-it 3.0.0, test procesního CLI se skutečným
+Javacem 21 a 13 testů plánovače. JUnit SHA-256
+`6a83ff3b29ee56054867b493d958bb91603b837e0374e074e55cb2c2cdd8e9e6`.
+Oba běhy ověřily shodu všech 936 sledovaných souborů před a po testech.
+
 ## T022-S05 — Příklad a stav dodání (AC06)
 
 ```sh
@@ -68,6 +80,7 @@ kgmaker architecture topology --capture-snapshot topology-inputs.json --max-node
 Aktualizované jsou README, [CLI](../architecture-json-cli.md#architecture-topology-markdown-t022),
 [architektura](../architecture.md), [topologie](../service-topology.md#markdown-report-t022),
 [stav](../production-analysis-progress.md) a [acceptance](../acceptance-inventory.md).
-Úplná sada a nezávislé posudky jsou `NOT_RUN`, samostatné PR a jeho integrace
-čekají na aktuální ověření a schválení. Jde o statický report nad existujícím
-podkladem. Běh cílové aplikace ani dostupnost dat tento výstup nedokládá.
+Samostatné draft PR je otevřené. Další revize čeká na aktuální ověření,
+nezávislé posudky a schválení před integrací. [PR #179](https://github.com/p-rum/kgmaker/pull/179).
+Jde o statický report nad existujícím podkladem. Běh cílové aplikace ani
+dostupnost dat tento výstup nedokládá.

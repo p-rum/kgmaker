@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 485
+- Implementation episodes: 486
 - Inferred/ambiguous relationships: 9292/0
 
 ## Architecture diagram
@@ -2978,6 +2978,7 @@ flowchart LR
 - **Preserve runtime multiproof with the verified publication guard** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/151_preserveRuntimeObservationEvidence.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: maven-jdk21-config-w06-t032=passed, actual-configured-multirun=passed, github-actions=unknown
 - **docs: record verified bounded TypeScript callback full validation** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/53_resolveBoundedTypeScriptCallbacks.md, docs/compiler-inspection.md; validation: actual_callbacks=passed, view_evidence_integration=passed, prior_source_full=passed
 - **Record final registrar and factory namespace validation** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/47_declareSpringRegistrations.md, docs/compiler-inspection.md; validation: strict-full-558-final=passed, actual-focused-59=passed, optional-10=skipped
+- **Change Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06, Aktuální stage ověření — 2026-11-06** — current; files: docs/acceptance-inventory.md, docs/changes/195_renderTopologyMarkdown.md; validation: prior44ea312-standard=passed, prior44ea312-locked-parser-native=passed, t022-doc-evidence-planner=passed, current-full-standard=unknown
 - **docs(coroutines): refresh current scanner semantic citations** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/51_mapCoroutineSourceBoundaries.md, docs/compiler-inspection.md; validation: frozen-full=passed, combined-actual=passed, pure-integration=passed
 - **Implement next steps from implementation plan** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker-implementation.agent.md; validation: pytest=passed, task_specs=passed, semantic=passed, diff_check=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/33_defineServiceOwnership.md, docs/production-analysis-progress.md; validation: focused-tests=passed, full-pytest=passed, toolchain-gates=skipped, semantic-validation=passed, docs-check=passed
