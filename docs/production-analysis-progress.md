@@ -9,17 +9,25 @@ tři cesty ke stejnému výsledku včetně vazby query tabulky, podmínky `IFERR
 odděleného zobrazení listu. V provozním sešitu a v živé relaci Copilotu má stav
 NOT_RUN. [Zadání](tasks/56_extractExcelBehavior.md) · [Návod](excel-migration.md#funkce-a-tok-dat-v-sešitu) · [Doklady](changes/177_extractExcelBehavior.md).
 
-Review follow-up `a1cb9e0` doplňuje do T056-S02 regresní případy pro překryv adres
+Review follow-up `d6b4054` nad základem `a1cb9e0` doplnil do T056-S02 regresní případy pro překryv adres
 query tabulky a vzorce bez uloženého `cell`, zachování definice přes známý
 nepřepisující intrinsic VBA a přepis návratové hodnoty po ukončené větvi. Tři
 cílené testy prošly; v celé migrační sadě je 19 PASS a 14 SKIP (13 vyžaduje worker,
 jeden instalovaný wheel). Viz [změna 178](changes/178_fixExcelBehaviorLineage.md). Produkční sešit,
 živý Copilot, Java worker/wheel a hostovaná CI v tomto follow-upu mají NOT_RUN.
 
-Nové reprodukce nad `5ff2c0846056353605ccb9ab271bd86847c6e661` upřesňují
-T056-S01 až S03 na PARTIAL. Přetrvávají mezery pro koncové buňky s definovaným
-názvem, predikáty větvení filtrovaných událostí a rozsah zdrojů ve filtrovaném
-reportu. [Doložená fixture a reprodukce](changes/183_reconcileExcelCompletionInventory.md).
+Reprodukce nad `5ff2c0846056353605ccb9ab271bd86847c6e661` upřesnily
+T056-S01 až S03 na PARTIAL. Doložily potlačené koncové buňky s definovaným
+názvem, chybějící predikáty větvení filtrovaných událostí a nadměrný rozsah
+deklarací zdrojů ve filtrovaném reportu.
+[Doložená fixture a reprodukce](changes/183_reconcileExcelCompletionInventory.md).
+
+Lokální oprava na `80db9cb` zachovává výstup odkazovaný pouze
+nepoužitými jmény, citují řídicí podmínky vybraných VBA zápisů a omezují
+deklarace na zvolený rozsah a doložené vstupní cesty. Report a packet používají
+stejné ověření původu lokálních vazeb VBA. T056-S01 až S03 zůstávají PARTIAL.
+Produkční sešit a živý Copilot mají stav NOT_RUN.
+[Rozsah a výsledky oprav](changes/184_preserveScopedExcelBehavior.md).
 
 ## T055 — Copilot skill pro migraci Excelu, 2026-11-25
 

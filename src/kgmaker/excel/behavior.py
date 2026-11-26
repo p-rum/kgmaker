@@ -7,6 +7,7 @@ from collections import Counter, defaultdict, deque
 
 from ..analysis_model import AnalysisError
 from ..workbooks import _range_cells
+from .relations import bound_relations, local_alternatives
 
 FLOW_LIMIT = 64
 OUTPUT_TRACE_LIMIT = 200
@@ -83,13 +84,22 @@ class WorkbookBehavior:
                 self.visible.add((place["workbook"], place["sheet"]))
             elif row["kind"] == "gap":
                 self.site_gaps[_site(row)].append(row)
-        for edge in inventory["relations"]:
+        for edge, _ in bound_relations(self.rows, inventory["relations"]):
             source, target, kind = edge["source"], edge["target"], edge["kind"]
             self.links[source, kind].append(target)
-            if kind == "reads":
+            if kind == "reads" and self.rows[source]["kind"] != "defined-name":
                 self.used.add(target)
             elif kind == "writes" and self.rows[source]["kind"] in {"vba-operation", "query-table"}:
                 self.writers[target].append(source)
+        # An alias declaration consumes its inputs only when a workbook rule
+        # uses that alias, possibly through other names.
+        names = deque(key for key in self.used if self.rows[key]["kind"] == "defined-name")
+        while names:
+            for target in self.links.get((names.popleft(), "reads"), ()):
+                if target not in self.used:
+                    self.used.add(target)
+                    if self.rows[target]["kind"] == "defined-name":
+                        names.append(target)
         # Expand only ranges that can contribute to output lineage. Larger
         # ranges stay in the report as cited range endpoints.
         range_budget = 50_000
@@ -191,11 +201,28 @@ class WorkbookBehavior:
             paths.append(path)
         return traced, paths, any(key not in observed for key, _ in pending)
 
+    def trace_guards(self):
+        pending = deque(key for row in self.by_kind["vba-operation"] if self.relevant(row)
+                        for key in self.connections(row, "guarded-by"))
+        observed = set()
+        while pending:
+            key = pending.popleft()
+            if key in observed:
+                continue
+            observed.add(key)
+            pending.extend(self.connections(self.rows[key], "guarded-by", "depends-on"))
+        self.traced.update(observed)
+
     def declared_sources(self, lines):
         lines.extend(("", "## Declared data sources", ""))
-        sources = self.by_kind["external-source"]
+        # Workbook-level connection metadata can be linked from a query table
+        # on the selected sheet without carrying a sheet locator of its own.
+        connected = {key for row in self.rows.values() if self.relevant(row)
+                     for key in self.connections(row, "source")}
+        sources = [row for row in self.by_kind["external-source"]
+                   if row["id"] in connected or self.relevant(row)]
         if not sources:
-            lines.append("No supported source declaration was extracted from this inventory.")
+            lines.append("No supported source declaration was found in this report's scope.")
         for row in sources:
             detail = row["mechanism"]
             if row.get("method"):
@@ -211,6 +238,8 @@ class WorkbookBehavior:
             if bindings := self.connections(row, "depends-on"):
                 lines.append(f"  - Static endpoint binding from literal assignment {self.refs(bindings)}")
         for row in self.by_kind["query-table"]:
+            if not self.relevant(row):
+                continue
             inputs = self.connections(row, "source")
             outputs = self.connections(row, "writes")
             lines.append(f"- **Declared query-table binding** · {_anchor(row)}")
@@ -227,10 +256,11 @@ class WorkbookBehavior:
         if functions := row.get("functions"):
             lines.append(f"  - Functions {', '.join(_code(name) for name in functions)}")
         for kind, name in (("reads", "Reads"), ("writes", "Writes"), ("source", "Associated source"), ("calls", "Calls"),
-                           ("depends-on", "Possible local definitions")):
+                           ("depends-on", "Possible local definitions"), ("guarded-by", "Control-flow context")):
             if keys := self.connections(row, kind):
                 lines.append(f"  - {name} {self.refs(keys)}")
-        for symbol, choices in row.get("alternatives", {}).items():
+        definitions = self.connections(row, "depends-on")
+        for symbol, choices in local_alternatives(row, definitions).items():
             lines.append(f"  - **Alternative definitions** of {_code(symbol)} · {self.refs(choices)}. "
                          "Branch selection and effects of opaque calls require verification.")
         for gap in self.site_gaps[_site(row)]:
@@ -319,8 +349,11 @@ class WorkbookBehavior:
             lines.append(f"- {_code(event)} · {_anchor(row)}")
             if calls := self.connections(row, "calls"):
                 lines.append(f"  - Invokes {self.refs(calls)}")
+        presentation = []
+        self.displays(presentation)
+        self.trace_guards()
         self.declared_sources(lines)
-        self.displays(lines)
+        lines.extend(presentation)
         referenced = [row for row in self.by_kind["cell"]
                       if self.relevant(row) and row["id"] in self.used and row.get("type") != "FORMULA"]
         if referenced:
