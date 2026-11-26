@@ -76,5 +76,18 @@ kgmaker impact --evidence-only --format json \
 [Stav](../production-analysis-progress.md).
 W02-AC01 zůstává `PARTIAL`; W03 nadále vyžaduje `VERIFIED_IN_SCOPE` pro W02.
 Přidání zdrojů, negativní lookupy, sdílené moduly a zápis přes CLI s build
-manifestem mají vlastní rozsah. Úplná standardní sada a nezávislé review
-této revize čekají na ověření přesného kandidáta.
+manifestem mají vlastní rozsah.
+
+## Krok 6 — draft #184 a přenos po #181
+
+Při otevření měl [draft #184](https://github.com/p-rum/kgmaker/pull/184) head
+`fa51826bf291eb17bef9d9d14d36fe3b3e4a5686` a strom
+`0009af7eaf2e9c9e3b407ae04bdc33bc148242b7`. Jeho rodič je
+`c4a1edb59f140faeafba0d5e979023bba185f3f1`. Doložených 36 nativních PASS z kroku 4
+patří původnímu výřezu s tímto stromem.
+
+Přenesený kandidát zachovává zdroj i testy W02 z původního headu a runtime
+změny [#181](https://github.com/p-rum/kgmaker/pull/181) z aktuálního `main`
+`7919c283c4ea7b58eb99bfcfbc3971903984f438`. Nativní i úplná standardní sada
+a nezávislé review složené revize mají při této přípravě stav `NOT_RUN`.
+W02 zůstává `MERGED / PARTIAL` podle rozsahu dříve sloučených výřezů.
