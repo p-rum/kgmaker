@@ -9,15 +9,18 @@ import subprocess
 import time
 from collections import defaultdict
 from dataclasses import replace
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from .analysis_model import AnalysisError, digest, file_hash, safe_path
 from .model import Edge, KnowledgeGraph
+from . import runtime_value
 
 SCHEMA_VERSION = 2
 INTERFACE_DISPATCH_VERSION = 3
-SUPPORTED_SCHEMA_VERSIONS = {1, SCHEMA_VERSION, INTERFACE_DISPATCH_VERSION}
+VALUE_PRESENCE_VERSION = 4
+SUPPORTED_SCHEMA_VERSIONS = {1, SCHEMA_VERSION, INTERFACE_DISPATCH_VERSION, VALUE_PRESENCE_VERSION}
 MAX_FACTS = 50_000
 MAX_OUTPUT = 8 * 1024 * 1024
 _LABEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:+-]{0,199}\Z")
@@ -129,7 +132,8 @@ class _InterfaceDispatch:
                 "call_site": site["id"], "receiver_type": receiver[0]["id"]}
 
 
-def _validate_capture(graph: KnowledgeGraph, context: dict, capture: dict, *, interface_dispatch=False) -> list[dict]:
+def _validate_capture(graph: KnowledgeGraph, context: dict, capture: dict, *, interface_dispatch=False,
+                      value_presence=False) -> list[dict]:
     """Closed schema: no arbitrary strings, diagnostic text, URLs or payloads."""
     if set(capture) != _CAPTURE_FIELDS:
         raise AnalysisError("Runtime capture requires only facts, status and diagnostics")
@@ -146,6 +150,10 @@ def _validate_capture(graph: KnowledgeGraph, context: dict, capture: dict, *, in
         raise AnalysisError("Runtime COMPLETE requires facts and no incomplete-scope diagnostics")
     if capture["status"] != "COMPLETE" and not diagnostics:
         raise AnalysisError("Runtime PARTIAL/UNKNOWN requires a diagnostic code")
+    if value_presence:
+        if (len(facts) != 1 or capture["status"] != "PARTIAL" or diagnostics != ["INSTRUMENTED_SCOPE_ONLY"]):
+            raise AnalysisError("RUNTIME_VALUE_FACT: expected one complete presence sample within the instrumented scope", 3)
+        return [runtime_value.resolve_capture(graph, context, facts[0])]
     nodes = {n.id: n for n in graph.nodes}
     symbols = {s["id"]: s for s in graph.symbols if s.get("context_id") == context["id"]}
     dispatch = None
@@ -317,14 +325,17 @@ def produce_manifest(root: Path, command: list[str], *, context_id: str, runtime
     validate_manifest(graph, root, manifest)
     target = _output_path(root, output, context)
     before = digest(graph.to_dict())
+    run_started_at = datetime.now(timezone.utc).isoformat()
     raw = _run_capture(root, command, timeout, cancel_file)
     if set(raw) != _CAPTURE_FIELDS:
         raise AnalysisError("Runtime capture requires only facts, status and diagnostics")
     manifest.update(raw)
     facts = raw["facts"]
-    if (isinstance(facts, list) and len(facts) <= MAX_FACTS
-            and any(isinstance(fact, dict) and fact.get("kind") == "interface_dispatch" for fact in facts)):
-        manifest["schema_version"] = INTERFACE_DISPATCH_VERSION
+    if isinstance(facts, list) and len(facts) <= MAX_FACTS:
+        if any(isinstance(fact, dict) and fact.get("kind") == runtime_value.FACT for fact in facts):
+            manifest.update(schema_version=VALUE_PRESENCE_VERSION, run_started_at=run_started_at)
+        elif any(isinstance(fact, dict) and fact.get("kind") == "interface_dispatch" for fact in facts):
+            manifest["schema_version"] = INTERFACE_DISPATCH_VERSION
     current = load_graph(root)
     if current is None or digest(current.to_dict()) != before:
         raise AnalysisError("STALE_RUNTIME: stored compiler graph changed during capture", 3)
@@ -334,7 +345,24 @@ def produce_manifest(root: Path, command: list[str], *, context_id: str, runtime
         raise AnalysisError("RUNTIME_PRODUCER_CANCELLED: no artifact was published", 3)
     if target is not None:
         from .analysis_model import atomic_write
-        atomic_write(target, json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
+        rendered = json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+
+        def recheck_value_output():
+            from .graph_provider import validate_context_snapshot
+            latest = load_graph(root)
+            if latest is None or digest(latest.to_dict()) != before:
+                raise AnalysisError("STALE_RUNTIME: stored compiler graph changed before capture publication", 3)
+            _check_hashes(root, context)
+            validate_context_snapshot(root, context)
+            if _output_path(root, output, context) != target:
+                raise AnalysisError("STALE_RUNTIME: capture output path changed before publication", 3)
+            if cancel_file is not None and cancel_file.exists():
+                raise AnalysisError("RUNTIME_PRODUCER_CANCELLED: no artifact was published", 3)
+
+        if manifest["schema_version"] == VALUE_PRESENCE_VERSION:
+            atomic_write(target, rendered, before_replace=recheck_value_output)
+        else:
+            atomic_write(target, rendered)
     return manifest
 
 
@@ -361,13 +389,14 @@ def _check_hashes(root: Path, context: dict[str, Any], manifest: dict[str, Any] 
 
 def validate_manifest(graph: KnowledgeGraph, root: Path, manifest: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
     if not isinstance(manifest, dict):
-        raise AnalysisError("RuntimeManifest schema_version must be 1, 2 or 3")
+        raise AnalysisError("RuntimeManifest schema_version must be 1, 2, 3 or 4")
     # Bind the envelope before any preflight checks can read caller-owned values.
     manifest = dict(manifest)
     version = manifest.get("schema_version")
     if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
-        raise AnalysisError("RuntimeManifest schema_version must be 1, 2 or 3")
+        raise AnalysisError("RuntimeManifest schema_version must be 1, 2, 3 or 4")
     bound = version >= SCHEMA_VERSION
+    value_presence = version == VALUE_PRESENCE_VERSION
     for key in ("runtime_id", "context_id", "build_id", "config_fingerprint"):
         value = manifest.get(key)
         if not isinstance(value, str) or (bound and type(value) is not str) or not value:
@@ -382,12 +411,16 @@ def validate_manifest(graph: KnowledgeGraph, root: Path, manifest: dict[str, Any
         fields = {"schema_version", "runtime_id", "context_id", "build_id", "config_fingerprint", "service_id",
                   "service_version", "source_identity", "source_hashes", "worker_distribution", "facts",
                   "observations", "status", "diagnostics", "producer"}
+        if value_presence:
+            fields.add("run_started_at")
         if set(manifest) != fields or any(type(key) is not str for key in manifest):
             raise AnalysisError(f"RuntimeManifest v{version} has missing or unsupported fields")
         for key in ("runtime_id", "context_id", "build_id", "config_fingerprint", "service_id", "service_version"):
             _label(manifest[key], key)
         if not context.get("source_files") or not context.get("config_fingerprint"):
             raise AnalysisError(f"RuntimeManifest v{version} requires captured source/config/context identity", 3)
+        if value_presence:
+            runtime_value.run_start(manifest["run_started_at"])
         source_identity = {"context_fingerprint": digest(context),
                            "source_manifest_fingerprint": digest(context["source_files"])}
         if manifest["source_identity"] != source_identity:
@@ -402,10 +435,15 @@ def validate_manifest(graph: KnowledgeGraph, root: Path, manifest: dict[str, Any
         from .graph_provider import validate_context_snapshot
         validate_context_snapshot(root, context)
         derived = _validate_capture(graph, context, {key: manifest[key] for key in _CAPTURE_FIELDS},
-                                    interface_dispatch=version == INTERFACE_DISPATCH_VERSION)
+                                    interface_dispatch=version == INTERFACE_DISPATCH_VERSION, value_presence=value_presence)
     observations = manifest.get("observations")
     if not isinstance(observations, list) or len(observations) > MAX_FACTS:
         raise AnalysisError("Runtime observations must be a bounded array")
+    if value_presence:
+        if observations:
+            raise AnalysisError("RuntimeManifest v4 requires a typed value sample and no supplied observations")
+        manifest["observations"] = derived
+        return manifest, context
     if version == INTERFACE_DISPATCH_VERSION:
         if observations or not derived:
             raise AnalysisError("RuntimeManifest v3 requires typed interface dispatch facts and no supplied observations")
@@ -471,20 +509,36 @@ def import_manifest(root: Path, manifest: dict[str, Any], *, graph: KnowledgeGra
                       for index, edge in enumerate(edges) if edge.evidence_kind == "RUNTIME_OBSERVED"}
     context_ids = (context["id"],)
     imported = {}
+    value_evidence_ids = []
     for item in manifest["observations"]:
-        source, target = item["caller"], item["target"]
-        relation = "observed_dispatch_to" if item.get("kind", "call") in {"dispatch", "call"} else "runtime_framework_observation"
+        is_value = item.get("kind") == runtime_value.FACT
+        source, target = item["source" if is_value else "caller"], item["target"]
+        if is_value:
+            relation = runtime_value.RELATION
+        else:
+            relation = "observed_dispatch_to" if item.get("kind", "call") in {"dispatch", "call"} else "runtime_framework_observation"
         record = {"kind": "RUNTIME_OBSERVED", "source": source, "target": target, "relation": relation,
                   "runtime_id": manifest["runtime_id"], "context_id": manifest["context_id"],
-                  "build_id": manifest["build_id"], "scenario": item.get("scenario", ""),
-                  "async": bool(item.get("async", False)), "observation_source": item.get("source")}
+                  "build_id": manifest["build_id"]}
+        if not is_value:
+            record.update({"scenario": item.get("scenario", ""), "async": bool(item.get("async", False)),
+                           "observation_source": item.get("source")})
         if manifest["schema_version"] >= SCHEMA_VERSION:
             record.update({key: manifest[key] for key in (
                 "config_fingerprint", "service_id", "service_version", "source_identity",
             )})
         if manifest["schema_version"] == INTERFACE_DISPATCH_VERSION:
             record.update({key: item[key] for key in ("call_site", "receiver_type")})
+        if is_value:
+            record.update({key: item[key] for key in ("presence", "field_mapping_evidence_id", "hook_call_site")})
+            record["run_started_at"] = manifest["run_started_at"]
         evidence_id = "evidence:" + digest(record)
+        if is_value:
+            same_run = ("runtime_id", "context_id", "service_id", "service_version", "field_mapping_evidence_id")
+            if any(old.get("relation") == runtime_value.RELATION and old["id"] != evidence_id
+                   and all(old.get(key) == record[key] for key in same_run) for old in evidence.values()):
+                raise AnalysisError("RUNTIME_VALUE_AMBIGUOUS: run already has a different sample for this field transfer", 3)
+            value_evidence_ids.append(evidence_id)
         evidence.setdefault(evidence_id, {"id": evidence_id, **record})
         imported.setdefault((source, target, relation), set()).add(evidence_id)
     for (source, target, relation), evidence_ids in imported.items():
@@ -517,5 +571,6 @@ def import_manifest(root: Path, manifest: dict[str, Any], *, graph: KnowledgeGra
     return {"status": manifest.get("status", "COMPLETE"), "mode": "RUNTIME_IMPORT", "runtime_id": manifest["runtime_id"],
             "context_id": context["id"], "observations_imported": len(manifest["observations"]),
             "limitations": ["Observed calls are scoped to the supplied run; absent calls prove nothing.",
-                            "Runtime observations do not establish data availability or deployment state."]}
+                            "Runtime observations do not establish data availability or deployment state."],
+            **({"value_evidence_ids": value_evidence_ids} if value_evidence_ids else {})}
 
