@@ -47,13 +47,14 @@ Plný krok T040-S01 navíc potřebuje existující příkazy `process prepare`,
 [T035](../tasks/T-035_render-business-process-mermaid.md)
 · [T040](../tasks/T-040_add-agent-process-instructions.md).
 
-## Lokální ověření této aktualizace
+## Historické lokální ověření prvního headu #180
 
-Na výchozím `main` `a2adbe2e8666fbc76bf87b0aa2fd2be288bdf6bc` a s touto
-dokumentační změnou obsahuje plán 135 položek. Z nich je 107 MERGED, 26 PLANNED,
-jedna PR_OPEN a jedna IN_PROGRESS. Mění se pouze T034 a odvozené blokace
-T035/T040. Z 32 položek delegace se odstraní T034 na druhé pozici, T035 se
-přidá na pátou pozici a ostatních 31 položek zachová relativní pořadí.
+Následující plán a JUnit patří veřejnému headu #180
+`6877afe4507afc4cce79072919e678db13de283b` na tehdejším `main`
+`a2adbe2e8666fbc76bf87b0aa2fd2be288bdf6bc`. Plán měl 135 položek, z toho
+107 MERGED, 26 PLANNED, jednu PR_OPEN a jednu IN_PROGRESS. Změnil se T034
+a odvozené blokace T035/T040. Z 32 položek delegace byl odstraněn T034
+na druhé pozici a přibyl T035 na páté. Ostatních 31 položek drželo pořadí.
 SHA-256 plánu `fda1d22d17e8db1b521ad342bd1d60ad3d4470ffbe14ac87e8f7fb6e30f1d6bc`.
 
 ```sh
@@ -61,6 +62,20 @@ kgmaker completion plan --root "$PWD" --jobs 32
 python -m pytest --assert=plain -q -p no:cacheprovider tests/test_completion.py
 ```
 
-Cílená sada má **13 PASS / 0 SKIP**. SHA-256 JUnit
+Cílená sada měla **13 PASS / 0 SKIP**. SHA-256 JUnit
 `b49c936e04216a5ecc33ff19d68dde86d7742887dadc1acc859936bd2f037b79`.
-Úplná sada má pro tuto dokumentační revizi stav NOT_RUN.
+Úplná sada měla pro tuto historickou dokumentační revizi stav NOT_RUN.
+
+## Ověření doplnění po sloučení #176
+
+Tento místní běh ověřuje spojení headu #180
+`6877afe4507afc4cce79072919e678db13de283b` se základem `main`
+`36295ea89f8f291d1efc25358a3a605b9da979cb`. Plán má 135 položek, z toho
+108 MERGED, 26 PLANNED a jednu IN_PROGRESS. Změnil se T034 a odvozené blokace
+T035/T040. V delegaci o 32 položkách odešel T034 z druhé pozice a T035 přibyl
+na čtvrté. Ostatních 31 položek zachovalo relativní pořadí. SHA-256 plánu
+`832bc7efcf0042383691dacadd5e7c4b2542e9fde6ff538f85a73927211086a4`.
+
+Cílená sada má **13 PASS / 0 SKIP**, SHA-256 JUnit
+`e4c6862f49710a362cb461f96035a8406dc38372f1f6117175abc8155b406f15`.
+Úplná sada má pro tento dokumentační běh stav NOT_RUN.

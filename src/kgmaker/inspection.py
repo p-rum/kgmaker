@@ -874,10 +874,13 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     if any(file_hash(Path(item["path"])) != item["sha256"] for item in meta["distribution"]):
         raise WorkerError("Worker distribution changed before publishing", "STALE")
     retired_paths = set()
+    deleted_paths = set()
 
     def final_guard():
         stages.guard()
-        from .graph_provider import validate_context_snapshot
+        from .graph_provider import _compiler_input_absent, validate_context_snapshot
+        if any(not _compiler_input_absent(root, path) for path in deleted_paths):
+            raise WorkerError('Deleted compiler input reappeared or became unavailable before commit', 'STALE')
         validate_context_snapshot(root, selected)
         current = scan_repository(root, project_model=project_model, strict=strict)
         raw_before, raw_now = base.raw_file_hashes, current.raw_file_hashes
@@ -896,7 +899,7 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
         previous = graph_revision(root)
         graph = stages.attach(graph)
         if allow_stale_peer:
-            graph, retired_paths = _prepare_compiler_context(root, graph, selected, initial_scan=base)
+            graph, retired_paths, deleted_paths = _prepare_compiler_context(root, graph, selected, initial_scan=base)
         else:
             graph = merge_compiler_context(root, graph, selected)
         save_graph(graph, root, before_replace=final_guard, expected_revision=previous)
