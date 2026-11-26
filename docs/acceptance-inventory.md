@@ -248,6 +248,14 @@ Příkazy a přesné revize uvádí [change151](changes/151_preserveRuntimeObser
 | T003-S13-W02-AC02, AC03 | VERIFIED_IN_SCOPE | `test_jdk21_interface_dispatch_revalidates_sanitized_fact_offline` pokrývá neplatné údaje, cizí konfiguraci, přidaná pozorování a vydávání v3 factu za v2. `test_jdk21_interface_dispatch_rejects_unlocated_instruction_in_same_caller` ověřuje odmítnutí skutečné konkatenace a lambdy s chybějícím řádkem `INVOKEDYNAMIC` v capture i offline importu se zachováním grafu, pohledů a artefaktu. Další testy ověřují dvě instrukce na témže řádku, zastaralý zdroj před spuštěním a obnovu výstupů po změně bytecode v průběhu publikace. |
 | T003-S13-W02-AC04 | PARTIAL | [Change182](changes/182_bindRuntimeInterfaceDispatch.md) zaznamenává baseline a ověření přesného rozsahu. Širší receiver/type kontrakt a T003-AC13 zůstávají PARTIAL. |
 
+## T003-S13-W03 — přítomnost hodnoty po přímém přiřazení
+
+| Acceptance | Ověření | Důkaz a rozsah |
+|---|---|---|
+| T003-S13-W03-AC01 | PARTIAL | `test_actual_java_value_presence_affects_only_matching_live_data_check` ověřuje čerstvý `PRESENT` mezi dvěma statickými Java `String` poli a schválené mapování. Pozorování doloží `PARTIAL/UNASSESSED` pro jeden běh. `ABSENT`, obyčejný call a prošlý vzorek nechají dostupnost `UNKNOWN`. |
+| T003-S13-W03-AC02, AC03 | PARTIAL | `test_actual_java_value_requires_selected_physical_proof` ověřuje chybějící nebo nejednoznačný fyzický doklad a offline import se zachováním výstupů. Testy v4 pokrývají také jiné příjemce, nesprávná přiřazení, cizí konfiguraci, budoucí čas, zastaralý zdroj a zakázaná pole. Živé čtení znovu ověřuje zdrojovou vazbu, přímočarý bytecode pro přiřazení, fyzické operandy hooku a identifikátory běhu a služby. V1–v3 a graph/store v3 používají existující schémata. |
+| T003-S13-W03-AC04 | PARTIAL | [Změna 187](changes/187_bindRuntimeValuePresence.md) odkazuje na skutečnou fixture a výchozí revizi. Rozsah se týká živého čtení `data-check`. |
+
 ## T051 — projektové workflows, 2026-11-15
 
 Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání MERGED

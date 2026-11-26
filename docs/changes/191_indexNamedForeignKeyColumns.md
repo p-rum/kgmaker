@@ -171,3 +171,35 @@ výřezu plánu je `6adb6cec0942028d7843d0c24637a5a6cf3f36c6bb5886e64e5766785016
 
 Úplná standardní sada společného stromu, běh mimo Linux a GitHub Actions
 mají při lokálním předání stav `NOT_RUN`.
+
+## Přenos opravy po sloučení #171 — kroky 4 a 5
+
+První rodič je `bdf54b2b31a7b721433bec39c20d1584af93f51b` se stromem
+`cc5d383df948c852cadc7cacf22e9a1c02464ff3`. Druhý je skutečný `main`
+`7e9fa691417706562c875a01a40606350ae058ea` se stromem
+`b2dd68bc3e8724dcb75110a84be6cb756471cf41`. `feature.py` je shodný s
+nezávislým třícestným sloučením. `current_graph` a `attach_schema`
+odpovídají prvnímu rodiči a ochrana v `apply` druhému. Ostatní soubory,
+fixture a testy obou úloh mají přesné bajty svých rodičů. ProcessView a
+jeho aktuální doklady se zachovaly. Graf slučuje všech 471 historických
+epizod obou rodičů. [Change187](187_bindRuntimeValuePresence.md).
+
+Samostatná historická zkouška skutečného `main` `7e9fa69` má 20 PASS / 0 SKIP
+a exit 0. SHA-256 JUnit je
+`6469fc61e67c7100f7c1a4e4d5bb849d7995badcb5e3c50170ecba0bfba3071f`.
+Cílená sada uvedená výše má na společném vstupu **31 PASS / 0 SKIP** za
+0,99 s. Pytest a sestavení a porovnání manifestů mají exit 0. SHA-256
+JUnit je `82ae8809f51a834d4034cb564a9ba102ce7453104e6652fbfbdfa5f5e4756a9d`
+a shodného manifestu `72b2fe707d6eb8405ab99243f0c18c53b129d032790515aa3ffacf1f30949a78`.
+
+Čerstvý lokální běh `scan` a `impact --evidence-only --format json` má
+exit 0. Jeden přesný důvod odpovídá uloženému cíli migrační operace a
+všechny soubory grafu mají při čtení shodné bajty. SHA-256 JSON je
+`6435e02aaf239f4cd0987069e1863670e05a28acbe7105a2fcc93f78427ba0b3`.
+Plán má 135 položek, proti `main` souhlasí 134 ostatních položek a pořadí
+32 úloh. S13-W03 má `IN_PROGRESS/PARTIAL` s #171. W02 uvádí #130 a #175
+ve stavu `MERGED/PARTIAL` a S10-W03 dál čeká na `VERIFIED_IN_SCOPE`.
+SHA-256 výřezu plánu je `1207731624f443217fdc50bca3ab1f0aec7cc745ac1a6058ece3e275bf56e2ff`.
+
+Úplná standardní sada společného stromu, běh mimo Linux a GitHub Actions
+mají při lokálním předání stav `NOT_RUN`.
