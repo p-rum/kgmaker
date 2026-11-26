@@ -242,8 +242,10 @@ ověření uvedené níže je lokální a neprokazuje automatickou discovery hos
 | T050-AC01 | VERIFIED_IN_SCOPE | tests/test_skills.py, všechny 8 resources, parity + references; čistý wheel init mimo checkout PASS |
 | T050-AC02 | VERIFIED_IN_SCOPE | Opakovaný init bytes/mtime, úpravy skills/references/cizích instrukcí, explicitní force a cizí skill PASS |
 | T050-AC03 | VERIFIED_IN_SCOPE | 12 symlink scénářů + 4 file/directory kolize s nulovou mutací; scan neinstaluje skilly PASS |
-| T050-AC04 | PARTIAL | 5 formátových validací PASS; audit/testgen JSON ukázky prošly runtime validátory. Živý model/hostitel NOT_RUN |
-| T050-AC05 | PARTIAL | Záznam obou kroků, README, capability/CLI návod, matice a registr aktualizované; nezávislé review a GH CI NOT_RUN |
+| T050-AC04 | PARTIAL | Na schváleném headu #98 prošlo pět formátových validací a 21 lokálních CLI volání. Audit a testgen příklady mají vlastní kontroly v pytest. Od té doby se změnil kontextový skill a reference testgen. Úplné opakování příkladů a živý hostitel mají NOT_RUN. |
+| T050-AC05 | PARTIAL | Český záznam, návod, matice a registr mají dohledatelné doklady. Nezávislé T045 pro přesný sloučený head #98 po doplnění lokálních důkazů udělilo APPROVE komentářem. Formální GitHub schválení účet nemohl přidat. Hostovaný Test má FAILURE/CANCELLED, výsledky testů se z dostupných logů nepodařilo ověřit. [Přesný verdikt a kontroly](https://github.com/p-rum/kgmaker/pull/98#issuecomment-6892872266). |
+
+[Aktuální rozsah a kanonické řádky](changes/186_reconcileInstallationCompletionInventory.md).
 
 ## Aktuální audit dodání — 2026-11-14
 

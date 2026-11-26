@@ -37,7 +37,7 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T055 | [55_automateExcelMigration.md](55_automateExcelMigration.md) | Copilot skill pro přípravu Kotlin plánu a Jira CSV ze sešitů | SPECIFICATION, revize 1 |
 | T056 | [56_extractExcelBehavior.md](56_extractExcelBehavior.md) | Statický popis funkcí sešitu, cest od zdrojů k výstupům a nejistot | SPECIFICATION, revize 1 |
 
-Jednotlivé kroky a deklarované závislosti T054–T056 zpracovává T052 ze
+Jednotlivé kroky a deklarované závislosti T050 a T053–T056 zpracovává T052 ze
 [stavové matice](../production-analysis-progress.md) a z uvedených zadání.
 
 T046 je již registrováno v `main`: kroky S01–S06 byly sloučeny v PR #41, #42,
