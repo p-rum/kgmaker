@@ -52,8 +52,26 @@ or UNKNOWN in every format. Invalid input returns 2; stale provider input return
 
 `--max-nodes` includes visible boundary nodes. Omitted control-flow endpoints retain
 original IDs; a budget too small for a truthful prefix produces an opaque root.
+For control-flow, selection indexes outgoing edges and tracks distinct omitted endpoints
+as it extends the canonical prefix. Each retained source contributes its outgoing
+edges once during prefix selection and each omitted endpoint costs one boundary
+node. [Scoped performance evidence](changes/189_reduceBoundedCfgTraversal.md)
+
 `--max-depth` bounds process expansion. Neither limit rewires branches to invented
 steps. Missing compiler/CFG support remains a gap rather than a guessed sequence.
+
+Control-flow and process retain the first 256 source diagnostic rows in each
+of `diagnostics` and `cfg.diagnostics` when the list is present. Coverage reflects
+the retained report diagnostics together with structural and provenance gaps.
+`FLOW_DIAGNOSTIC_LIMIT` records the omitted row count for each list in JSON,
+Markdown, and Mermaid. The counts are separate because a control-flow diagnostic
+can occur in both lists. An omitted diagnostic that requires `UNKNOWN` preserves
+that status and its code in the summary. The `truncated` flag still describes the
+node or process depth limit.
+
+```sh
+kgmaker flow render --root project --entry METHOD_ID --context CONTEXT_ID --view control-flow --max-nodes 40 --format json
+```
 
 `--output` atomically publishes a single report under `.kgmaker/flows/` in the
 selected root. Absolute paths inside that directory are accepted. Source/store
@@ -88,3 +106,30 @@ sets without reversing stored edges. An actual single-context frontend capture
 retains its HTTP-response→state→JSX path in all formats. Selecting that context
 does not import a second compiler variant or a mixed-context backend bridge;
 such omitted claims remain explicit context-boundary gaps.
+
+## T043 scale benchmark
+
+The static fixture supplies the public topology filter with 100 service nodes
+and 10,000 distinct binding edges. The CFG fixture has 1,600 branches and
+1,600 loop-back edges. The same fixtures run against the selected baseline
+and the current checkout. Run from the repository root with its test
+dependencies available.
+
+```sh
+baseline_dir=$(mktemp -d)
+git archive 346536495db749a6a1d79f89b388b55f9db3da83 src | tar -x -C "$baseline_dir"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests python tests/benchmarks/t043_view_performance.py \
+  --baseline-source "$baseline_dir/src" --samples 3 > t043-benchmark.json
+```
+
+Each sample starts a fresh Python process. Cold is its first report on the
+prepared fixture. Warm is the median of three subsequent reports. A separate
+pass records the peak allocated Python bytes during report construction and
+JSON serialization. Timing starts after imports and fixture construction.
+The order of source revisions alternates for each case on the same runner. The report carries
+raw samples, medians, runner details, parameters and the SHA-256 of every
+fixture and output. The gate requires the same fixture and output identities.
+The benchmark exits 1 if any candidate median exceeds the matching baseline
+median by more than 25%, or 2 if the run cannot be compared. Pytest checks
+output contracts and the arithmetic gate with fixed input metrics.
+[Measured baseline and remaining scope](changes/189_reduceBoundedCfgTraversal.md)

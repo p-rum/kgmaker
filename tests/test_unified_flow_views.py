@@ -86,6 +86,91 @@ def test_truncation_retains_bounded_original_endpoints():
     assert report['cfg']['exit'] is None and report['cfg']['omitted_exit']=='exit'
 
 
+@pytest.mark.parametrize('branches', [64, 128])
+def test_truncation_visits_fanout_edges_a_bounded_number_of_times(branches, monkeypatch):
+    graph = model_graph()
+    cfg = graph.cfgs[0]
+    root, normal_exit, error_exit = (cfg['blocks'][index] for index in (0, -2, -1))
+    leaves = [{**root, 'id': f'leaf-{i:03d}', 'kind': 'basic_block'} for i in range(branches)]
+    cfg['blocks'] = [root, *leaves, normal_exit, error_exit]
+    cfg['edges'] = [{'source': 'entry', 'target': leaf['id'], 'kind': 'true'} for leaf in leaves]
+    cfg['edges'] += [{'source': leaf['id'], 'target': 'exit', 'kind': 'normal'} for leaf in leaves]
+    before = copy.deepcopy(graph.to_dict())
+    edge_visits = 0
+
+    class CountedEdges(list):
+        def __iter__(self):
+            nonlocal edge_visits
+            for edge in super().__iter__():
+                edge_visits += 1
+                yield edge
+
+    project = flow.project
+
+    def count_projected_edges(*args, **kwargs):
+        scoped = project(*args, **kwargs)
+        scoped.cfgs = [item if isinstance(item['edges'], CountedEdges)
+                       else {**item, 'edges': CountedEdges(item['edges'])} for item in scoped.cfgs]
+        return scoped
+
+    monkeypatch.setattr(flow, 'project', count_projected_edges)
+    report = flow.build_report(graph, 'method', max_nodes=branches // 2)
+    assert report['truncated']
+    block, = report['cfg']['blocks']
+    assert block['kind'] == 'unresolved_boundary'
+    assert block['original_ids'] == ['entry', 'error', 'exit', 'method']
+    assert report['cfg']['edges'] == []
+    assert graph.to_dict() == before
+    assert 0 < edge_visits <= 8 * len(cfg['edges'])
+
+
+def cyclic_frontier_graph():
+    graph = model_graph()
+    cfg = graph.cfgs[0]
+    entry, normal_exit, error_exit = (cfg['blocks'][index] for index in (0, -2, -1))
+    internal = [{**entry, 'id': key, 'kind': 'basic_block', 'original_ids': [f'ast:{key}']}
+                for key in ('a', 'b', 'c', 'unused')]
+    cfg['blocks'] = [entry, *internal, normal_exit, error_exit]
+    cfg['edges'] = [
+        {'source': source, 'target': target, 'kind': relation}
+        for source, target, relation in (
+            ('entry', 'a', 'normal'), ('entry', 'b', 'true'), ('entry', 'c', 'false'),
+            ('a', 'b', 'normal'), ('a', 'c', 'true'),
+            ('b', 'a', 'normal'), ('b', 'c', 'false'), ('b', 'error', 'exception'),
+            ('c', 'a', 'normal'), ('c', 'b', 'resume'), ('c', 'exit', 'normal'),
+        )
+    ]
+    for edge in cfg['edges']:
+        if edge['target'] == 'a' and edge['source'] in {'b', 'c'}:
+            edge['loop_back'] = True
+    return graph
+
+
+@pytest.mark.parametrize(('budget', 'retained', 'omitted'), [
+    (4, {'entry', 'a'}, {'b', 'c'}),
+    (5, {'entry', 'a', 'b'}, {'c', 'error'}),
+    (6, {'entry', 'a', 'b', 'c', 'exit', 'error'}, set()),
+])
+def test_truncation_preserves_exact_shared_frontier_and_dense_cycle(budget, retained, omitted):
+    graph = cyclic_frontier_graph()
+    before = copy.deepcopy(graph.to_dict())
+    report = flow.build_report(graph, 'method', max_nodes=budget)
+    blocks = report['cfg']['blocks']
+    boundaries = {row['id']: row['original_ids'][0] for row in blocks if row['kind'] == 'unresolved_boundary'}
+    assert {row['id'] for row in blocks} - boundaries.keys() == retained
+    assert set(boundaries.values()) == omitted
+    assert len(blocks) == budget
+    actual_edges = {(edge['source'], boundaries.get(edge['target'], edge['target']), edge['kind'],
+                     edge.get('loop_back', False)) for edge in report['cfg']['edges']}
+    expected_edges = {(edge['source'], edge['target'], edge['kind'], edge.get('loop_back', False))
+                      for edge in graph.cfgs[0]['edges'] if edge['source'] in retained}
+    assert actual_edges == expected_edges
+    assert report['truncated'] is True and report['status'] == 'PARTIAL'
+    assert report['execution'] == 'NOT_OBSERVED' and report['availability'] == 'UNKNOWN'
+    assert report['provenance']['evidence_ids'] == ['cfg-proof']
+    assert graph.to_dict() == before
+
+
 def test_invalid_snapshot_cannot_be_hidden_by_projection():
     graph=model_graph();graph.cfgs[0]['edges'][0]['target']='missing'
     before=copy.deepcopy(graph.to_dict())
