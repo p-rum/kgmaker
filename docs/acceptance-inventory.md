@@ -1527,7 +1527,7 @@ See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
 | T034-AC03 | VERIFIED_IN_SCOPE | Stejný test ověřuje původní `flow render --view process` s Javac a CFG schema 1. |
 | T034-AC04 | VERIFIED_IN_SCOPE | Shoda bajtů vstupů, indexů a posledního validního JSON při chybném výběru, revizi, souboru, pinování a chybějícím původním indexu. Chybný výslovný pin druhé služby skončí u obou selektorů exit 2. Historický jinak platný ProcessView se stejným baseline skončí exit 3. |
 | T034-AC05 | VERIFIED_IN_SCOPE | Přesný kontext `orders`, scope, provenance a obě větve zůstávají v PARTIAL výsledku. Cizí scope nevydá JSON, `--strict` vydá stejný JSON s exit 4. |
-| T034-AC06 | PARTIAL | Výchozí CLI selhalo na chybějícím příkazu. Cílená sada s JDK21 a K1/K2 má 237 PASS / 0 SKIP. [Change193](changes/193_renderLocalProcess.md) uvádí výsledky kandidáta a zbývající release kontroly. |
+| T034-AC06 | PARTIAL | [PR #177](https://github.com/p-rum/kgmaker/pull/177) je sloučené do `main` na `a2adbe2e8666fbc76bf87b0aa2fd2be288bdf6bc`. Schválený head má 51 PASS / 0 SKIP a cílená sada na sloučeném stromu 16 PASS / 0 SKIP s Javac 21. Původní selhání při chybějícím příkazu a následných 237 PASS / 0 SKIP patří dřívějšímu výřezu. [Implementace](changes/193_renderLocalProcess.md) · [Přesný doklad](changes/196_recordProcessRenderMerge.md). |
 
 
 ## T014 — current-parent descendant-result transfer

@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 617
+- Scope: production; omitted files: 618
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `abce1b6516684bdf3dc78c426b7d84f41386e68062a4e6afd9bbb540a68cf8f6`; content: `d07dbee3b2f4bebbbd72b5a910415ddf3990e57705a9bf111e31baa6bf1f5387`; freshness: CONTENT_VERIFIED
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 482
+- Implementation episodes: 483
 - Inferred/ambiguous relationships: 9274/0
 
 ## Architecture diagram
@@ -2732,6 +2732,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/160_bindJvmSourceBytes.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: javac-raw-focus=passed, mixed-kotlin-guard=passed, strict-focused-300=passed, full-suite=unknown
 - **Project explicit datasource resources from scoped upstream evidence** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/68_projectDataResources.md, docs/compiler-inspection.md; validation: focused115=passed, target_scope_guard=passed, strict_full=unknown, semantic=passed
 - **Change 2 passed, 36 passed, 364 passed, 24 skipped** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: Full pytest=passed, Actual Javac AC06 and K2=passed, Focused Java and K2 JPA=passed, Semantic validate=passed, kgmaker check=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: docs/acceptance-inventory.md, docs/changes/196_recordProcessRenderMerge.md, docs/process-paths.md, docs/production-analysis-progress.md; validation: planner=passed, focused_completion=passed, semantic=passed, diff_check=passed
 - **Carry installation inventory through the verified runtime merge** — changed; files: docs/acceptance-inventory.md, docs/changes/186_reconcileInstallationCompletionInventory.md, docs/production-analysis-progress.md, docs/tasks/50_addTargetProjectSkills.md, docs/tasks/53_manageProjectInstallation.md; validation: planner_post168_red_green=passed, completion_installation_focus=passed, inherited_t056_scope=passed, semantic=passed
 - **merge Kafka main before corrected consumer acceptance** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/76_catalogHttpConsumers.md, docs/http-consumers.md; validation: strict-full=passed, compiler-focus=passed
 - **docs: record current Return parent retry focus and reanchor evidence** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/87_captureKafkaRetryDlt.md, docs/compiler-inspection.md; validation: current-parent-focus470=passed, input1620freeze=passed, semantic-check=passed, required-full=unknown, github-ci=unknown
