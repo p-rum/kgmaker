@@ -41,9 +41,10 @@ historický doklad, SHA-256 JUnit
 `939a3327c79f6f612707541d3860b9969a8dc90611fb00abde75d2e8d22c55be`.
 [Implementace a její původní kontroly](190_bindLocalProcessContext.md).
 
-T025 a T030 mají dodání MERGED a ověření PARTIAL. T034 zůstává PLANNED /
-NOT_RUN. Pro použití lokálního výběru platí stávající příklady v příručce API
-a README. [Výběr kontextu](../process-paths.md) · [Příprava packetu](../process-label-packets.md)
+V inventáři na tehdejším `main` `cb9848520b056518d028ceb8010ec6a6f9a43a2f`
+po #174 měly T025 a T030 stav MERGED / PARTIAL a T034 stav PLANNED / NOT_RUN.
+Příklady lokálního výběru jsou v příručce API a README.
+[Výběr kontextu](../process-paths.md) · [Příprava packetu](../process-label-packets.md)
 · [README](../../README.md#local-technical-process-paths-t025).
 
 ## Historické ověření první revize #176
@@ -99,17 +100,30 @@ strukturální mezery a diagnostika vztahových pohledů zůstávají mimo ově�
 rozsah. [Kritéria T043](../acceptance-inventory.md#t043--limity-velikosti-a-výkonu-pohledů)
 · [Implementace a hranice](189_reduceBoundedCfgTraversal.md).
 
-## Ověření doplnění inventáře po #173
+## Historické ověření doplnění inventáře po #173
 
-Toto dokumentační doplnění vychází z headu #176
-`e8f42482377f733acc6730e4d12ee293ca3aac27` a skutečného `main`
-`8290606eace7d7c94497cca143fa8e70c0042d38`. Lokální plán má 135 položek,
-z toho 107 MERGED, 27 PLANNED a jednu IN_PROGRESS. Změnil se doklad T025,
+Následující údaje patří headu #176 `7df1adfe796a1e61537bf071c75fd553738a0a03`
+proti tehdejšímu `main` `8290606eace7d7c94497cca143fa8e70c0042d38`. Plán měl
+135 položek, z toho 107 MERGED, 27 PLANNED a jednu IN_PROGRESS. Změnil se doklad T025,
 dodání T043 a odvozený seznam blokací T044. Z 32 položek k delegování
 uvolnil sloučený T043 místo pro ověření T003-S10-W02. Zbývajících 31 položek
-má stejné pořadí jako na uvedeném `main`. SHA-256 plánu
+mělo stejné pořadí jako na uvedeném `main`. SHA-256 plánu
 `c59e9ed7dd3acc3ddf754dd19e6d03607858c68136353ef8f01a83cb85cb6cc1`.
 
-Cílená sada plánovače podle uvedeného příkazu má **13 PASS / 0 SKIP**.
+Cílená sada plánovače pro tento head měla **13 PASS / 0 SKIP**.
 SHA-256 JUnit `207a9f6449cf63cce596d64214299aa52554a506ddc8b54356a94e90e110dfbf`.
-Úplná sada má v tomto místním dokumentačním běhu stav NOT_RUN.
+Úplná sada měla v tomto místním dokumentačním běhu stav NOT_RUN.
+
+## Ověření doplnění po sloučení #177
+
+Tento místní běh používá head #176 `7df1adfe796a1e61537bf071c75fd553738a0a03`
+a základ `main` `a2adbe2e8666fbc76bf87b0aa2fd2be288bdf6bc`. Záznamy v matici
+mají celkem 135 položek, z toho 107 MERGED, 26 PLANNED, jednu PR_OPEN a jednu
+IN_PROGRESS. V porovnání s touto revizí `main` se mění pouze doklad T025,
+dodání T043 a odvozená blokace T044. V delegaci o 32 položkách připadlo místo
+po T043 na ověření T003-S10-W02 a zbývajících 31 položek zachovalo pořadí.
+SHA-256 plánu `dd77c0f5d2a0467307e2b576bfcd9dc5719bddb24eeed3d8e149c6c61dba6f42`.
+
+Stejný příkaz pro plánovač má **13 PASS / 0 SKIP**. SHA-256 JUnit
+`46d425c91719625a1913da0b6af95316733749e108f53fd240715937263487eb`.
+Úplná sada má pro tento místní dokumentační běh stav NOT_RUN.

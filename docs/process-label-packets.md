@@ -9,7 +9,9 @@ Use the [current delivery inventory](production-analysis-progress.md) and
 The Python API prepares review input from an explicit existing `ProcessView` (or
 its validated document). It never discovers a process, invokes a model/compiler,
 loads a checkout, calls `feature.prepare`, persists a packet or applies semantics.
-T031 read-only validation and T032 local review are merged. T034 CLI remains planned.
+T031 read-only validation and T032 local review are merged. T034 includes
+[local JSON render](process-paths.md#read-only-process-render-t034). CLI packet
+preparation remains planned.
 
 ```python
 from kgmaker.process_semantics import prepare_process_label_packet

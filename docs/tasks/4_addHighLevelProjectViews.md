@@ -88,7 +88,7 @@ prepare → bounded packet + template → host agent candidate → validate → 
 
 Schválení zaznamená explicitní rozhodnutí, payload/base hash a lokální actor label, ale nepředstírá autentizovaný podpis. Stale candidate se odmítá; změna podkladů vyžaduje revalidation a zachování historie. Chybějící business rozhodnutí není možné „dopočítat“ modelem.
 
-## 4. Navržené CLI (SPECIFICATION, zatím není dostupné)
+## 4. Cílový kontrakt CLI (SPECIFICATION)
 
 Společné čtení: `--root` nebo `--workspace`, `--scope production`, `--context-selection FILE`, `--strict`. Výběr workspace musí využít existující provider, ne přepnout potichu na jeden repo. `--context` lze přijmout jako kompatibilní zkratku jen pro jednoznačný single-root případ.
 
@@ -98,7 +98,7 @@ kgmaker architecture topology --workspace workspace.json --focus order-service -
 kgmaker architecture explain --snapshot view.json --element ELEMENT_ID --format json
 kgmaker process list --workspace workspace.json --format json
 kgmaker process render --entry ENTRY_ID --workspace workspace.json --context-selection contexts.json --format json
-kgmaker process render --process PROCESS_ID --root . --format markdown
+kgmaker process render --process PROCESS_ID --process-view process.json --workspace workspace.json --context-selection contexts.json --format json
 kgmaker process prepare --process PROCESS_ID --root . --token-budget 4000 --output packet-dir
 kgmaker process validate --packet packet.json --candidate candidate.json --root .
 kgmaker process apply --packet packet.json --candidate candidate.json --expected-revision REV --root .
@@ -109,6 +109,10 @@ kgmaker architecture diff --before old.json --after new.json --format json
 ```
 
 Render formáty: JSON všude; interfaces Markdown (diagram není povinný); topology/process JSON, Markdown, Mermaid. Přepínače se přidají až s odpovídajícím renderer taskem. Export patří T038, diff T039, nikoli základnímu CLI tasku. `--entry` a `--process` jsou vzájemně výlučné. `--root` slouží pro store/coordinator podle stávajícího workspace kontraktu.
+
+První [čtecí výřez T034](../process-paths.md#read-only-process-render-t034) podporuje
+uvedené dvě varianty `process render` s JSON a explicitním workspace. Obecné
+dohledání jen podle ID a render Markdown/Mermaid zůstávají cílovým chováním.
 
 Exit codes: 0 validní výsledek (i přiznaný PARTIAL bez strict), 2 invalid input/unsupported schema, 3 stale baseline/revision konflikt, 4 neúplné pokrytí při strict. stdout pouze požadovaný dokument; žádný progress text v JSON. Read/list/render/explain/diff/validate jsou read-only. Prepare/apply/review/export zapisují pouze explicitní artefakty, nikdy aplikaci/graf. Cache je opt-in a její poškození je cache miss, ne evidence.
 
@@ -181,7 +185,7 @@ Každý řádek je samostatný soubor a samostatný PR. ID je globální z exist
 | T031 | [Validace agentových návrhů](T-031_validate-process-annotations.md) | T023, T030 | SPECIFICATION |
 | T032 | [Schválení a revizní historie procesů](T-032_persist-process-review.md) | T031 | SPECIFICATION |
 | T033 | [Katalog identifikovaných procesů](T-033_catalog-business-processes.md) | T024, T032 | SPECIFICATION |
-| T034 | [CLI životního cyklu procesů](T-034_add-process-cli.md) | T027, T028, T029, T030, T031, T032, T033 | SPECIFICATION |
+| T034 | [CLI životního cyklu procesů](T-034_add-process-cli.md) | T027, T028, T029, T030, T031, T032, T033. Čtecí výřez T019, T023–T025 | SPECIFICATION rev. 2 |
 | T035 | [Mermaid business průběhu](T-035_render-business-process-mermaid.md) | T026, T027, T028, T029, T034 | SPECIFICATION |
 | T036 | [Markdown business report](T-036_render-business-process-report.md) | T033, T035 | SPECIFICATION |
 | T037 | [Invalidace odvozených pohledů](T-037_invalidate-derived-views.md) | T018, T032, T033 | SPECIFICATION |

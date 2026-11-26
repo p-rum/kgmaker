@@ -891,6 +891,8 @@ def build_parser() -> argparse.ArgumentParser:
     register_excel(sub)
     from .architecture_cli import register as register_architecture
     register_architecture(sub)
+    from .process_cli import register as register_process
+    register_process(sub)
     feature_cli.register(sub)
     from . import delivery_cli
     delivery_cli.register(sub)
@@ -1043,6 +1045,9 @@ def main() -> None:
     if len(sys.argv)>1 and sys.argv[1]=="architecture":
         from .architecture_cli import run as run_architecture
         raise SystemExit(run_architecture(sys.argv[2:]))
+    if len(sys.argv)>1 and sys.argv[1]=="process":
+        from .process_cli import run as run_process
+        raise SystemExit(run_process(sys.argv[2:]))
     parser = build_parser()
     args = parser.parse_args()
     if args.command == "impact" and args.evidence_only and args.workspace is not None:
