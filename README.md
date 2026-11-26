@@ -1363,6 +1363,11 @@ s diagnostikou hranic. Podporuje lokální repozitář zvolený přes `--root`.
 Kombinace `--evidence-only` s `--workspace` končí chybou použití.
 [Výstup a podporovaný rozsah](docs/stage-content-cache.md#selektivní-dopad-změn).
 
+Při explicitním volání Python API `inspect_jvm` s oddělenými moduly může
+nová inspekce zveřejnit vybraný kontext ve stejné generaci, v níž označí
+prokazatelně zastaralý nezávislý kontext jako `STALE`. Platné důkazy dalších
+modulů se zachovají. [Podporovaný rozsah a příklad API](docs/compiler-inspection.md#obnova-izolovaného-jvm-kontextu).
+
 ### Doklad skutečného testovacího běhu (T047-S10)
 
 `kgmaker project build-run --plan /tmp/plan.json --record-verification TASK_ID`
