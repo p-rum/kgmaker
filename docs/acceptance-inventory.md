@@ -4,12 +4,12 @@
 
 | Kritérium | Ověření | Důkaz |
 |---|---|---|
-| T056-AC01 | PARTIAL | Syntetický 15listý OOXML sešit dokládá tři zdroje a deklarovanou query tabulku na cestě do výstupu. VBA HTTP a výpočet mají doložené řádky. Nepoužitý definovaný název může potlačit cestu k výstupu. |
-| T056-AC02 | PARTIAL | `IFERROR`, alternativy VBA, citace a regrese rozsahů, `Format` a `End If` mají doložený rozsah. Ve filtrovaném `Worksheet_Change` může chybět podmínka zobrazeného zápisu. [Dřívější opravy toku](changes/178_fixExcelBehaviorLineage.md). |
-| T056-AC03 | PARTIAL | Lokální příprava, report, výchozí redakce, kompatibilita a distribuce skillu mají doklady. Filtrovaný report může přidat zdroj nesouvisejícího sešitu. Odvození úloh a testů živým Copilotem a produkční sešit mají stav NOT_RUN. |
+| T056-AC01 | PARTIAL | Syntetický 15listý OOXML sešit dokládá tři zdroje a deklarovanou query tabulku na cestě do výstupu. VBA HTTP a výpočet mají doložené řádky. Reprodukce potlačené cesty má lokální opravu a regresi nepoužitých a skutečně použitých jmen. [Rozsah opravy](changes/184_preserveScopedExcelBehavior.md). |
+| T056-AC02 | PARTIAL | `IFERROR`, alternativy VBA, citace a regrese rozsahů, `Format` a `End If` mají doložený rozsah. Lokální oprava výpisu `Worksheet_Change` cituje doložené podmínky a definice z téže procedury a respektuje ukončení vnořených bloků. [Dřívější opravy toku](changes/178_fixExcelBehaviorLineage.md) · [Rozsah opravy](changes/184_preserveScopedExcelBehavior.md). |
+| T056-AC03 | PARTIAL | Lokální příprava, report, výchozí redakce, kompatibilita a distribuce skillu mají doklady. Lokální regrese potvrzují filtrování nesouvisejících deklarací, doložený původ vazeb VBA v reportu i packetu a zachování doložených cest z dalších sešitů. Odvození úloh a testů živým Copilotem a produkční sešit mají stav NOT_RUN. [Rozsah opravy](changes/184_preserveScopedExcelBehavior.md). |
 
 [Doklady fixture a distribuce](changes/177_extractExcelBehavior.md) ·
-[Aktuální reprodukce na `5ff2c08`](changes/183_reconcileExcelCompletionInventory.md).
+[Reprodukce na `5ff2c08`](changes/183_reconcileExcelCompletionInventory.md).
 
 
 ## T055 — Copilot skill pro migraci Excelu, 2026-11-25

@@ -8,6 +8,7 @@ from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 
 from ..analysis_model import ID_PATTERN, AnalysisError, canonical, digest
+from .relations import bound_relations, local_alternatives
 from .source import INVENTORY_WORKERS, MAX_ARTIFACT_BYTES, VERSION, bounded_json
 
 ARCHITECTURE = {
@@ -119,17 +120,30 @@ def packet(inventory, *, book=None, entity=None, include_source=False, budget=32
     if book is not None and book not in books:
         raise AnalysisError("Unknown workbook selector")
     evidence = {item["id"]: item for item in inventory["evidence"]}
-    adjacency = defaultdict(set)
-    for relation in inventory["relations"]:
-        adjacency[relation["source"]].add(relation["target"])
-        adjacency[relation["target"]].add(relation["source"])
-        for key in relation["evidence"]:
-            adjacency[relation["source"]].add(key)
-            adjacency[relation["target"]].add(key)
     if entity is not None and (entity not in evidence
                                or (book and evidence[entity]["locator"].get("workbook") != book)):
         raise AnalysisError("Unknown evidence entity for the selected workbook")
-    selected = set(evidence) if entity is None else {entity} | adjacency[entity]
+    relations = []
+    neighbors = set()
+    local_context = defaultdict(list)
+    definitions = defaultdict(list)
+    for relation, local in bound_relations(evidence, inventory["relations"]):
+        source, target = relation["source"], relation["target"]
+        relations.append(relation)
+        if source == entity or target == entity:
+            neighbors.update((source, target, *relation["evidence"]))
+        if local:
+            local_context[source].append(target)
+            if relation["kind"] == "depends-on":
+                definitions[source].append(target)
+    selected = set(evidence) if entity is None else {entity} | neighbors
+    if entity is not None:
+        pending = list(selected)
+        while pending:
+            for target in local_context.get(pending.pop(), ()):
+                if target not in selected:
+                    selected.add(target)
+                    pending.append(target)
     if book and entity is None:
         selected = {key for key in selected if evidence[key]["locator"].get("workbook") == book}
     subjects = {item["id"]: item for item in inventory["subjects"] if item["id"] in selected}
@@ -165,6 +179,10 @@ def packet(inventory, *, book=None, entity=None, include_source=False, budget=32
 
     for key in sorted(selected, key=priority):
         item = evidence[key]
+        if item["kind"] == "vba-operation" and "alternatives" in item:
+            item = {field: value for field, value in item.items() if field != "alternatives"}
+            if alternatives := local_alternatives(evidence[key], definitions.get(key, ())):
+                item["alternatives"] = alternatives
         if not include_source:
             item = {field: value for field, value in item.items() if field not in SOURCE_FIELDS}
             item["locator"] = {field: value for field, value in item["locator"].items() if field != "reference"}
@@ -189,7 +207,7 @@ def packet(inventory, *, book=None, entity=None, include_source=False, budget=32
         if key in subjects:
             result["subjects"].append(subjects[key])
         used += cost
-    for relation in inventory["relations"]:
+    for relation in relations:
         if relation["source"] in included and relation["target"] in included:
             cost = len(canonical(relation).encode("utf-8")) + 1
             if used + cost > budget - 16:

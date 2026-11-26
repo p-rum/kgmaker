@@ -68,7 +68,7 @@ Restart Copilot CLI after installing the hook. Each new session refreshes the gr
 
 Ask Copilot `Use $kgmaker-excel-migration to prepare the Kotlin plan and Jira CSV for Fakturace.xlsm with Sazby.xlsx as a dependency.` The skill prepares the inputs, writes and validates the plan, and produces both exports. It uses static analysis only and forbids macro execution.
 
-`kgmaker excel migrate prepare` also writes `behavior.md` with data sources, calculations, entry points and available paths to displayed results. Use `kgmaker excel behavior --inventory <dir>/inventory.json --sheet <name>` for a focused view of a sheet and its upstream paths.
+`kgmaker excel migrate prepare` also writes `behavior.md` with data sources, calculations, entry points and available paths to displayed results. Use `kgmaker excel behavior --inventory <dir>/inventory.json --book <id> --sheet <name>` for a focused view of a sheet, its linked upstream sources and the VBA conditions that govern its cited writes. An `excel packet --entity` request uses the same verified local VBA relationships and retains linked workbook data. Exact statements and source identities require `--include-source`. [Workbook behavior report](docs/excel-migration.md#funkce-a-tok-dat-v-sešitu)
 
 ## Commands
 

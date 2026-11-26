@@ -110,3 +110,17 @@ Přenos zachoval rozsah runtime evidence, zdroje, doklady i historii #166.
 - PASS — stejné čtyři cílené sady daly na přeneseném stromu 125 PASS a
   0 SKIP za 3,51 s. SHA-256 JUnit
   `6dd0634dc929bdfd5503bc7d2a61c793255ba5bdfec93c28318e83d7b82c01c3`.
+
+### Ověření po #168
+
+Výchozí `main` `4dc8f657b891f1716f7d134f97c1e6098cbb50b5` zahrnuje opravu
+T056 se stavem PARTIAL v doloženém rozsahu.
+[Doklad #168](184_preserveScopedExcelBehavior.md).
+
+- RED — kontrola plánu nad `main` znovu našla šest chybějících řádků.
+  SHA-256 `7985e2050f85125069b8a7fde4288cedcd8ddbf732aae875e6375614b776fe72`.
+- PASS — plán změny má 135 položek, 106 MERGED a 29 PLANNED. Hodnoty
+  původních 129 položek a pořadí 32 pozic dispatch zůstaly shodné.
+  SHA-256 `c18ff64bcfd564c23d99df6e7741a8b7fa5aa38475f8c351814009da7b593559`.
+- PASS — čtyři cílené sady daly 125 PASS a 0 SKIP za 6,70 s. SHA-256 JUnit
+  `b03f612baa96a87064f31adf6ebf5a456028fcb5ec25d335adc20923cc6c9ff9`.

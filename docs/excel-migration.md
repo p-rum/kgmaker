@@ -66,15 +66,21 @@ HTTP klientů, přípravu a odeslání požadavku, čtení odpovědi a návaznos
 lokální přiřazení. Známá nepřepisující intrinsic volání, například `Format`,
 nepřeruší vazbu vstupní hodnoty. Alternativní definice zůstávají uvnitř
 podporovaných větví; přímé přiřazení po jejich uzavření starší definici přepíše.
+Report u doloženého VBA zápisu cituje řídicí podmínku bloku i možné lokální
+definice jejích proměnných. Citace vycházejí z příslušné procedury a pořadí
+jejích příkazů. Výsledek vyhodnocení podmínky se ověřuje samostatně.
 Neznámá volání dál ruší možné přepsané definice. Výstupní buňka v zobrazeném listu
-je kandidát na prezentaci.
+je kandidát na prezentaci. Pojmenovaná oblast sama o sobě buňku z kandidátů
+nevyřazuje. Započítá se teprve použití názvu ve vzorci nebo v jiné doložené vazbě,
+i přes řetězec jmen.
 Změna `Caption`, `Text`, `Visible` či `MsgBox` dokládá příslušný zápis nebo volání;
 skutečné zobrazení závisí na běhu. Neprůhledné integrace přes COM, Power Query, dynamicky sestavené
 adresy, aktivní sešit a skutečné výsledky externího volání mohou vyžadovat další
 doklady.
 
-Ve velkém sešitu lze z již vytvořeného inventáře vypsat jeden list i s cestami
-do ostatních listů a sešitů.
+Ve velkém sešitu lze z již vytvořeného inventáře vypsat jeden list. Report
+zahrne deklarace ve zvoleném rozsahu, připojení jeho query tabulek a zdroje na
+doložených cestách do dalších listů a sešitů.
 
 ```sh
 kgmaker excel behavior --inventory migrace/inventory.json --book main --sheet Vysledky
@@ -82,8 +88,13 @@ kgmaker excel behavior --inventory migrace/inventory.json --book main --sheet Vy
 
 Výchozí report uvádí strukturu a identifikátory důkazů. `--include-source`
 v `prepare` nebo `behavior` přidá přesné vzorce, příkazy VBA, hodnoty a identity
-zdrojů podle stejného souhlasu jako u packetu. Lokální příkaz čte výhradně
-inventář a volání ani vzorce nevyhodnocuje. [Rozsah a ověření](changes/177_extractExcelBehavior.md)
+zdrojů podle stejného souhlasu jako u packetu. `excel packet --entity` používá
+stejné ověření původu vazeb VBA. U vybraného zápisu zahrne doložené podmínky
+i jejich dřívější lokální definice. Při výběru vzorce zachová jeho přímé
+doložené odkazy do dalšího sešitu. Lokální příkazy čtou výhradně inventář.
+Pro doplnění vazeb mezi příkazy a řídicími podmínkami vytvoř nový inventář
+z původních sešitů.
+[Rozsah a ověření](changes/177_extractExcelBehavior.md) · [Oprava rozsahu a podmínek](changes/184_preserveScopedExcelBehavior.md)
 
 ## Sešity a plán
 
