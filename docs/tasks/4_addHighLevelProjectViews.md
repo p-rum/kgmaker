@@ -113,6 +113,8 @@ Render formáty: JSON všude; interfaces Markdown (diagram není povinný); topo
 První [čtecí výřez T034](../process-paths.md#read-only-process-render-t034) podporuje
 uvedené dvě varianty `process render` s JSON a explicitním workspace. Obecné
 dohledání jen podle ID a render Markdown/Mermaid zůstávají cílovým chováním.
+Čisté [T035 Python API](../process-paths.md#mermaid-for-a-supplied-processview-t035)
+vykreslí diagram z dodaného typovaného pohledu.
 
 Exit codes: 0 validní výsledek (i přiznaný PARTIAL bez strict), 2 invalid input/unsupported schema, 3 stale baseline/revision konflikt, 4 neúplné pokrytí při strict. stdout pouze požadovaný dokument; žádný progress text v JSON. Read/list/render/explain/diff/validate jsou read-only. Prepare/apply/review/export zapisují pouze explicitní artefakty, nikdy aplikaci/graf. Cache je opt-in a její poškození je cache miss, ne evidence.
 
@@ -186,7 +188,7 @@ Každý řádek je samostatný soubor a samostatný PR. ID je globální z exist
 | T032 | [Schválení a revizní historie procesů](T-032_persist-process-review.md) | T031 | SPECIFICATION |
 | T033 | [Katalog identifikovaných procesů](T-033_catalog-business-processes.md) | T024, T032 | SPECIFICATION |
 | T034 | [CLI životního cyklu procesů](T-034_add-process-cli.md) | T027, T028, T029, T030, T031, T032, T033. Čtecí výřez T019, T023–T025 | SPECIFICATION rev. 2 |
-| T035 | [Mermaid business průběhu](T-035_render-business-process-mermaid.md) | T026, T027, T028, T029, T034 | SPECIFICATION |
+| T035 | [Mermaid business průběhu](T-035_render-business-process-mermaid.md) | T026, T027, T028, T029, T034 | SPECIFICATION rev. 2 |
 | T036 | [Markdown business report](T-036_render-business-process-report.md) | T033, T035 | SPECIFICATION |
 | T037 | [Invalidace odvozených pohledů](T-037_invalidate-derived-views.md) | T018, T032, T033 | SPECIFICATION |
 | T038 | [Atomická publikace exportů](T-038_publish-view-artifacts-atomically.md) | T022, T036, T037 | SPECIFICATION |

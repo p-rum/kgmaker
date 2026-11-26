@@ -1542,6 +1542,17 @@ See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
 | T034-AC05 | VERIFIED_IN_SCOPE | Přesný kontext `orders`, scope, provenance a obě větve zůstávají v PARTIAL výsledku. Cizí scope nevydá JSON, `--strict` vydá stejný JSON s exit 4. |
 | T034-AC06 | PARTIAL | [PR #177](https://github.com/p-rum/kgmaker/pull/177) je sloučené do `main` na `a2adbe2e8666fbc76bf87b0aa2fd2be288bdf6bc`. Schválený head má 51 PASS / 0 SKIP a cílená sada na sloučeném stromu 16 PASS / 0 SKIP s Javac 21. Původní selhání při chybějícím příkazu a následných 237 PASS / 0 SKIP patří dřívějšímu výřezu. [Implementace](changes/193_renderLocalProcess.md) · [Přesný doklad](changes/196_recordProcessRenderMerge.md). |
 
+## T035 — Mermaid nad dodaným typovaným ProcessView
+
+| Kritérium | Ověření místního výřezu | Důkaz |
+|---|---|---|
+| T035-AC01 | VERIFIED_IN_SCOPE | T023 `checkout` zachovává větve a cyklus. Projekce T028 zachovává dvě výslovné service lanes a vějíř dvou konzumentů bez pořadí mezi nimi. Javac fixture T029 zachovává statickou cestu výjimka → retry → DLT. |
+| T035-AC02 | NOT_RUN | Schválené popisky vyžadují autoritu T032. Součástí diagramu jsou technické popisky. |
+| T035-AC03 | VERIFIED_IN_SCOPE | Golden a skutečný parser Mermaid 11.4.1 se SVG ověřují přesné vrcholy, orientované hrany a jejich násobnost, lanes a vazby na původní výskyty. |
+| T035-AC04 | VERIFIED_IN_SCOPE | Neplatný typ, cizí scope/kontext, nebezpečný obsah a překročený rozpočet odmítne čisté API. Vstup a poslední uložený artefakt zůstávají beze změny. |
+| T035-AC05 | VERIFIED_IN_SCOPE | Dokumenty `PARTIAL`, `TRUNCATED` a `UNKNOWN` zachovávají původní důkazy, hranice a hlášené vynechání. |
+| T035-AC06 | PARTIAL | První čisté Python API má místní cílené doklady. Další napojení, úplná sada a nezávislý verdikt mají samostatné doklady. [Change199](changes/199_renderSuppliedProcessMermaid.md). |
+
 
 ## T014 — current-parent descendant-result transfer
 

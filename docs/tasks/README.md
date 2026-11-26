@@ -93,7 +93,7 @@ lowerCamelCase, včetně historických kopií v agent templates.
 | T032 | [Schválení a revizní historie procesů](T-032_persist-process-review.md) | T031 | SPECIFICATION Rev2; bounded POSIX CAS, explicitní review |
 | T033 | [Katalog identifikovaných procesů](T-033_catalog-business-processes.md) | T024, T032 | Merged PR79; bounded source/result evidence retained as history |
 | T034 | [CLI životního cyklu procesů](T-034_add-process-cli.md) | T027, T028, T029, T030, T031, T032, T033. Čtecí výřez T019, T023–T025 | SPECIFICATION rev. 2 |
-| T035 | [Mermaid business průběhu](T-035_render-business-process-mermaid.md) | T026, T027, T028, T029, T034 | SPECIFICATION |
+| T035 | [Mermaid business průběhu](T-035_render-business-process-mermaid.md) | T026, T027, T028, T029, T034 | SPECIFICATION rev. 2 |
 | T036 | [Markdown business report](T-036_render-business-process-report.md) | T033, T035 | SPECIFICATION |
 | T037 | [Invalidace odvozených pohledů](T-037_invalidate-derived-views.md) | T018, T032, T033 | SPECIFICATION |
 | T038 | [Atomická publikace exportů](T-038_publish-view-artifacts-atomically.md) | T022, T036, T037 | SPECIFICATION |
