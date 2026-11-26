@@ -79,3 +79,17 @@ CLI příkazů a instalované instrukce zůstávají použitelné beze změny.
 Úplná sada na této revizi, hostované CI a nativní kontrola jiného OS mají
 stav `NOT_RUN`. W01-AC01 zůstává `PARTIAL`. Ověřený persistentní warm HIT
 vyžaduje samostatný důkaz původu a úplnosti běhových vstupů. [#116](https://github.com/p-rum/kgmaker/issues/116)
+
+## Otevření návrhu nad aktualizovaným main
+
+[#182](https://github.com/p-rum/kgmaker/pull/182) byl otevřen jako draft na
+`2a8330ab35f89153c355f80a45970afaf04b56e1`, stromu
+`735bf72d9a5e95281a3d69cbd7d7ae31c5f424c7` a základu
+`c4a1edb59f140faeafba0d5e979023bba185f3f1`. Cílené a nativní počty výše
+patří prvnímu rodiči `c63a6948558aae986b888e8821c9d05a21fe98a6`.
+Změněný produkční a testovací soubor W01 mají na otevřené revizi přesné
+bajty tohoto rodiče. Na otevřené revizi prošly sémantická validace,
+`scan`, `check`, kontrola diffu a porovnání všech 135 položek plánu a jeho 32
+pozic s cílovou větví. Nový cílený, nativní ani úplný běh nebyly součástí
+této kompozice. W01 zůstává `PARTIAL` a [#116](https://github.com/p-rum/kgmaker/issues/116)
+vede zbývající ověření warm HIT.
