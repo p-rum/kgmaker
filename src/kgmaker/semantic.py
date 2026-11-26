@@ -21,7 +21,6 @@ SEMANTIC_PATCH_FILE = Path(".kgmaker/semantic-patch.json")
 LEGACY_SEMANTIC_SCHEMA_VERSION = 2
 SEMANTIC_SCHEMA_VERSION = 3
 SEMANTIC_UPDATE_SCHEMA_VERSION = 1
-V1_SEMANTIC_FINGERPRINT_MISMATCH = "legacy semantic artifact is stale; run `kgmaker semantic prepare` to upgrade it"
 DEFAULT_SEMANTIC_TOKEN_BUDGET = 4_000
 CHARS_PER_TOKEN_ESTIMATE = 4
 SEMANTIC_RELATIONS = {
@@ -110,7 +109,7 @@ def validate_semantic_data(data: Any, graph: KnowledgeGraph, root: Path) -> tupl
         )
     version = data["schema_version"]
     if version == 1 and data.get("graph_fingerprint") != graph_fingerprint(graph):
-        raise SemanticValidationError(V1_SEMANTIC_FINGERPRINT_MISMATCH)
+        raise SemanticValidationError("legacy semantic artifact is stale; run `kgmaker semantic prepare` to upgrade it")
     snapshots = data.get("files")
     if version in {LEGACY_SEMANTIC_SCHEMA_VERSION, SEMANTIC_SCHEMA_VERSION}:
         if not isinstance(snapshots, dict) or any(

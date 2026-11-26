@@ -16,6 +16,7 @@ from .agents import (
     TEST_EXPERT_AGENT_CONTENT,
 )
 from .analysis_agent import ANALYST_FILE, ANALYST_CONTENT, JUNIE_FILE, JUNIE_CONTENT
+from .analysis_model import atomic_write
 from .context import DEFAULT_TOKEN_BUDGET as DEFAULT_CONTEXT_TOKEN_BUDGET, prepare_task_packet
 from .data_agent import DATA_AUDITOR_FILE, DATA_AUDITOR_CONTENT, DATA_AUDITOR_JUNIE_FILE, DATA_AUDITOR_JUNIE_CONTENT
 from .confluence import (
@@ -40,7 +41,7 @@ from .semantic import (
     SEMANTIC_UPDATE_FILE,
     SEMANTIC_UPDATE_MARKDOWN,
     SEMANTIC_EXTRACT_MARKDOWN,
-    V1_SEMANTIC_FINGERPRINT_MISMATCH,
+    SEMANTIC_SCHEMA_VERSION,
     SemanticValidationError,
     apply_semantic_patch,
     build_semantic_update,
@@ -51,6 +52,7 @@ from .store import (
     GRAPH_FILE,
     PUBLICATION_LOCK,
     GraphPublicationConflict,
+    _publication_lock,
     graph_revision,
     query_nodes,
     MARKDOWN_FILE,
@@ -579,15 +581,15 @@ def semantic_apply(root: Path) -> int:
         update = json.loads((root / SEMANTIC_UPDATE_FILE).read_text(encoding="utf-8"))
         patch = json.loads((root / SEMANTIC_PATCH_FILE).read_text(encoding="utf-8"))
         graph = scan_repository(root)
-        candidate = apply_semantic_patch(patch, update, graph, root)
-    except (OSError, UnicodeError, json.JSONDecodeError, SemanticValidationError) as error:
+        with _publication_lock(root):
+            candidate = apply_semantic_patch(patch, update, graph, root)
+            atomic_write(root / SEMANTIC_FILE, json.dumps(candidate, indent=2, ensure_ascii=False) + "\n")
+    except GraphPublicationConflict as error:
+        print(f"Semantic patch was not applied: {error}", file=sys.stderr)
+        return error.code
+    except (OSError, ValueError) as error:
         print(f"Semantic patch was not applied: {error}", file=sys.stderr)
         return 2
-    artifact_path = root / SEMANTIC_FILE
-    artifact_path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = artifact_path.with_suffix(".json.tmp")
-    temporary.write_text(json.dumps(candidate, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    temporary.replace(artifact_path)
     print(f"Applied semantic patch: {len(candidate['nodes'])} concepts, {len(candidate['edges'])} relationships total.")
     print("Next: kgmaker semantic validate && kgmaker scan")
     return 0
@@ -708,7 +710,6 @@ def query(root: Path, terms: str, limit: int = 10, scope: str = "production",
 
 def memory_capture(root: Path, base: str, validation_values: list[str]) -> int:
     """Capture one idempotent Git-backed implementation episode."""
-    from .analysis_model import atomic_write
     from .feature import local_graph_from_scan
 
     semantic_path = root / SEMANTIC_FILE
@@ -719,6 +720,10 @@ def memory_capture(root: Path, base: str, validation_values: list[str]) -> int:
         except FileNotFoundError:
             return None
 
+    def require_same_snapshot():
+        if read_snapshot() != snapshot:
+            raise CaptureError("semantic artifact changed during capture; rerun with the current artifact")
+
     try:
         previous_graph = load_graph(root)
         if previous_graph is None:
@@ -726,54 +731,46 @@ def memory_capture(root: Path, base: str, validation_values: list[str]) -> int:
         validations = parse_validations(validation_values)
         structural = scan_repository(root)
         snapshot = read_snapshot()
+        candidate = {
+            "schema_version": SEMANTIC_SCHEMA_VERSION,
+            "files": dict(structural.files),
+            "nodes": [],
+            "edges": [],
+            "episodes": [],
+        }
         if snapshot is not None:
             data = json.loads(snapshot.decode("utf-8"))
             validate_semantic_data(data, structural, root)
-        else:
-            data = {
-                "schema_version": 3,
-                "files": dict(structural.files),
-                "nodes": [],
-                "edges": [],
-                "episodes": [],
-            }
-        if not isinstance(data, dict) or data.get("schema_version") not in {1, 2, 3}:
-            raise CaptureError("semantic artifact must use schema_version 1, 2, or 3")
-        # A structurally valid v1 artifact can still be excluded by the enriched
-        # scan's fingerprint. Keep that projection and migrate the valid artifact.
-        current, _, semantic_error = local_graph_from_scan(root, structural, semantic_artifact=data)
-        if semantic_error and not (data["schema_version"] == 1 and semantic_error == V1_SEMANTIC_FINGERPRINT_MISMATCH):
+            candidate.update(nodes=data["nodes"], edges=data["edges"])
+            if data["schema_version"] == SEMANTIC_SCHEMA_VERSION:
+                candidate["episodes"] = data["episodes"]
+        # Project the same validated v3 evidence during migration and on retry.
+        current, _, semantic_error = local_graph_from_scan(root, structural, semantic_artifact=candidate)
+        if semantic_error:
             raise CaptureError(f"semantic artifact must be refreshed before capture: {semantic_error}")
         episode = build_capture_episode(root, base, previous_graph, current, validations)
-        existing = data.get("episodes", []) if data.get("schema_version") == 3 else []
-        if not isinstance(existing, list):
-            raise CaptureError("semantic artifact episodes must be an array")
         duplicate = next(
-            (item for item in existing if isinstance(item, dict)
-             and item.get("worktree_fingerprint") == episode["worktree_fingerprint"]),
+            (item for item in candidate["episodes"] if item["worktree_fingerprint"] == episode["worktree_fingerprint"]),
             None,
         )
-        def require_same_snapshot():
-            if read_snapshot() != snapshot:
-                raise CaptureError("semantic artifact changed during capture; rerun with the current artifact")
-
-        if duplicate is not None:
-            require_same_snapshot()
-            print(f"Implementation episode already recorded: {duplicate.get('id', 'unknown')}")
-            return 0
-        candidate = {
-            "schema_version": 3,
-            "files": dict(structural.files),
-            "nodes": list(data.get("nodes", [])),
-            "edges": list(data.get("edges", [])),
-            "episodes": [*existing, episode],
-        }
-        validate_semantic_data(candidate, structural, root)
-        atomic_write(semantic_path, json.dumps(candidate, indent=2, ensure_ascii=False) + "\n",
-                     before_replace=require_same_snapshot)
-    except (OSError, UnicodeError, json.JSONDecodeError, CaptureError, SemanticValidationError, ValueError) as error:
+        if duplicate is None:
+            candidate["episodes"] = [*candidate["episodes"], episode]
+            validate_semantic_data(candidate, structural, root)
+        with _publication_lock(root):
+            if duplicate is not None:
+                require_same_snapshot()
+            else:
+                atomic_write(semantic_path, json.dumps(candidate, indent=2, ensure_ascii=False) + "\n",
+                             before_replace=require_same_snapshot)
+    except GraphPublicationConflict as error:
+        print(f"Implementation memory was not captured: {error}", file=sys.stderr)
+        return error.code
+    except (OSError, ValueError) as error:
         print(f"Implementation memory was not captured: {error}", file=sys.stderr)
         return 2
+    if duplicate is not None:
+        print(f"Implementation episode already recorded: {duplicate['id']}")
+        return 0
     print(f"Captured implementation episode: {episode['id']}")
     print("Next: kgmaker scan")
     return 0

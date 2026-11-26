@@ -367,6 +367,10 @@ Use a pre-task `kgmaker scan` without an external Confluence overlay for the
 graph baseline. Capture compares it with the same local graph projection, so
 unchanged workbook and template nodes stay out of the delta. See the
 [completion workflow](docs/completion-orchestrator.md#záznam-implementační-epizody).
+The first capture and a repeat project the same v3 evidence after validating
+any legacy artifact. Capture and `semantic apply` share a checkout publication
+lock. If publication is busy, the command exits with status 3 and can be
+retried after the active command finishes.
 
 `memory recall` ranks current graph locations and prior episodes against the implementation request. It labels changed or removed episode evidence as historical, applies result and token bounds, and reports the estimated reduction from the broad legacy graph context.
 

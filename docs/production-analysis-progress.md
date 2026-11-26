@@ -86,7 +86,8 @@ mají vlastní stav a ověření.
 
 Dílčí oprava T052-S04/AC04 porovnává při `memory capture` výchozí graf z
 běžného scanu se stejnou lokální projekcí. Regrese rozlišuje nezměněný
-workbook a šablonu od skutečného smazání workbooku a zachovává historii.
+workbook a šablonu od skutečného smazání workbooku, zachovává historii a
+ověřuje jednoznačný záznam po migraci v1 i opakování odmítnutého zápisu.
 [Přesný rozsah a lokální kontroly](changes/202_alignMemoryCaptureProjection.md).
 
 Dílčí oprava T052-S01/AC01 ověřuje přímé závislosti na aktuálním inventáři.
