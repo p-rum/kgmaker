@@ -196,16 +196,16 @@ T052 zde eviduje i kroky T054–T056. Závislosti T055-S03 na T050-S01,
 T053-S01 a T053-S02 mají dosavadní doklady, ale zatím nemají vlastní kanonické
 řádky. [Doplnění inventáře](changes/183_reconcileExcelCompletionInventory.md).
 
-| Skupina | MERGED | PLANNED | PR_OPEN | Celkem |
-|---|---:|---:|---:|---:|
-| T003 work packages | 51 | 9 | 0 | 60 |
-| T004 / T005–T044 | 29 | 11 | 0 | 40 |
-| T046 etapy | 6 | 0 | 0 | 6 |
-| T047 kroky | 4 | 9 | 0 | 13 |
-| T054–T056 kroky | 10 | 0 | 0 | 10 |
-| Celkem (včetně sdílených kontraktů T047) | 100 | 29 | 0 | 129 |
+| Skupina | MERGED | PLANNED | IN_PROGRESS | PR_OPEN | Celkem |
+|---|---:|---:|---:|---:|---:|
+| T003 work packages | 51 | 8 | 1 | 0 | 60 |
+| T004 / T005–T044 | 29 | 11 | 0 | 0 | 40 |
+| T046 etapy | 6 | 0 | 0 | 0 | 6 |
+| T047 kroky | 4 | 9 | 0 | 0 | 13 |
+| T054–T056 kroky | 10 | 0 | 0 | 0 | 10 |
+| Celkem (včetně sdílených kontraktů T047) | 100 | 28 | 1 | 0 | 129 |
 
-T003/T004 mají podle níže uvedených atomických řádků 20 položek v `PLANNED`.
+T003/T004 mají podle níže uvedených atomických řádků 19 položek v `PLANNED` a jednu v `IN_PROGRESS`.
 W09 a S09-W05 jsou `MERGED`. Součet vyjadřuje evidovaný stav dodání.
 T047 není dalších 13 nezávislých
 implementací; sloupec omezení určuje upstream vlastníky. `PARTIAL` znamená nalezený
@@ -284,7 +284,7 @@ Oprava čtení normalizovaného kontextu T032 je od 2026-11-21 v main přes [#13
 | [T003-S12-W01](tasks/T003-S12-01-liveConfluenceConnector.md) | MERGED | PARTIAL | `7b9a9eaecaf41c9c5bc5a6d1233cd82e2cf4f1e9` | [src/kgmaker/confluence.py](../src/kgmaker/confluence.py), [src/kgmaker/confluence_sync.py](../src/kgmaker/confluence_sync.py), [tests/test_confluence_configuration.py](../tests/test_confluence_configuration.py) | [# 25](https://github.com/p-rum/kgmaker/pull/25) | Pouze offline konfigurace; live adapter DEFERRED, live acceptance NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S13-W01](tasks/T003-S13-01-runtimeTraceProducer.md) | MERGED | PARTIAL; JDK21/POSIX subset VERIFIED_IN_SCOPE | `d2507ef465c9b4844830520de68629a3b577c0d2`, `385943e48d2d2e60cec541f1f0db78beda83de22` | [tests/test_runtime_trace_producer.py](../tests/test_runtime_trace_producer.py), [JDK fixture](../tests/fixtures/runtime-trace/TraceApplication.java) | [PR101](https://github.com/p-rum/kgmaker/pull/101) MERGED · [#148](https://github.com/p-rum/kgmaker/pull/148) MERGED | Skutečný synchronní opt-in SDK capture call/factory/condition/map registration, strict v2, pre/postflight a POSIX cleanup. #148 dodalo veřejné předání deklarovaného SHA-256 z vybrané varianty BuildManifestu. Ověření W01 zůstává PARTIAL v rozsahu JDK21/POSIX. Okolní runtime prostředí, automatický Spring capture, Windows a dostupnost dat mají vlastní rozsah. Historický přenos PR102 zahrnul 88 runtime testů v sadě 205 PASS / 0 SKIP. [Ověření PR102](changes/120_namedQueryContainers.md) · [Kontrakt](runtime-trace.md) · [Change122](changes/122_runtimeTraceProducer.md) · [Change165](changes/165_forwardBuildConfiguration.md). |
 | [T003-S13-W02](tasks/T003-S13-02-runtimeRtaImport.md) | MERGED | PARTIAL | merge `5809e84932b1910bfc3f17c72e2a2005283389b1` | [import](../src/kgmaker/runtime_evidence.py), [navigace](../src/kgmaker/callgraph.py), [fixture](../tests/test_runtime_trace_producer.py) | [#136](https://github.com/p-rum/kgmaker/pull/136) | Import uchovává doklady podle compiler kontextu a variant služby. V2 `call` a `dispatch` vyžadují volatelné symboly. #147 ověřuje vstupy při publikaci, #148 předává deklarovaný otisk. Doplnění v3 ověřuje synchronní volání Java rozhraní v jednom jednoznačném bytecode místě a konkrétní přímou implementaci. Při chybějícím řádku fyzické instrukce v metodě odmítne capture i offline import. Statické cesty i kandidáty zachovává. Širší receiver/type kontrakt a T003-AC13 zůstávají PARTIAL. [Ověření #136](changes/151_preserveRuntimeObservationEvidence.md) · [Ověření #147](changes/163_revalidateRuntimeImportPublication.md) · [Nový omezený fixture rozsah](changes/182_bindRuntimeInterfaceDispatch.md). |
-| [T003-S13-W03](tasks/T003-S13-03-runtimeValueFlow.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/runtime_evidence.py](../src/kgmaker/runtime_evidence.py), [src/kgmaker/availability.py](../src/kgmaker/availability.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
+| [T003-S13-W03](tasks/T003-S13-03-runtimeValueFlow.md) | IN_PROGRESS | PARTIAL | `4dc8f657b891f1716f7d134f97c1e6098cbb50b5` | [capture](../src/kgmaker/runtime_evidence.py), [runtime proof](../src/kgmaker/runtime_value.py), [živá kontrola](../src/kgmaker/availability.py), [doklad](changes/187_bindRuntimeValuePresence.md) | — | Jedno přímé Java `String` přiřazení, v4 grafový doklad, přesné schválené mapování a čerstvý živý `data-check`. Rozsah `PARTIAL/UNASSESSED` pro jeden běh. Vícekrokové a hodnotové důkazy mají vlastní ověření. |
 | [T003-S13-W04](tasks/T003-S13-04-runtimeAsyncReflection.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/runtime_evidence.py](../src/kgmaker/runtime_evidence.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T005](tasks/T-005_add-view-model.md) | MERGED | PARTIAL | `c0a10261c2ff1f83291125ec838bbaeea8723532` | [src/kgmaker/architecture_model.py](../src/kgmaker/architecture_model.py), [tests/test_t005_add_view_model.py](../tests/test_t005_add_view_model.py) | [#11](https://github.com/p-rum/kgmaker/pull/11) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T006](tasks/T-006_select-service-contexts.md) | MERGED | PARTIAL | `3c94ea8e91042cad1bfb516e76a9c110b04fc719` | [src/kgmaker/views.py](../src/kgmaker/views.py), [tests/test_t006_select_service_contexts.py](../tests/test_t006_select_service_contexts.py) | [#20](https://github.com/p-rum/kgmaker/pull/20) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
@@ -635,7 +635,7 @@ lokálního sběru, smoke i hostované opravy je VERIFIED_IN_SCOPE.
 | T003-S10 incremental | PARTIAL | Semantic diff, workspace cache, Flyway checkpoints | Selektivní compiler/feature invalidace a negativní lookup dependencies |
 | T003-S11 release/acceptance | PARTIAL | Sedm CI jobů; worker/exporter clean install na Linuxu a skutečný Windows non-admin core/Java/K1/TS smoke (43 PASS / 2 scoped SKIP) | K2 Windows, Windows BUILD_EXECUTE, immutable publikace, celá acceptance a benchmark budgets |
 | T003-S12 Confluence boundary | VERIFIED_IN_SCOPE / LIVE NOT_RUN | Adapter protocol, `FAKE_TEST_ONLY`, explicit pull, managed-section diff, hash+base-version approval, optimistic concurrency, TO_BE re-import and audit; `test_confluence_sync` covers FA-28–30/AC12 | Live connector requires a documented host/API/auth contract and remains separately NOT_RUN |
-| T003-S13 runtime | PARTIAL / OPTIONAL | V1 import, strict v2 capture/import a omezený v3 interface dispatch. Explicitní synchronní JDK21/POSIX producer ověřuje call/factory/condition/map a konkrétního příjemce v jednoznačném compiler místě. [Change122](changes/122_runtimeTraceProducer.md) · [Change182](changes/182_bindRuntimeInterfaceDispatch.md) · [Kontrakt](runtime-trace.md). | Automatický Spring capture, Windows, obecné RTA, value flow, async/reflective capture a deployment/data availability mají vlastní rozsah. |
+| T003-S13 runtime | PARTIAL / OPTIONAL | V1 import, strict v2 capture/import, omezený v3 interface dispatch a v4 stav přítomnosti po přímém přiřazení v Javě 21. [Change122](changes/122_runtimeTraceProducer.md) · [Change182](changes/182_bindRuntimeInterfaceDispatch.md) · [Change187](changes/187_bindRuntimeValuePresence.md) · [Kontrakt](runtime-trace.md). | Automatický Spring capture, Windows, obecné RTA, další value-flow tvary, async/reflective capture a deployment mají vlastní rozsah. |
 
 Dílčí ověření T003-S02 / AC02 pokrývá Javac LF/CRLF. Nový JVM snapshot svazuje
 přesný výběr compiler vstupů a bajty zdrojů s normalizovanou strukturální projekcí.

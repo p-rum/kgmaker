@@ -589,6 +589,12 @@ na obou koncích. U ověřeného v3 dispatch zobrazí navigace také `call_site`
 `receiver_type`. Statické kandidáty zachová bez ohledu na obsah capture.
 [Příklady importu a navigace](docs/runtime-trace.md#opakovaný-import-a-navigace).
 
+Pro přímé přiřazení mezi dvěma `String` poli v Javě lze uložit jen stav
+`PRESENT` nebo `ABSENT`. `feature data-check` může z čerstvého pozorování
+a schváleného mapování doložit dostupnost `PARTIAL` v rozsahu daného běhu.
+[Runtime capture](docs/runtime-trace.md#přítomnost-hodnoty-po-přímém-přiřazení-v-javě)
+· [Živá kontrola](docs/feature-analysis.md#runtime-presence-in-data-check).
+
 Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,
 SHA-256 `java` a `javac` a fingerprint volby, při spuštění nastaví `JAVA_HOME`
 a JDK `bin` na začátek `PATH`. Změněná či chybějící binárka zneplatní plán ještě
