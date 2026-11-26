@@ -52,8 +52,17 @@ or UNKNOWN in every format. Invalid input returns 2; stale provider input return
 
 `--max-nodes` includes visible boundary nodes. Omitted control-flow endpoints retain
 original IDs; a budget too small for a truthful prefix produces an opaque root.
+For control-flow, selection indexes outgoing edges and tracks distinct omitted endpoints
+as it extends the canonical prefix. Each retained source contributes its outgoing
+edges once during prefix selection and each omitted endpoint costs one boundary
+node. [Scoped performance evidence](changes/189_reduceBoundedCfgTraversal.md)
+
 `--max-depth` bounds process expansion. Neither limit rewires branches to invented
 steps. Missing compiler/CFG support remains a gap rather than a guessed sequence.
+
+```sh
+kgmaker flow render --root project --entry METHOD_ID --context CONTEXT_ID --view control-flow --max-nodes 40 --format json
+```
 
 `--output` atomically publishes a single report under `.kgmaker/flows/` in the
 selected root. Absolute paths inside that directory are accepted. Source/store

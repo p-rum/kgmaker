@@ -1721,6 +1721,15 @@ Nový integrační běh T037 po merge main `9f88d846`: **298 PASS / 0 SKIP,
 11.07 s** v sedmi modulech uvedených v change121. Source identity vůči oběma
 reviewovaným rodičům PASS; runtime/W06 sady se tímto výsledkem znovu nedokládají.
 
+## T043 — limity velikosti a výkonu pohledů
+
+| Kritérium | Ověření | Důkaz a rozsah |
+|---|---|---|
+| T043-AC01, T043-AC02 | PARTIAL | Lokální regrese T043-S02 ověřují nejdelší přípustný prefix CFG, započtení sdílených hranic a počet návštěv hran při dvojnásobném větvení. Topologie a širší rozpočty mají vlastní ověření. |
+| T043-AC03 | NOT_RUN | Lokální měření větvení dokládá opravu. Generátor 100 služeb a 10 000 vazeb, cold/warm srovnání, maximum paměti a relativní benchmark gate mají zbývající rozsah T043-S01/S03. |
+| T043-AC04, T043-AC05 | PARTIAL | Regrese ověřují neměnnost vstupu, shodu výstupu, původní ID, společné koncové body i explicitní hranice cyklu. Dochovaná evidence zachovává `NOT_OBSERVED` a `UNKNOWN`. |
+| T043-AC06 | PARTIAL | Změna, testy a odpovídající dokumentace mají lokální doklad. [Change189](changes/189_reduceBoundedCfgTraversal.md). |
+
 ## T028 — Potential asynchronous process paths
 
 Historical initial handoff `1732a3d` (subsequent AC05 REQUEST_CHANGES and fixes below):
