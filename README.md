@@ -1323,8 +1323,9 @@ se stavem BYPASS. Offline scan/hook/feature zachovávají stávající chování
 Otisk launcheru a platformních souborů se počítá průběžným čtením.
 Každá grafová fáze předá výsledek své živé validace přímo dalšímu kroku.
 Java launcher váže také `lib/ct.sym` a na POSIX přesné locale vstupy
-`LANG`, `LC_ALL`, `LC_CTYPE`. Změna zaznamenaného vstupu během inspekce
-vrátí `STALE` a zachová poslední uložený graf.
+`LANG`, `LC_ALL`, `LC_CTYPE`. Na Linuxu otisk zahrnuje také standardní
+JDK soubory `lib/libjli.so` a `lib/server/libjvm.so`. Změna zaznamenaného
+vstupu během inspekce vrátí `STALE` a zachová poslední uložený graf.
 Při spuštění přes symbolický odkaz `java` se otisk váže na cílový JDK.
 Relativní položka `PATH` se vyhodnotí v pracovním adresáři KGMAKERu.
 Graph publication reserves the checkout before writing and rejects a stale
@@ -1335,7 +1336,8 @@ explicit graph object requires it to match the stored generation, when present.
 Retry the original command after the other writer finishes.
 [Příkazy a omezení](docs/stage-content-cache.md),
 [ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md),
-[ověření nákladů živé inspekce](docs/changes/178_reduceLiveInspectionOverhead.md).
+[ověření nákladů živé inspekce](docs/changes/178_reduceLiveInspectionOverhead.md),
+[ověření nativních vstupů JDK](docs/changes/180_bindLinuxJdkNativeInputs.md).
 
 ### Selektivní dopad změněných souborů (T003-S10-W02)
 

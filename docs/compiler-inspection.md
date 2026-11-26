@@ -1576,11 +1576,13 @@ Grafová fáze vrací svůj validovaný objekt a otisk launcheru čte soubory
 průběžně při každé kontrole.
 Otisk spuštění Java zahrnuje `lib/ct.sym`, který Javac používá pro starší
 `--java-release`, a na POSIX přesné hodnoty `LANG`, `LC_ALL` a `LC_CTYPE`.
+Na Linuxu zachytí také obsah `lib/libjli.so` a `lib/server/libjvm.so`
+ve standardním rozložení JDK. [Ověření nativních vstupů](changes/180_bindLinuxJdkNativeInputs.md).
 Při výběru přes `bin/java` jako symbolický odkaz vychází otisk z cílové
 binárky a platformních souborů jejího JDK.
 Relativní položku `PATH` ukotví KGMAKER při výběru launcheru a worker
 použije stejnou cestu i po přechodu do adresáře analyzovaného projektu.
-Chybějící vstup otisku ponechá případný živý výsledek v režimu
+Chybějící nebo nečitelný vstup otisku ponechá případný živý výsledek v režimu
 `BYPASS/INCOMPLETE_INPUT_CLOSURE`. Změna zachyceného otisku během běhu
 vyvolá `STALE` před dokončením publikace.
 Graph/store v1/v2/v3 a interní envelope v1 zůstávají čitelné.
