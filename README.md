@@ -1322,10 +1322,16 @@ K2 policy capture and runtime delivery remain UNKNOWN. See
 `kgmaker flow render --entry METHOD_ID --view process --format markdown` uses the
 same CFG model as JSON and Mermaid, with original IDs, explicit coverage gaps and
 truncation. Expansion requires the current source-body proof of the exact caller
-and callee; reference-only bindings do not establish an execution path. `--output .kgmaker/flows/process.md` publishes atomically after rechecking
+and callee; reference-only bindings do not establish an execution path. The
+control-flow view counts each omitted endpoint once when finding the longest
+canonical prefix that fits `--max-nodes`. Control-flow and process reports retain
+up to 256 source diagnostic rows per list and disclose omitted counts as
+`FLOW_DIAGNOSTIC_LIMIT`. `--output .kgmaker/flows/process.md` publishes atomically after rechecking
 the loaded index and source snapshot; rendering
 never launches workers. See [flow formats, limits and compatibility](docs/unified-flow-views.md)
 and [change128](docs/changes/128_unifiedFlowViews.md).
+The opt-in benchmark compares a 100-service topology and a cyclic CFG against
+a supplied source revision on the same runner. [Benchmark commands and scope](docs/unified-flow-views.md#t043-scale-benchmark)
 
 
 ### Obsahová cache explicitní inspekce (T003-S10-W01)

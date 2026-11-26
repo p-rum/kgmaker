@@ -25,12 +25,19 @@ def _control_flow(graph, entry, *, scope="production", max_nodes=500, representa
         # Budget includes boundary vertices. Keep a real CFG prefix only when
         # every outgoing omitted endpoint fits; otherwise shrink to an opaque root.
         order=ordered_cfg(cfg)[1]
-        selected=set()
-        for count in range(min(max_nodes,len(order)),0,-1):
-            candidate=set(order[:count])
-            omitted={e['target'] for e in cfg['edges'] if e['source'] in candidate and e['target'] not in candidate}
-            if len(candidate)+len(omitted)<=max_nodes:
-                selected=candidate;break
+        outgoing = defaultdict(set)
+        for edge in cfg['edges']:
+            outgoing[edge['source']].add(edge['target'])
+        selected, frontier = set(), set()
+        for node in order[:max_nodes]:
+            selected.add(node)
+            frontier.discard(node)
+            frontier.update(target for target in outgoing.get(node, ()) if target not in selected)
+            # Adding a node replaces at most its own boundary and can expose
+            # further endpoints, so the size cannot fall after the first overflow.
+            if len(selected) + len(frontier) > max_nodes:
+                selected.remove(node)
+                break
         boundaries,edges={},[]
         for edge in cfg['edges']:
             if edge['source'] not in selected: continue

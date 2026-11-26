@@ -1,8 +1,9 @@
-# Záznam sloučení výběru kontextu lokálního procesu
+# Záznam sloučení výběru kontextu a omezení toku
 
 Datum 2026-11-26. [T048-S01 / T048-AC01](../tasks/48_completeImplementationHandoff.md#3-první-krok-t048-s01--sjednotit-stav-a-vytvořit-pracovní-seznam),
 [T025](../tasks/T-025_build-local-process-path.md),
-[T030](../tasks/T-030_prepare-process-label-packet.md).
+[T030](../tasks/T-030_prepare-process-label-packet.md),
+[T043](../tasks/T-043_bound-view-performance.md).
 
 ## T048-S01 / T048-AC01
 
@@ -45,7 +46,11 @@ NOT_RUN. Pro použití lokálního výběru platí stávající příklady v př
 a README. [Výběr kontextu](../process-paths.md) · [Příprava packetu](../process-label-packets.md)
 · [README](../../README.md#local-technical-process-paths-t025).
 
-## Ověření aktualizace inventáře
+## Historické ověření první revize #176
+
+Následující počty, porovnání plánů a JUnit patří prvnímu headu #176
+`7b24eff22d74160376234911a552836cb1db1d78` na base
+`cb9848520b056518d028ceb8010ec6a6f9a43a2f`.
 
 ```sh
 kgmaker completion plan --root "$PWD" --jobs 32
@@ -59,7 +64,52 @@ python -m pytest --assert=plain -q -p no:cacheprovider tests/test_completion.py
 - PASS — 13 testů plánovače, 0 SKIP. SHA-256 JUnit
   `dae2f4dc6ba6188311db97a4b15973e063fd5d54bb5872b2ff8e4b47df08db1e`.
 
-Doklady se ověřují také přes `semantic update`, `semantic apply`,
+Počáteční kontroly zahrnovaly `semantic update`, `semantic apply`,
 `semantic validate`, `memory capture`, `scan`, `status`, `check` a
-`git diff --cached --check`. Nová úplná sada a nezávislé review této
-dokumentační revize mají stav NOT_RUN.
+`git diff --cached --check`. Při pozdějším přezkumu headu
+`e8f42482377f733acc6730e4d12ee293ca3aac27` proti base
+`0b922c00bfe7ebe57f07bf7dfdee7e8ab746318a` dala T045 verdikt `REQUEST_CHANGES`
+kvůli chybějícímu označení historického rozsahu dokladů. [Verdikt T045](https://github.com/p-rum/kgmaker/pull/176#issuecomment-7202753732).
+
+## T043 — sloučené omezení toku a diagnostiky
+
+[PR #173](https://github.com/p-rum/kgmaker/pull/173) je sloučené do `main`
+jako `8290606eace7d7c94497cca143fa8e70c0042d38`. Rodiče merge jsou v pořadí
+`0b922c00bfe7ebe57f07bf7dfdee7e8ab746318a` a
+`c5069e03ef4d81c48683f2225108f4f2fc497795`. Strom
+`0864c5eacd0a574c4e5a6efb02ef658a95d71874` odpovídá přesně testovanému headu.
+SHA-256 ověřeného dokladu o sloučení
+`97241ac483183016548d1d5f95b9f47f4309534aec147e72275fd621eba18128`.
+
+Nezávislá T045 na uvedeném headu vydala `APPROVE` pro T043-S02 a T043-AC04.
+Její cílený běh měl **26 PASS / 0 SKIP**, 42 nezvolených případů. SHA-256 JUnit
+`6c27477567580ee910f02e08b72bdd1c08541c451a850c807e0759595f4512ac`.
+Další přesný běh na schváleném headu ověřil čtyři výstupy parserem Mermaid 11.4.1.
+SHA-256 dokladu `fe7e3d250cb5b4c9312221b8aab400216051f1a3e71f37b70fe522932a632837`.
+[Nezávislý verdikt](https://github.com/p-rum/kgmaker/pull/173#issuecomment-7202991032).
+
+Po sloučení prošlo na `8290606` **33 PASS / 0 SKIP** za 3,42 s, raw exit 0.
+Cíleně se ověřil plánovač, limity průchodu a diagnostiky, zachování posledního
+platného reportu a kontrolní test pojmenovaných cizích klíčů. Otisky sledovaných
+souborů před a po běhu souhlasí. SHA-256 JUnit
+`c3a2eb77432f37d5e1621f61267ff2f60447beda8d5b546851a78bc172e0f75e`.
+
+Kanonický T043 má stav MERGED / PARTIAL. Celkový bajtový rozpočet reportu,
+strukturální mezery a diagnostika vztahových pohledů zůstávají mimo ověřený
+rozsah. [Kritéria T043](../acceptance-inventory.md#t043--limity-velikosti-a-výkonu-pohledů)
+· [Implementace a hranice](189_reduceBoundedCfgTraversal.md).
+
+## Ověření doplnění inventáře po #173
+
+Toto dokumentační doplnění vychází z headu #176
+`e8f42482377f733acc6730e4d12ee293ca3aac27` a skutečného `main`
+`8290606eace7d7c94497cca143fa8e70c0042d38`. Lokální plán má 135 položek,
+z toho 107 MERGED, 27 PLANNED a jednu IN_PROGRESS. Změnil se doklad T025,
+dodání T043 a odvozený seznam blokací T044. Z 32 položek k delegování
+uvolnil sloučený T043 místo pro ověření T003-S10-W02. Zbývajících 31 položek
+má stejné pořadí jako na uvedeném `main`. SHA-256 plánu
+`c59e9ed7dd3acc3ddf754dd19e6d03607858c68136353ef8f01a83cb85cb6cc1`.
+
+Cílená sada plánovače podle uvedeného příkazu má **13 PASS / 0 SKIP**.
+SHA-256 JUnit `207a9f6449cf63cce596d64214299aa52554a506ddc8b54356a94e90e110dfbf`.
+Úplná sada má v tomto místním dokumentačním běhu stav NOT_RUN.
