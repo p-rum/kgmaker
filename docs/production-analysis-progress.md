@@ -163,16 +163,12 @@ Baseline `193c89b4d461047fd3330fd74892c5830ba8ac81`,
 [zadání revize 1](tasks/50_addTargetProjectSkills.md),
 [change117: přesné kontroly a omezení](changes/117_addTargetProjectSkills.md).
 
-| Krok | Dodání | Ověření | Důkaz a omezení |
-|---|---|---|---|
-| T050-S01 | MERGED | VERIFIED_IN_SCOPE | Pět skillů + tři references, init preflight, parity a ochrana uživatelských souborů; čistý wheel smoke PASS. Hostitelská discovery NOT_RUN; neuzavírá T049. |
-| T050-S02 | MERGED | PARTIAL | 83 cílených testů PASS, 5 skill validací PASS; příklady prošly skutečnými validátory. Plná sada má environmentální/toolchain chyby, živé hostitelské scénáře a GH CI NOT_RUN. |
-
 [PR #98](https://github.com/p-rum/kgmaker/pull/98) byl sloučen do main jako
-`31a69bcf5b72c5f1f3be4ed699cc6b5672bcdcde` dne 2026-11-15. Historické lokální
-výsledky výše se nepovyšují na celou produkční ani hostitelskou podporu.
-Příručka: [agent-skills.md](agent-skills.md). T050 nemění delivery součty T003,
-T004, T046 nebo T047 níže. Lokální soubory nejsou důkaz merge ani živé podpory hostitele.
+`31a69bcf5b72c5f1f3be4ed699cc6b5672bcdcde` dne 2026-11-15. Nezávislé review
+ověřilo instalaci z wheelu, pět formátových validací a lokální příklady. Záznam
+odděluje tento historický výsledek od aktuálních kontrol šablon a omezení
+hostitelské discovery. [T045 pro #98](https://github.com/p-rum/kgmaker/pull/98#issuecomment-6892872266) ·
+[Příručka](agent-skills.md) · [Kanonické kroky a ověření](changes/186_reconcileInstallationCompletionInventory.md).
 
 ## Integrační ověření T048-S02 / T046 — 2026-11-12
 
@@ -192,9 +188,10 @@ Původní audit T048-S01 vychází z `f115aa4a1c37683f3be9e4607111d51d9c1301c1`.
 Řádky níže jsou jediným aktuálním delivery inventářem. Následující historické
 checkpointy zachovávají původní výsledky a nepředstavují čekající merge již
 sloučených funkcí. SPECIFICATION je stav zadání a zůstává oddělený od dodání.
-T052 zde eviduje i kroky T054–T056. Závislosti T055-S03 na T050-S01,
-T053-S01 a T053-S02 mají dosavadní doklady, ale zatím nemají vlastní kanonické
-řádky. [Doplnění inventáře](changes/183_reconcileExcelCompletionInventory.md).
+T052 zde eviduje i kroky T050 a T053–T056. Podklady pro T055-S03 mají vlastní
+řádky T050-S01, T053-S01 a T053-S02.
+[Záznam T054–T056](changes/183_reconcileExcelCompletionInventory.md) ·
+[Záznam T050 a T053](changes/186_reconcileInstallationCompletionInventory.md).
 
 | Skupina | MERGED | PLANNED | PR_OPEN | Celkem |
 |---|---:|---:|---:|---:|
@@ -202,8 +199,9 @@ T053-S01 a T053-S02 mají dosavadní doklady, ale zatím nemají vlastní kanoni
 | T004 / T005–T044 | 29 | 11 | 0 | 40 |
 | T046 etapy | 6 | 0 | 0 | 6 |
 | T047 kroky | 4 | 9 | 0 | 13 |
+| T050 a T053 kroky | 6 | 0 | 0 | 6 |
 | T054–T056 kroky | 10 | 0 | 0 | 10 |
-| Celkem (včetně sdílených kontraktů T047) | 100 | 29 | 0 | 129 |
+| Celkem (včetně sdílených kontraktů T047) | 106 | 29 | 0 | 135 |
 
 T003/T004 mají podle níže uvedených atomických řádků 20 položek v `PLANNED`.
 W09 a S09-W05 jsou `MERGED`. Součet vyjadřuje evidovaný stav dodání.
@@ -345,6 +343,12 @@ Oprava čtení normalizovaného kontextu T032 je od 2026-11-21 v main přes [#13
 | [T047-S11](tasks/47_addReliableIncrementalContext.md) | MERGED | PARTIAL | `47807742a07c4a4fb92a590479fbfa0b558bf7fe` | [workflow](../src/kgmaker/workflow.py), [verification](../src/kgmaker/verification.py), [lineage](../src/kgmaker/provenance.py), [context](../src/kgmaker/context.py), [test](../tests/test_verification_records.py) | [#144](https://github.com/p-rum/kgmaker/pull/144) | Lokální volitelná brána `done` používá aktuální doklad jednoho explicitního běhu. Schválení T046 mají vlastní pravidla. Report odlišuje workflow od aktuálnosti evidence. Přesný head a sloučené main mají 179 PASS / 0 SKIP se skutečným Mavenem a Surefire. Mapování požadovaných testů, selektivní dopad, širší matice a projekce do paměti zůstávají otevřené. [Doklad integrace](changes/161_recordMutationCorpusMerge.md#t047-s11--t047-r11--t047-ac11-a-t048-s01--t048-ac01) · [Change159](changes/159_gateCompletionOnCurrentVerification.md). |
 | [T047-S12](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/cli.py](../src/kgmaker/cli.py), [src/kgmaker/feature_cli.py](../src/kgmaker/feature_cli.py) | — | Upstream owner: T047-S12; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S13](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Upstream owner: T047-S13 + T003-S11; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
+| [T050-S01](tasks/50_addTargetProjectSkills.md) | MERGED | VERIFIED_IN_SCOPE | `31a69bcf5b72c5f1f3be4ed699cc6b5672bcdcde` | [Šablony](../src/kgmaker/skills.py), [testy](../tests/test_skills.py), [Change117](changes/117_addTargetProjectSkills.md) | [#98](https://github.com/p-rum/kgmaker/pull/98) | Pět skillů a tři reference s instalací, paritou a ochranou souborů. Historický wheel a aktuální cílové fixture. Živá discovery NOT_RUN. |
+| [T050-S02](tasks/50_addTargetProjectSkills.md) | MERGED | PARTIAL | `31a69bcf5b72c5f1f3be4ed699cc6b5672bcdcde` | [Testy](../tests/test_skills.py), [historický T045](https://github.com/p-rum/kgmaker/pull/98#issuecomment-6892872266), [aktuální ověření](changes/186_reconcileInstallationCompletionInventory.md) | [#98](https://github.com/p-rum/kgmaker/pull/98) | Přesný historický head má pět formátových validací a 21 skutečných lokálních CLI volání. Úplné opakování příkladů s aktuálními šablonami, nový wheel a živý hostitel mají NOT_RUN. |
+| [T053-S01](tasks/53_manageProjectInstallation.md) | MERGED | VERIFIED_IN_SCOPE | `1e782a119e5ae54d22bfc8d7c22c565ed651815a` | [Instalátor](../src/kgmaker/installation.py), [testy](../tests/test_installation.py), [Change170](changes/170_manageProjectInstallation.md) | [#154](https://github.com/p-rum/kgmaker/pull/154) | Společný katalog včetně skillů T050, manifest vlastnictví, opakovaný init a převzetí známých legacy ignore pravidel. |
+| [T053-S02](tasks/53_manageProjectInstallation.md) | MERGED | VERIFIED_IN_SCOPE | `1e782a119e5ae54d22bfc8d7c22c565ed651815a` | [Instalátor](../src/kgmaker/installation.py), [testy](../tests/test_installation.py), [Change170](changes/170_manageProjectInstallation.md) | [#154](https://github.com/p-rum/kgmaker/pull/154) | Upgrade instalovaných šablon, chybějící a vysloužilé cesty, ochrana cizích souborů a historie v doloženém místním rozsahu. |
+| [T053-S03](tasks/53_manageProjectInstallation.md) | MERGED | VERIFIED_IN_SCOPE | `1e782a119e5ae54d22bfc8d7c22c565ed651815a` | [Instalátor](../src/kgmaker/installation.py), [testy](../tests/test_installation.py), [Change170](changes/170_manageProjectInstallation.md) | [#154](https://github.com/p-rum/kgmaker/pull/154) | Idempotentní odstranění vlastněné integrace a dat s ochranou cizích souborů, ignore bajtů a externích cílů symlinků. |
+| [T053-S04](tasks/53_manageProjectInstallation.md) | MERGED | VERIFIED_IN_SCOPE | `1e782a119e5ae54d22bfc8d7c22c565ed651815a` | [Chybové scénáře](../tests/test_installation.py), [wheel](../tests/test_installation_distribution.py), [T045 a merge](changes/174_reconcileMergedDelivery.md#t053-s01s04-ac01ac04) | [#154](https://github.com/p-rum/kgmaker/pull/154) | Validace, zachytitelná chyba publikace a historický instalovaný Linux wheel. Windows lifecycle, výpadek procesu a živý reload NOT_RUN. |
 | [T054-S01](tasks/54_addExcelMigration.md) | MERGED | VERIFIED_IN_SCOPE | `782ac6ac0287550084e9afadbd6182756fdd2730; VML 5ff2c0846056353605ccb9ab271bd86847c6e661` | [test_excel_migration.py](../tests/test_excel_migration.py), [171_addExcelMigration.md](changes/171_addExcelMigration.md), [176_readVmlLineBreaks.md](changes/176_readVmlLineBreaks.md) | [# 155](https://github.com/p-rum/kgmaker/pull/155), [# 159](https://github.com/p-rum/kgmaker/pull/159) | Statická XLSM/BIFF8/XLSX evidence, no-mutation, původní SHA a VML vazby. |
 | [T054-S02](tasks/54_addExcelMigration.md) | MERGED | VERIFIED_IN_SCOPE | `782ac6ac0287550084e9afadbd6182756fdd2730` | [test_excel_migration.py](../tests/test_excel_migration.py), [171_addExcelMigration.md](changes/171_addExcelMigration.md) | [# 155](https://github.com/p-rum/kgmaker/pull/155) | Lokální Kotlin/JVM plán, pokrytí, citace, pořadí a odmítnutí stale vstupu. |
 | [T054-S03](tasks/54_addExcelMigration.md) | MERGED | PARTIAL | `782ac6ac0287550084e9afadbd6182756fdd2730` | [test_excel_migration.py](../tests/test_excel_migration.py), [174_reconcileMergedDelivery.md](changes/174_reconcileMergedDelivery.md) | [# 155](https://github.com/p-rum/kgmaker/pull/155) | Jira CSV s vlastními poli a vztahy ověřeno. Živý import do cílové Jira Cloud NOT_RUN. |
