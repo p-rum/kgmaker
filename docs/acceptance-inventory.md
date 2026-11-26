@@ -110,14 +110,21 @@ JDK 21, ověřují neúplný otisk při chybějícím či nečitelném vstupu a 
 změně izolované fixture vyžadují `STALE` se zachováním grafu.
 [Provedené kontroly a hranice](changes/180_bindLinuxJdkNativeInputs.md).
 
+Dílčí ověření W01-AC03 a W01-AC04 potvrzuje, že relativní `PATH` pro Node
+umožní skutečnou inspekci TypeScriptu i při odlišném pracovním adresáři
+workeru. `test_actual_typescript_anchors_relative_node_path_before_worker_cwd`
+pokrývá absolutní kontrolu, relativní výběr a bajty publikovaných výstupů.
+Živá inspekce hlásí `BYPASS/UNVERIFIED_REPLAY`. W01-AC01 zůstává `PARTIAL`.
+[Doklad a prostředí](changes/188_anchorTypeScriptNodeLauncher.md).
+
 ## T003-S10-W02 — reverse dependency indexy
 
 Čtecí report z [#130](https://github.com/p-rum/kgmaker/pull/130) je MERGED
 v `main` jako `0c834c8b2c06ca80d76f1aaf09f6f49b968e8aa3`. Po opravě
 nálezu T045 prošlo 44 cílených testů bez přeskočení na JDK 21. Úplná
 sada CPython 3.13 má 2 586 PASS, 1 345 SKIP a 1 očekávaný strict XFAIL.
-W02-AC01 zůstává PARTIAL. Po čtecím reportu následuje selektivní
-publikace do grafu a revizí. Plánovač řadí W03 mezi kandidáty až po
+W02-AC01 zůstává PARTIAL. Selektivní publikace do grafu má níže doložený
+dílčí rozsah Python API. Plánovač řadí W03 mezi kandidáty až po
 doložení W02-AC01 ve stavu `VERIFIED_IN_SCOPE`.
 GitHub Actions jsou pro schválený head neověřené. Předchozí běhy a
 omezení Excel workeru jsou zachovány v change145.
@@ -133,6 +140,17 @@ omezení Excel workeru jsou zachovány v change145.
 | T003-S10-W02-AC02 | VERIFIED_IN_SCOPE | `test_legacy_and_unproven_name_matches_never_gain_positive_evidence` ukládá a čte graf v1/v2/v3. JSON režim reportu je aditivní a nevyžaduje migraci. |
 | T003-S10-W02-AC03 | VERIFIED_IN_SCOPE | `test_actual_javac_tampered_capture_cannot_ground_reverse_impact` odmítá změněný výběr compiler vstupů pod stejným raw ID. `test_actual_javac_malformed_capture_digest_is_ignored_in_public_impact` ověřuje obě uložené mapy otisků. CLI vynechá vazby poškozeného kontextu a zachová vazby druhého skutečného Javac capture. Testy pokrývají také chybný graf v3, nedostupný zdroj, čtyři FIFO vstupy na POSIX, chybné migrační vazby, relativní citaci, lidské rozhodnutí a stabilní CRLF OpenAPI. Smíšené `--workspace --evidence-only` vrací chybu použití před načtením manifestu. Report zachovává bajty store a sám nespouští proces. |
 | T003-S10-W02-AC04 | VERIFIED_IN_SCOPE | README, capability, stavová matice a change145 odlišují skutečný Javac/JDK21 a offline replay/contract fixture od širšího verification scope. T003-S10 zůstává PARTIAL. |
+
+Dílčí publikace W02-AC01 a AC03 pokrývá Python API `inspect_jvm` s výhradně
+vlastněnými zdroji. Nativní K1/K2 fixture obnovuje jeden modul, odebere
+staré compiler důkazy změněného nezávislého modulu a zachová důkaz kontrolního
+modulu. Kontroly společné cesty, classpath, smíšené anotace a pozdní změny
+pokrývají odmítnutí se zachováním grafu. Kontroly LF↔CRLF mimo zachycené
+vstupy ověřují běžnou i izolovanou publikaci. Nativní test
+`test_actual_jvm_stale_peer_checks_cfg_and_typed_proof_references` ověřuje
+typovaný `STALE` a shodné uložené bajty při neplatném CFG nebo závislosti
+framework či runtime důkazu na vyřazovaném kontextu. Celé W02-AC01 zůstává `PARTIAL`.
+[Přesné ověření a hranice](changes/185_publishIsolatedJvmContext.md).
 
 ## T045 — doplňující automatická kontrola PR
 

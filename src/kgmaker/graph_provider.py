@@ -14,6 +14,12 @@ from .store import load_graph, load_graph_generation
 from .worker_protocol import WorkerError
 
 
+class _JvmSourceDrift(WorkerError):
+    def __init__(self, changed: dict[str, str]):
+        super().__init__("STALE_INDEX: source/config inputs changed; inspect again", "STALE")
+        self.changed = changed
+
+
 def _compiler_contexts(graph: KnowledgeGraph, *, include_stale: bool = True) -> list[dict]:
     return [context for context in graph.contexts
             if context.get("analyzer_version")
@@ -248,7 +254,14 @@ def validate_context_snapshot(root: Path, context: dict) -> tuple[dict, ...]:
         from .inspection import source_snapshot
         from .symbol_identity import kotlin_source_omissions
         current_files = source_snapshot(root, current, context)
-        if current_files != context.get("source_files", {}):
+        recorded_files = context.get("source_files", {})
+        if current_files != recorded_files:
+            if snapshot_version == JVM_RAW_SOURCE_SNAPSHOT and current_files.keys() == recorded_files.keys():
+                changed = {path: value for path, value in current_files.items() if recorded_files[path] != value}
+                if (changed.keys() <= set(context["compiler_inputs"])
+                        and changed.keys() <= current.files.keys()
+                        and unsupported_kotlin_source(current.raw_file_hashes, context["compiler_inputs"]) is None):
+                    raise _JvmSourceDrift(changed)
             raise WorkerError("STALE_INDEX: source/config inputs changed; inspect again", "STALE")
         if snapshot_version == JVM_RAW_SOURCE_SNAPSHOT:
             if normalized_source_projection(current.files, current_files) != context.get("normalized_source_files"):
@@ -389,23 +402,211 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
     return result
 
 
+def _reference_ids(value) -> bool:
+    return isinstance(value, (list, tuple)) and all(isinstance(item, str) and item for item in value)
+
+
+def _proof_owners(proof: dict) -> set[str] | None:
+    """Read compiler arrays and the runtime importer's singular owner."""
+    plural = proof.get('context_ids', [])
+    if not _reference_ids(plural):
+        return None
+    owners = set(plural)
+    if len(owners) != len(plural):
+        return None
+    if 'context_id' not in proof:
+        return owners
+    singular = proof['context_id']
+    if not isinstance(singular, str) or not singular:
+        return None
+    if 'context_ids' in proof and owners != {singular}:
+        return None
+    return {singular}
+
+
+def _proof_dependencies(proof: dict, owners: set[str], symbols: dict, sites: dict) -> set[str] | None:
+    """Resolve the extra compiler and runtime references stored by typed producers."""
+    dependencies = set()
+    if 'compiler_symbol_id' in proof:
+        reference = proof['compiler_symbol_id']
+        # Framework proxy proofs use this field for a compiler call site.
+        if not isinstance(reference, str) or (reference not in symbols and reference not in sites):
+            return None
+        dependencies.add(reference)
+    sources = proof.get('compiler_sources', [])
+    if not isinstance(sources, list):
+        return None
+    for source in sources:
+        if not isinstance(source, dict):
+            return None
+        identity = source.get('symbol_id')
+        if not isinstance(identity, str) or identity not in symbols:
+            return None
+        symbol = symbols[identity]
+        if source.get('context_id') != symbol['context_id'] or source.get('path') != symbol.get('path'):
+            return None
+        dependencies.add(identity)
+    if proof.get('kind') == 'RUNTIME_OBSERVED' and ('call_site' in proof or 'receiver_type' in proof):
+        call_site, receiver = proof.get('call_site'), proof.get('receiver_type')
+        if not isinstance(call_site, str) or not isinstance(receiver, str):
+            return None
+        site, receiver_symbol = sites.get(call_site, {}), symbols.get(receiver, {})
+        if (len(owners) != 1 or site.get('context_id') not in owners
+                or receiver_symbol.get('context_id') not in owners or receiver_symbol.get('kind') != 'class'):
+            return None
+        dependencies.update((call_site, receiver))
+    return dependencies
+
+
+def _isolated_peer_evidence(graph: KnowledgeGraph, context: dict) -> bool:
+    if graph.analysis_annotations:
+        return False
+    peer = context['id']
+    paths = context['source_files'].keys()
+    other_ids = {item['id'] for item in _compiler_contexts(graph) if item['id'] != peer}
+    known_ids = {item['id'] for item in graph.contexts if isinstance(item.get('id'), str)}
+    symbols = {item['id']: item for item in graph.symbols}
+    sites = {item['id']: item for item in graph.call_sites}
+    peer_nodes = {item['id'] for item in [*graph.symbols, *graph.call_sites] if item.get('context_id') == peer}
+    for node in graph.nodes:
+        metadata = node.metadata if node.metadata is not None else {}
+        if not isinstance(metadata, dict):
+            return False
+        support = _proof_owners(metadata)
+        if support is None or not support <= known_ids or (peer in support and support != {peer}):
+            return False
+        if node.path in paths or peer in support:
+            peer_nodes.add(node.id)
+    peer_evidence = set()
+    for item in graph.evidence:
+        support = _proof_owners(item)
+        source, target, path = (item.get(key) for key in ('source', 'target', 'source_file'))
+        if (support is None or not support <= known_ids
+                or any(value is not None and not isinstance(value, str) for value in (source, target, path))):
+            return False
+        dependencies = _proof_dependencies(item, support, symbols, sites)
+        if dependencies is None:
+            return False
+        if (peer in support or source in peer_nodes or target in peer_nodes or path in paths
+                or peer_nodes.intersection(dependencies)):
+            if other_ids.intersection(support) or (peer in support and support != {peer}):
+                return False
+            peer_evidence.add(item['id'])
+    for edge in graph.edges:
+        if peer in edge.context_ids and edge.context_ids != (peer,):
+            return False
+        if other_ids.intersection(edge.context_ids) and (
+                edge.source in peer_nodes or edge.target in peer_nodes or edge.source_file in paths
+                or peer_evidence.intersection(edge.evidence_ids)):
+            return False
+    for site in graph.call_sites:
+        if site.get('context_id') in other_ids and (
+                site.get('path') in paths or site.get('caller') in peer_nodes
+                or site.get('declared_target') in peer_nodes
+                or peer_nodes.intersection(site.get('dispatch_candidates', []))
+                or peer_evidence.intersection(site.get('evidence_ids', []))):
+            return False
+    for cfg in graph.cfgs:
+        if cfg.get('context_id') not in other_ids:
+            continue
+        refs = cfg.get('evidence_ids', [])
+        if not _reference_ids(refs) or cfg.get('method') in peer_nodes or peer_evidence.intersection(refs):
+            return False
+        for block in cfg['blocks']:
+            path = block.get('source_file')
+            calls, refs = block.get('call_site_ids', []), block.get('local_operation_evidence_ids', [])
+            if ((path is not None and not isinstance(path, str)) or path in paths
+                    or not _reference_ids(calls) or not _reference_ids(refs)
+                    or peer_nodes.intersection(calls) or peer_evidence.intersection(refs)):
+                return False
+    return not any(item.get('context_id') in other_ids and item.get('path') in paths
+                   for item in graph.symbols)
+
+
+def _isolated_jvm_peer(initial: KnowledgeGraph, fresh: KnowledgeGraph, stored: KnowledgeGraph,
+                       context: dict, peers: list[dict], selected: dict, error: _JvmSourceDrift) -> bool:
+    if initial.raw_file_hashes is None or any(
+            initial.raw_file_hashes.get(path, initial.files.get(path)) != value
+            for path, value in error.changed.items()):
+        return False
+    files = {node.path: (node.build_membership, node.scope) for node in initial.nodes if node.kind == 'file'}
+    active = [selected, *(item for item in peers if item.get('freshness') != 'STALE')]
+    distribution = selected.get('worker', {}).get('distribution', [])
+    if not distribution:
+        return False
+    try:
+        library_root = (Path(distribution[0]['path']).parent / 'lib').resolve()
+        libraries = {(Path(item['path']).resolve(strict=True), item['sha256']) for item in distribution[1:]}
+        libraries = {(path, checksum) for path, checksum in libraries if path.parent == library_root}
+        for item in active:
+            module, source_set = item.get('module'), item.get('source_set')
+            if (not isinstance(module, str) or not isinstance(source_set, str)
+                    or jvm_raw_capture_id(item) != item['id']
+                    or item.get('freshness') != 'CONTENT_VERIFIED'
+                    or item.get('origin_trust') != 'LOCAL_COMPILER_INPUTS'
+                    or item.get('repo_id') != selected.get('repo_id')
+                    or item.get('scope') != selected.get('scope')
+                    or item.get('project_model') != selected.get('project_model')
+                    or item.get('worker', {}).get('distribution') != distribution
+                    or any(item.get(key) for key in ('build_id', 'build_context_id', 'manifest_hash',
+                                                     'toolchain', 'dependency_model_hash', 'compiler_options',
+                                                     'generated_source_roots', 'bytecode_artifacts'))
+                    or not item.get('compiler_inputs')
+                    or any(files.get(path) != ((module + ':' + source_set,), item['scope'])
+                           for path in item['source_files'])):
+                return False
+            if item['id'] != context['id'] and (item['module'] == context['module']
+                    or context['source_files'].keys() & item['source_files'].keys()):
+                return False
+            classpath = item.get('classpath')
+            if not isinstance(classpath, list) or any(
+                   not isinstance(entry, dict) or set(entry) != {'path', 'sha256'}
+                   or not all(isinstance(value, str) for value in entry.values())
+                   or not Path(entry['path']).is_absolute()
+                   or (Path(entry['path']).resolve(strict=True), entry['sha256']) not in libraries
+                   for entry in classpath):
+                return False
+    except (OSError, RuntimeError):
+        return False
+    return _isolated_peer_evidence(stored, context) and _isolated_peer_evidence(fresh, context)
+
+
 def merge_compiler_context(root: Path, fresh: KnowledgeGraph, selected_context: dict) -> KnowledgeGraph:
     """Publish one context while preserving other valid module/variant contexts."""
+    graph, _ = _prepare_compiler_context(root, fresh, selected_context)
+    return graph
+
+
+def _prepare_compiler_context(root: Path, fresh: KnowledgeGraph, selected_context: dict, *,
+                              initial_scan: KnowledgeGraph | None = None) -> tuple[KnowledgeGraph, set[str]]:
+    """Compose the candidate and report source paths of peers newly retired by it."""
     stored = load_graph(root)
     if stored is None or not _compiler_contexts(stored):
-        return fresh
+        return fresh, set()
     selection = _selection_key(selected_context)
     preserved = [context for context in _compiler_contexts(stored)
                  if _selection_key(context) != selection]
-    active_ids, omissions = set(), {}
+    published, active_ids, omissions = [], set(), {}
+    retired_paths = set()
     for context in preserved:
         if context.get("freshness") == "STALE":
+            published.append(context)
             continue
-        omitted = validate_context_snapshot(root, context)
+        try:
+            omitted = validate_context_snapshot(root, context)
+        except _JvmSourceDrift as error:
+            if initial_scan is None or not _isolated_jvm_peer(initial_scan, fresh, stored, context,
+                                                               preserved, selected_context, error):
+                raise
+            published.append(_stale_context(context, str(error)))
+            retired_paths.update(context['source_files'])
+            continue
+        published.append(context)
         if omitted:
             omissions[context["id"]] = omitted
         active_ids.add(context["id"])
-    return _merge_contexts(fresh, stored, preserved, layer_context_ids=active_ids, source_omissions=omissions)
+    graph = _merge_contexts(fresh, stored, published, layer_context_ids=active_ids, source_omissions=omissions)
+    return graph, retired_paths
 
 
 def retain_compiler_layer(root: Path, syntax: KnowledgeGraph) -> KnowledgeGraph:

@@ -1337,7 +1337,8 @@ Java launcher váže také `lib/ct.sym` a na POSIX přesné locale vstupy
 JDK soubory `lib/libjli.so` a `lib/server/libjvm.so`. Změna zaznamenaného
 vstupu během inspekce vrátí `STALE` a zachová poslední uložený graf.
 Při spuštění přes symbolický odkaz `java` se otisk váže na cílový JDK.
-Relativní položka `PATH` se vyhodnotí v pracovním adresáři KGMAKERu.
+Relativní položka `PATH` pro `java` i `node` se vyhodnotí v pracovním
+adresáři KGMAKERu, i když worker běží v analyzovaném projektu.
 Graph publication reserves the checkout before writing and rejects a stale
 candidate if a newer graph was published during capture, import or migration.
 A Confluence-enabled scan stages its report and validation index with the graph.
@@ -1347,7 +1348,8 @@ Retry the original command after the other writer finishes.
 [Příkazy a omezení](docs/stage-content-cache.md),
 [ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md),
 [ověření nákladů živé inspekce](docs/changes/178_reduceLiveInspectionOverhead.md),
-[ověření nativních vstupů JDK](docs/changes/180_bindLinuxJdkNativeInputs.md).
+[ověření nativních vstupů JDK](docs/changes/180_bindLinuxJdkNativeInputs.md),
+[ověření relativní cesty k Node](docs/changes/188_anchorTypeScriptNodeLauncher.md).
 
 ### Selektivní dopad změněných souborů (T003-S10-W02)
 
@@ -1364,6 +1366,11 @@ z ostatních doložených kontextů. Operace pouze čte a uvádí `PARTIAL`
 s diagnostikou hranic. Podporuje lokální repozitář zvolený přes `--root`.
 Kombinace `--evidence-only` s `--workspace` končí chybou použití.
 [Výstup a podporovaný rozsah](docs/stage-content-cache.md#selektivní-dopad-změn).
+
+Při explicitním volání Python API `inspect_jvm` s oddělenými moduly může
+nová inspekce zveřejnit vybraný kontext ve stejné generaci, v níž označí
+prokazatelně zastaralý nezávislý kontext jako `STALE`. Platné důkazy dalších
+modulů se zachovají. [Podporovaný rozsah a příklad API](docs/compiler-inspection.md#obnova-izolovaného-jvm-kontextu).
 
 ### Doklad skutečného testovacího běhu (T047-S10)
 

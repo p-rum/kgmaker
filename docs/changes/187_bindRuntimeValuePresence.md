@@ -150,3 +150,30 @@ parametry příjemce u `getfield`/`putfield` v záporné fixture. SHA-256
 `f84a5c67fbac24bd11639027b13f5404d4a198f0feeb4fc9a10f11ed8a330320`.
 Úplná sada, Windows a GitHub Actions jsou pro tuto opravu v tomto kroku
 `NOT_RUN`. W03 zůstává `IN_PROGRESS / PARTIAL`.
+
+## Krok 7 — přenos po #169
+
+T003-S13-W03-AC01–AC04. Opravený první rodič
+`26d172ac7604ad8ed2786d2919517e14691614e4` je přenesen nad skutečný `main`
+`346536495db749a6a1d79f89b388b55f9db3da83`. Přenos zachovává publikaci
+izolovaného JVM kontextu z [Change185](185_publishIsolatedJvmContext.md)
+a volbu absolutní cesty Node z [Change188](188_anchorTypeScriptNodeLauncher.md).
+Příslušné soubory implementace a testů na obou stranách mají stejné bajty
+jako u svých rodičů. Plánovač zachovává 134 ze 135 řádků a všech 32 položek
+dispatch ve stejném pořadí. S13-W03 zůstává `IN_PROGRESS / PARTIAL`.
+S10-W03 nadále čeká na ověření S10-W02 v požadovaném rozsahu.
+
+Přesný přenesený výběr má 10 PASS, 0 FAIL, 0 SKIP, 101 mimo výběr,
+raw exit 0 a 249,37 s s Temurin JDK 21.0.6+7 a povinným JVM workerem.
+Zahrnuje kladné statické čtení, skutečný případ jiných příjemců přes capture
+i offline import, časovou platnost, schválení mapování a runtime doklady v1–v3.
+JUnit má SHA-256 `b74566800502ecee3f96ca0ef96e3809eba1531d4eecf9e3bc344baeb6541482`.
+Vstupy se během běhu nezměnily a jejich manifest má SHA-256
+`67f2df312afc06276a5bed39270982590fc8477398fb278ea2e7899769d20313`.
+Úplná sada, Windows a GitHub Actions jsou v tomto kroku `NOT_RUN`.
+
+```sh
+python -m pytest -q -p no:cacheprovider --tb=short \
+  tests/test_runtime_value_presence.py tests/test_availability.py tests/test_runtime_trace_producer.py \
+  -k 'test_runtime_value_presence or observed_approved_input or unapproved_or_different_business_mapping or interface_dispatch_binds_concrete or runtime_keeps_callable'
+```
