@@ -1374,7 +1374,9 @@ Retry the original command after the other writer finishes.
 po úpravě souboru před dalším scanem nebo inspekcí. Report používá jednu
 uloženou generaci grafu a uvádí důvody pro opětovné ověření doložených compiler
 callers, migračních vazeb a OpenAPI deklarací. U Flyway sleduje zachycené
-migrační operace pro stejný objekt. OpenAPI a citace použité revize feature
+migrační operace pro stejný objekt. Úplný lokální replay ukládá i explicitní
+vazby cizích klíčů na pojmenované sloupce a report uvádí jejich uloženou
+migrační operaci. OpenAPI a citace použité revize feature
 porovnává podle původních bajtů. Změna LF↔CRLF může označit i tranzitivní
 callery dříve doloženého compiler cíle s přesným lokátorem původních bajtů.
 `changed_sources` dál porovnává normalizovaný text. Report vynechá compiler

@@ -50,6 +50,23 @@ def test_two_databases_can_share_stream_name_without_cross_realm_bindings(tmp_pa
     assert not any(e.kind == 'persisted_in' for e in graph.edges)  # source-only field has no realm proof
 
 
+def test_workspace_keeps_table_level_foreign_keys_for_two_explicit_realms(tmp_path):
+    app, configs, manifest = two_datasources(tmp_path)
+    for config, sql_type in zip(configs, ('bigint', 'text'), strict=True):
+        path = app / config['locations'][0] / 'V1__base.sql'
+        with path.open('a', encoding='utf-8') as stream:
+            stream.write('ALTER TABLE orders ADD CONSTRAINT orders_key UNIQUE(id);\n'
+                         f'CREATE TABLE invoices (parent {sql_type}, '
+                         'CONSTRAINT invoice_order FOREIGN KEY(parent) REFERENCES orders(id));\n')
+    _, coverage, _, graph, _ = snapshot_workspace(manifest)
+    assert all(replay['status'] == 'COMPLETE' for replay in coverage['schemas']['app'])
+    table_references = [edge for edge in graph.edges if edge.kind == 'foreign_key_to']
+    assert len(table_references) == 2
+    assert all(edge.source.startswith('repo:app:') and edge.target.startswith('repo:app:') for edge in table_references)
+    assert not any(edge.kind == 'foreign_key_references_column' for edge in graph.edges)
+    assert not any((node.metadata or {}).get('foreign_key_targets') for node in graph.nodes)
+
+
 def test_replayed_schema_nodes_expose_structured_realm_and_target_provenance(tmp_path):
     app, configs, _ = two_datasources(tmp_path)
     for config in configs:
