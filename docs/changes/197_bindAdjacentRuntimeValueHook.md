@@ -66,3 +66,13 @@ SHA-256 manifestu vstupů `18012930446c46e900ed8af5442c29e708416e01f0bd226bd9e3c
 zaznamenávají omezený rozsah. CLI přepínače i parametry zůstávají beze změny.
 W03 je nadále `IN_PROGRESS / PARTIAL`. Další instrukce, typy, instanční pole,
 vícekrokové cesty a trvalé business závěry mají vlastní acceptance.
+
+## Krok 6 — integrace po #180
+
+První rodič `18d46e8d1cee1b7d669b62bd953574809f4a6fe3` se skládá s `main`
+`c4a1edb59f140faeafba0d5e979023bba185f3f1`. Validátor, fixture a komentář
+SDK mají stejné bajty jako první rodič. Kanonické záznamy [T025 a T043 po #176](192_recordLocalProcessContextMerge.md),
+[T034 po #180](196_recordProcessRenderMerge.md) a W02 po #178 pocházejí z `main`.
+Stav S13-W03 zůstává `IN_PROGRESS / PARTIAL`. Výsledky z kroku 4 patří
+prvnímu rodiči. Opakované nativní ověření a úplná sada nad složeným stromem
+mají při této přípravě stav `NOT_RUN`.
