@@ -30,8 +30,15 @@ VALUE = 'SYNTHETIC_FIXTURE_VALUE_49F95_NO_EXPORT'
 
 
 @pytest.fixture(scope='module')
-def application(tmp_path_factory):
-    root, java, classes = compile_runtime_fixture(tmp_path_factory, 'runtime-value-presence', 'ValuePresenceApplication.java')
+def application(tmp_path_factory, request):
+    name = 'ValuePresenceApplication.java'
+    source_text = None
+    if getattr(request, 'param', 'same-line') == 'adjacent-line':
+        source_text = (Path(__file__).with_name('fixtures') / 'runtime-trace' / name).read_text(encoding='utf-8')
+        assignment_and_hook = 'Target.status = Source.status; TRACE.observeValuePresence(Source.status, Target.status);'
+        assert source_text.count(assignment_and_hook) == 1
+        source_text = source_text.replace(assignment_and_hook, assignment_and_hook.replace('; ', ';\n        ', 1))
+    root, java, classes = compile_runtime_fixture(tmp_path_factory, 'runtime-value-presence', name, source_text=source_text)
     (root / 'requirement.md').write_text('Use the current status for a scoped audit.\n')
     context = inspect_runtime_fixture(root, classes, 'w03-presence', digest({'fixture': 'presence'}))
     (root / ARTIFACT).parent.mkdir(exist_ok=True)
@@ -104,7 +111,9 @@ def check_projected_hook_authority(root, packet, candidate, item):
         assert VALUE not in str(exc.value)
 
 
-def test_actual_java_value_presence_affects_only_matching_live_data_check(application, monkeypatch, capsys):
+@pytest.mark.parametrize(('application', 'line_delta'), [('same-line', 0), ('adjacent-line', 1)],
+                         indirect=['application'], ids=['same-line', 'adjacent-line'])
+def test_actual_java_value_presence_affects_only_matching_live_data_check(application, line_delta, monkeypatch, capsys):
     root, argv, context = application
     monkeypatch.setenv('FIXTURE_ONLY_VALUE', VALUE)
     monkeypatch.delenv('KGMAKER_RUNTIME_TRACE', raising=False)
@@ -129,6 +138,7 @@ def test_actual_java_value_presence_affects_only_matching_live_data_check(applic
         assert manifest['schema_version'] == 4 and manifest['observations'] == []
         fact, = manifest['facts']
         assert fact['presence'] == expected and fact['kind'] == FACT
+        assert fact['source_line'] == mapping['source_range']['end_line'] + line_delta
         with patch('subprocess.Popen', side_effect=AssertionError('Offline import spawned a process')):
             assertions[run], = import_manifest(root, manifest)['value_evidence_ids']
         if run == 'present':
@@ -284,6 +294,7 @@ def test_actual_java_value_requires_selected_physical_proof(application, monkeyp
     assert outputs(root) == before
 
 
+@pytest.mark.parametrize('application', ['same-line', 'adjacent-line'], indirect=True)
 def test_actual_java_value_capture_rechecks_late_source_change_before_replace(application, monkeypatch):
     from kgmaker import analysis_model
 
