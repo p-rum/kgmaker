@@ -1175,6 +1175,11 @@ pohled a T030 souhlasí na vybraném kontextu a vstupní graf, inventář a soub
 zůstávají shodné. Dříve čitelný ProcessView s cizím výběrem T030 stále odmítne.
 [Change190](changes/190_bindLocalProcessContext.md).
 
+Sloučený [#174](https://github.com/p-rum/kgmaker/pull/174) na `cb9848520b05`
+má 19 cílených PASS bez SKIP, včetně Javacu, Kotlin K1, striktní validace
+obálky výběru a čtení starších grafů. Širší T025 zůstává PARTIAL.
+[Doklad sloučení a kontroly](changes/192_recordLocalProcessContextMerge.md).
+
 ## T011 — typed HTTP consumer inventory
 
 AC01 lazy/static intent, AC02 dynamic URI/source identity, AC03 actual Feign and
