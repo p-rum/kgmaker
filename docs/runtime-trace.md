@@ -190,20 +190,30 @@ Děděné a výchozí metody, proxy, reflexe, async a dostupnost dat mají vlast
 
 ## Přítomnost hodnoty po přímém přiřazení v Javě
 
-V explicitně instrumentovaném běhu zavolejte SDK na stejném řádku hned po
-přímém přiřazení mezi dvěma statickými poli `String` v Javě.
+V explicitně instrumentovaném běhu použijte přímočarou Java metodu `void` pro
+přímé přiřazení mezi dvěma statickými poli `String`. Zavolejte SDK ze statického
+pole třídy na stejném řádku hned po přiřazení.
 
 ```java
-Target.status = Source.status; trace.observeValuePresence(Source.status, Target.status);
+private static final RuntimeTrace TRACE = new RuntimeTrace();
+
+static void copyStatus() {
+    Target.status = Source.status; TRACE.observeValuePresence(Source.status, Target.status);
+}
 ```
 
-Vybraný `EXECUTION_BOUND` kontext musí doložit deklarace obou statických polí,
-jednu přímou vazbu přiřazení, jediné fyzické volání SDK na tomto řádku a compiler
-důkazy o čtení obou polí ve správném pořadí. Instanční pole jsou mimo rozsah,
-protože stejná deklarace může patřit k různým objektům. Pozorování platí pro
-hodnoty načtené v hooku daného běhu. SDK zaznamená jen `PRESENT` pro shodný
-nenulový odkaz a `ABSENT` pro dvě hodnoty `null`. Při nesouhlasu je výsledek neúplný. Samotnou
-hodnotu, argument ani její otisk SDK neukládá. Při spuštění předávejte data
+Vybraný `EXECUTION_BOUND` kontext musí doložit deklarace obou statických polí
+a stejný tok v přeložené metodě. Ověření vyžaduje přesné pořadí čtení zdroje,
+zápisu cíle, načtení SDK, čtení zdroje a cíle pro hook, volání SDK a návratu.
+Větvení, obsluha výjimek, další instrukce a instanční pole jsou mimo tento
+rozsah. Nepřítomný nebo nejednoznačný doklad skončí `RUNTIME_VALUE_BYTECODE`.
+U dříve indexovaného buildu zopakujte explicitní inspekci vybraného buildu
+a kontextu aktuálním `kgmaker inspect code`.
+
+Pozorování platí pro hodnoty načtené v hooku daného běhu. SDK zaznamená jen
+`PRESENT` pro shodný nenulový odkaz a `ABSENT` pro dvě hodnoty `null`. Při
+nesouhlasu je výsledek neúplný. SDK ukládá pouze stav přítomnosti a identitu
+volajícího rámce. Při spuštění předávejte data
 aplikaci jejím běžným vstupem a vynechte je z argumentů příkazu capture.
 
 `runtime produce` vytvoří RuntimeManifest v4 s právě jedním `value_presence`

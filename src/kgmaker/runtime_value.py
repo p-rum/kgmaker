@@ -9,6 +9,11 @@ RELATION = "runtime_value_presence"
 PROOF = "RUNTIME_PRESENT_VALUE_PATH"
 _STRING = "Ljava/lang/String;"
 _HOOK = ("org.kgmaker.runtime.RuntimeTrace", "observeValuePresence", f"({_STRING}{_STRING})V")
+_TRACE = "Lorg/kgmaker/runtime/RuntimeTrace;"
+# Labels used by the existing ASM instruction CFG for GETSTATIC, PUTSTATIC and RETURN.
+_GET_STATIC, _PUT_STATIC, _RETURN = "opcode 178", "opcode 179", "opcode 177"
+_OPCODES = (_GET_STATIC, _PUT_STATIC, _GET_STATIC, _GET_STATIC, _GET_STATIC, "VIRTUAL", _RETURN)
+_ACCESS = ("reads_field", "writes_field", "reads_field", "reads_field", "reads_field")
 _FRAME_FIELDS = ("caller_owner", "caller_name", "caller_descriptor")
 _RECORD_FIELDS = {"id", "kind", "relation", "source", "target", "context_id", "runtime_id", "build_id",
                   "config_fingerprint", "service_id", "service_version", "source_identity", "presence",
@@ -42,11 +47,11 @@ def _on_line(location, line):
     return isinstance(location, dict) and location.get("start_line") == location.get("end_line") == line
 
 
-def _selected_static_string_field(field, source_files):
+def _selected_static_field(field, source_files, descriptor):
     # The compiler models field declarations, which identify one shared slot only for static fields.
     path = field.get("path")
     modifiers = field.get("modifiers")
-    return (field.get("kind") == "field" and field.get("descriptor") == _STRING
+    return (field.get("kind") == "field" and field.get("descriptor") == descriptor
             and type(modifiers) is list and "static" in modifiers
             and isinstance(path, str) and path.endswith(".java") and path in source_files
             and field.get("sha256") == source_files[path])
@@ -62,7 +67,95 @@ def _direct_mapping(binding, context, symbols):
             and binding["source"] != binding["target"] and isinstance(source, str) and source.endswith(".java")
             and owner.get("kind") == "method" and owner.get("path") == source and source in context["source_files"]
             and binding.get("sha256") == context["source_files"][source]
-            and all(_selected_static_string_field(field, context["source_files"]) for field in fields))
+            and all(_selected_static_field(field, context["source_files"], _STRING) for field in fields))
+
+
+def is_physical_value_hook(site, context, symbols):
+    caller = symbols.get(site.get("caller"), {})
+    return (site.get("representation") == "BYTECODE" and site.get("invocation_kind") == "VIRTUAL"
+            and site.get("context_id") == context["id"] and bool(context.get("bytecode_artifacts"))
+            and site.get("artifact_hashes") == context["bytecode_artifacts"]
+            and caller.get("kind") == "bytecode_method" and caller.get("context_id") == context["id"]
+            and site.get("evidence_kind") == "SYMBOL_RESOLVED" and site.get("receiver_type") == _HOOK[0]
+            and _signature(symbols.get(site.get("declared_target"), {})) == _HOOK)
+
+
+def _closed_instruction_indexes(cfg, hook):
+    if (cfg.get("representation") != "BYTECODE" or cfg.get("method") != hook["caller"]
+            or cfg.get("context_id") != hook["context_id"]):
+        return ()
+    blocks = cfg.get("blocks", [])
+    if type(blocks) is not list or any(type(block) is not dict or type(block.get("id")) is not str for block in blocks):
+        return ()
+    instructions = [block for block in blocks if block.get("kind") == "basic_block"]
+    indexes = [block.get("instruction_index") for block in instructions]
+    if (len(blocks) != len(_OPCODES) + 3 or tuple(block.get("label") for block in instructions) != _OPCODES
+            or any(type(index) is not int or index < 0 for index in indexes) or indexes != sorted(set(indexes))
+            or type(hook.get("instruction_index")) is not int or hook["instruction_index"] != indexes[5]
+            or any(type(cfg.get(key)) is not str for key in ("entry", "exit", "exceptional_exit"))):
+        return ()
+    path = [cfg["entry"], *(block["id"] for block in instructions), cfg["exit"]]
+    expected = [{"source": left, "target": right, "kind": "return" if right == cfg["exit"] else "normal"}
+                for left, right in zip(path, path[1:])]
+    if (len(set(path + [cfg["exceptional_exit"]])) != len(blocks) or cfg.get("edges") != expected
+            or {block["id"]: block.get("kind") for block in blocks if block.get("kind") != "basic_block"}
+            != {cfg["entry"]: "entry", cfg["exit"]: "exit", cfg["exceptional_exit"]: "exceptional_exit"}):
+        return ()
+    return indexes[:len(_ACCESS)]
+
+
+def _operands_match(cfg, hook, context, symbols, operands, source, target):
+    indexes = _closed_instruction_indexes(cfg, hook)
+    if (not indexes or type(operands) is not list or len(operands) != len(_ACCESS)
+            or any(type(row) is not dict or type(row.get("instruction_index")) is not int
+                   or type(row.get("target")) is not str for row in operands)):
+        return False
+    sdk = operands[2]["target"]
+    receiver = symbols.get(sdk, {})
+    return (source != target and receiver.get("owner") == symbols[hook["caller"]]["owner"]
+            and all(_selected_static_field(symbols.get(identity, {}), context["source_files"], descriptor)
+                    for identity, descriptor in ((source, _STRING), (target, _STRING), (sdk, _TRACE)))
+            and operands == [{"instruction_index": index, "relation": relation, "target": identity}
+                             for index, relation, identity in zip(indexes, _ACCESS, (source, target, sdk, source, target))])
+
+
+def physical_field_operands(cfg, hook, context, symbols, facts):
+    """Keep scoped worker facts together before graph relationships coalesce repeated reads."""
+    if (len(facts) != len(_ACCESS) or any(fact.get("context_id") != context["id"]
+            or fact.get("source") != cfg.get("method") or type(fact.get("instruction_index")) is not int
+            or fact.get("evidence_kind") != "SYMBOL_RESOLVED" for fact in facts)):
+        return None
+    operands = [{"instruction_index": fact["instruction_index"], "relation": fact["kind"], "target": fact["target"]}
+                for fact in sorted(facts, key=lambda item: item["instruction_index"])]
+    if _operands_match(cfg, hook, context, symbols, operands, operands[0]["target"], operands[1]["target"]):
+        return operands
+    return None
+
+
+def _require_physical_path(graph, context, hook, transfer, symbols):
+    failure = "RUNTIME_VALUE_BYTECODE: expected a selected straight-line static transfer and ordered hook operands"
+    physical = hook["caller"]
+    cfgs = [cfg for cfg in graph.cfgs if cfg.get("method") == physical and cfg.get("context_id") == context["id"]]
+    if len(cfgs) != 1 or not is_physical_value_hook(hook, context, symbols):
+        raise AnalysisError(failure, 3)
+    cfg, = cfgs
+    refs = cfg.get("evidence_ids", [])
+    if type(refs) is not list or len(refs) != 1 or type(refs[0]) is not str:
+        raise AnalysisError(failure, 3)
+    proofs = [row for row in graph.evidence if row.get("id") == refs[0]]
+    if len(proofs) != 1:
+        raise AnalysisError(failure, 3)
+    proof, = proofs
+    if (proof.get("source") != physical or proof.get("target") != physical or proof.get("relation") != "control_flow"
+            or proof.get("context_ids") != [context["id"]] or proof.get("representation") != "BYTECODE"
+            or proof.get("resolution_reason") != "ASM_BYTECODE_INSTRUCTIONS"
+            or proof.get("extractor") != context.get("worker", {}).get("worker")
+            or proof.get("artifact_hashes") != context["bytecode_artifacts"]
+            or proof.get("freshness") != "EXECUTION_BOUND" or proof.get("origin_trust") != context.get("origin_trust")
+            or proof["id"] != "evidence:" + digest({key: value for key, value in proof.items() if key != "id"})
+            or not _operands_match(cfg, hook, context, symbols, proof.get("physical_field_operands"),
+                                   transfer["source"], transfer["target"])):
+        raise AnalysisError(failure, 3)
 
 
 def resolve_capture(graph, context, fact):
@@ -124,6 +217,7 @@ def resolve_capture(graph, context, fact):
                 or argument["context_ids"] != [context["id"]] or argument["transformation"] != "DIRECT"
                 or len(matches) != 1 or matches[0]["target"] != transfer[endpoint] or matches[0].get("branch_guards")):
             raise AnalysisError("RUNTIME_VALUE_ARGUMENTS: hook arguments do not match the selected field reads", 3)
+    _require_physical_path(graph, context, hooks[0], transfer, symbols)
     return {"kind": FACT, "source": transfer["source"], "target": transfer["target"], "presence": fact["presence"],
             "field_mapping_evidence_id": transfer["id"], "hook_call_site": hook["id"]}
 

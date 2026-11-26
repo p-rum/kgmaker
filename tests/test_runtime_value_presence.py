@@ -20,7 +20,7 @@ from kgmaker.data_check import data_check
 from kgmaker.dataflow import field_mapping_bindings, impact_paths
 from kgmaker.feature_cli import run as run_feature
 from kgmaker.runtime_evidence import import_manifest, produce_manifest
-from kgmaker.runtime_value import FACT, PROOF
+from kgmaker.runtime_value import FACT, PROOF, resolve_capture
 from kgmaker.store import GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE, load_graph
 from tests.test_runtime_trace_producer import compile_runtime_fixture, inspect_runtime_fixture
 
@@ -65,6 +65,16 @@ def check_projected_hook_authority(root, packet, candidate, item):
                    and 'ValuePresenceApplication.reversed(' in site['caller'] and site.get('range')]
     missing = replace(graph, call_sites=[site for site in graph.call_sites if site['id'] != hook['id']])
     with pytest.raises(AnalysisError, match='RUNTIME_VALUE_SITE'):
+        evaluate_proof(root, packet, candidate, item, missing)
+    physical, = [row for row in graph.call_sites if row.get('representation') == 'BYTECODE'
+                 and row.get('source_mapping_ids') == [hook['caller']]]
+    cfg, = [row for row in graph.cfgs if row['method'] == physical['caller']]
+    body, = [row for row in graph.evidence if row['id'] in cfg['evidence_ids']]
+    assert [row['target'] for row in body['physical_field_operands'] if row['target'] in (original['source'], original['target'])] == [
+        original['source'], original['target'], original['source'], original['target'],
+    ]
+    missing = replace(graph, evidence=[row for row in graph.evidence if row['id'] != body['id']])
+    with pytest.raises(AnalysisError, match='RUNTIME_VALUE_BYTECODE'):
         evaluate_proof(root, packet, candidate, item, missing)
     wrong_ordinal = replace(graph, evidence=[{**row, 'parameter_index': 1} if row.get('call_site') == hook['id']
                                             and row.get('argument_index') == 0 else row for row in graph.evidence])
@@ -241,6 +251,36 @@ def test_actual_java_value_rejects_reads_on_other_receiver_instances(application
             manifest = {**valid, 'runtime_id': 'other-receivers', 'facts': [fact]}
             with patch('subprocess.Popen', side_effect=AssertionError('Offline import spawned a process')):
                 import_manifest(root, manifest)
+    assert outputs(root) == before
+
+
+@pytest.mark.parametrize('missing', ['cfg', 'ambiguous-cfg', 'cfg-evidence', 'ambiguous-path'])
+def test_actual_java_value_requires_selected_physical_proof(application, monkeypatch, missing):
+    root, _, context = application
+    monkeypatch.setenv('FIXTURE_ONLY_VALUE', VALUE)
+    manifest = produce(application, 'present')
+    graph = load_graph(root)
+    context, = [row for row in graph.contexts if row['id'] == context['id']]
+    physical, = [symbol['id'] for symbol in graph.symbols if symbol.get('kind') == 'bytecode_method'
+                 and symbol.get('owner') == 'fixture.ValuePresenceApplication' and symbol.get('name') == 'copy']
+    cfg, = [item for item in graph.cfgs if item['method'] == physical]
+    before = outputs(root)
+    if missing == 'cfg':
+        incomplete = replace(graph, cfgs=[item for item in graph.cfgs if item != cfg])
+    elif missing == 'ambiguous-cfg':
+        incomplete = replace(graph, cfgs=[*graph.cfgs, cfg])
+    elif missing == 'cfg-evidence':
+        incomplete = replace(graph, evidence=[row for row in graph.evidence if row['id'] not in cfg['evidence_ids']])
+    else:
+        ambiguous = {**cfg, 'edges': [*cfg['edges'], {'source': cfg['entry'], 'target': cfg['exit'], 'kind': 'normal'}]}
+        incomplete = replace(graph, cfgs=[ambiguous if item == cfg else item for item in graph.cfgs])
+    with pytest.raises(AnalysisError, match='RUNTIME_VALUE_BYTECODE'):
+        resolve_capture(incomplete, context, manifest['facts'][0])
+    with (patch('kgmaker.store.load_graph', return_value=incomplete),
+          patch('kgmaker.store.save_graph', side_effect=AssertionError('Unproven import attempted publication')),
+          patch('subprocess.Popen', side_effect=AssertionError('Offline import spawned a process'))):
+        with pytest.raises(AnalysisError, match='RUNTIME_VALUE_BYTECODE'):
+            import_manifest(root, manifest)
     assert outputs(root) == before
 
 

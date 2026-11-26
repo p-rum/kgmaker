@@ -177,3 +177,47 @@ python -m pytest -q -p no:cacheprovider --tb=short \
   tests/test_runtime_value_presence.py tests/test_availability.py tests/test_runtime_trace_producer.py \
   -k 'test_runtime_value_presence or observed_approved_input or unapproved_or_different_business_mapping or interface_dispatch_binds_concrete or runtime_keeps_callable'
 ```
+
+## Krok 8 — fyzické přiřazení a operandy hooku
+
+T003-S13-W03-AC01–AC03. Výchozí publikovaný #171 měl HEAD
+`2e1f32b3740d2d76d16208b76a5d85f44924867a` a strom
+`f6c9546f7e9cd1f9258e255c5a6ec27b1211ab98`. Zdrojová vazba a volání SDK
+prošly i bez dokladu o fyzickém přiřazení. Regrese použila běžně přeloženou
+fixture a tři kontroly v paměti. Chybějící nebo duplicitní CFG a chybějící
+doklad CFG měly 0 PASS, 3 FAIL, 0 SKIP, 5 mimo výběr a raw exit 1.
+JUnit má SHA-256 `3a435b7e9e70898802ceb1020dda41ec7cfd70ec4c5d4ef1818425bc52a214fa`.
+
+Inspekce k existujícímu dokladu CFG vázanému na vybrané artefakty připojí pět
+fyzických přístupů k polím. Zachová oba přístupy ke stejnému zdrojovému poli
+i po projekci grafu. Společná kontrola capture, offline importu a `data-check`
+vyžaduje přímočarých sedm instrukcí a jedinou cestu od vstupu přes přiřazení
+a hook k návratu. Ověřuje přesnou deklaraci SDK, fyzický zápis a čtení obou
+operandů ve správném pořadí. Při chybě vrátí `RUNTIME_VALUE_BYTECODE` před
+zápisem. Dříve indexovaný graf musí pro tuto v4 cestu znovu projít explicitní
+inspekcí. Formáty v1–v3 a existující JVM worker používají původní kontrakty.
+
+Skutečný výstup projekce z běžné kompilace má SHA-256
+`56c2bb06ce5f6075f666793df45a35d379ca1f7ca15da6bd10323c1788d0442f`.
+`PRESENT` vyjadřuje stav načtený v hooku v kooperačním lokálním běhu. Čerstvý
+vzorek stále potřebuje odpovídající schválené mapování a může doložit nejvýš
+`PARTIAL/UNASSESSED`. [Inspekce](../../src/kgmaker/inspection.py) ·
+[Kontrola bytecode](../../src/kgmaker/runtime_value.py) ·
+[Nativní regrese](../../tests/test_runtime_value_presence.py).
+
+Přesný cílený výběr s Temurin JDK 21.0.6+7 a povinným JVM workerem má
+12 PASS, 0 FAIL, 0 SKIP, 103 mimo výběr, raw exit 0 a 175,53 s. Zahrnuje
+`PRESENT` a `ABSENT` z běžné kompilace, živý `data-check`, čtyři kontroly
+neúplného CFG či dokladu včetně odmítnutí nejednoznačné cesty, offline import
+bez spuštění procesu a zachování artefaktu, grafu i pohledů. Starší pozorování
+a schválení mapování prošla ve stejném výběru. JUnit má SHA-256
+`bcc6bbe87f734d00cdf34434cd136a7cfc5c2941748dcea1ed3aaef4464505df`, manifest
+shodných vstupů má SHA-256
+`40ac3a67b4180f7477fab66c43729f1db0b38dca3053ba9820e2b4c8484ae7cc`.
+Úplná sada, Windows a GitHub Actions jsou pro tento krok `NOT_RUN`.
+
+```sh
+python -m pytest -q -p no:cacheprovider --tb=short \
+  tests/test_runtime_value_presence.py tests/test_availability.py tests/test_runtime_trace_producer.py \
+  -k 'test_runtime_value_presence or observed_approved_input or unapproved_or_different_business_mapping or runtime_keeps_callable'
+```
