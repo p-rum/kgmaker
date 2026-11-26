@@ -26,15 +26,24 @@ def adjacency(graph: KnowledgeGraph, include_candidates=True, *, include_runtime
                         "dispatch_complete": site.get("dispatch_complete", False)})
     # Callers/callees label supplied runtime samples. Static analyses opt out.
     if include_runtime:
+        locations = {item["id"]: (item["call_site"], item["receiver_type"]) for item in graph.evidence
+                     if item.get("kind") == "RUNTIME_OBSERVED" and isinstance(item.get("call_site"), str)
+                     and isinstance(item.get("receiver_type"), str)}
         for edge in graph.edges:
             if edge.kind != "observed_dispatch_to" or edge.evidence_kind != "RUNTIME_OBSERVED":
                 continue
-            result[edge.source].append({"target": edge.target,
-                                        "call_site": edge.evidence_ids[0] if edge.evidence_ids else f"runtime:{edge.source}:{edge.target}",
-                                        "kind": "RUNTIME_OBSERVED",
-                                        "evidence_ids": list(edge.evidence_ids),
-                                        "dispatch_complete": False,
-                                        "completeness_reason": "RUNTIME_SAMPLE_NOT_STATIC_DISPATCH"})
+            proofs = defaultdict(list)
+            for identity in edge.evidence_ids:
+                proofs[locations.get(identity, (None, None))].append(identity)
+            if not proofs:
+                proofs[None, None] = []
+            for (site, receiver), evidence_ids in proofs.items():
+                row = {"target": edge.target, "kind": "RUNTIME_OBSERVED", "evidence_ids": evidence_ids,
+                       "dispatch_complete": False, "completeness_reason": "RUNTIME_SAMPLE_NOT_STATIC_DISPATCH"}
+                row["call_site"] = site or (evidence_ids[0] if evidence_ids else f"runtime:{edge.source}:{edge.target}")
+                if receiver is not None:
+                    row["receiver_type"] = receiver
+                result[edge.source].append(row)
     for key in result:
         result[key].sort(key=lambda e: (e["target"], e["call_site"], e["kind"]))
     return result

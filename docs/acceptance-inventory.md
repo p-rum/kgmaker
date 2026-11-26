@@ -178,7 +178,7 @@ Ověření W01 zůstává `PARTIAL`. [#148](https://github.com/p-rum/kgmaker/pul
 | Acceptance | Ověření | Důkaz a limit |
 |---|---|---|
 | T003-S13-W01-AC01 | VERIFIED_IN_SCOPE (JDK21/POSIX) | `tests/test_runtime_trace_producer.py::test_actual_jdk21_application_observes_all_four_kinds_and_no_values` + `test_actual_jdk21_capture_is_opt_in_and_records_only_executed_branch`: skutečný javac, JVM compiler worker, aplikace a source-bound IDs; povinné identity, žádné raw credentials. `tests/test_graph_provider.py::test_scan_hook_and_feature_retain_compiler_layer_without_processes` a import pod zákazem Popen. Žádný automatický Spring capture ani deployment proof. |
-| T003-S13-W01-AC02 | VERIFIED_IN_SCOPE | `tests/test_build_aware.py::BuildAwareContractsTest::test_runtime_import_is_bound_to_context_and_rejects_stale_source`: původní v1. V2 pozitivní roundtrip a `test_v2_import_requires_complete_bound_identity_before_store_mutation`, `test_v2_import_rejects_empty_forged_and_unknown_evidence`; v3 odmítnuto, graph/store beze změny schématu. |
+| T003-S13-W01-AC02 | VERIFIED_IN_SCOPE | `tests/test_build_aware.py::BuildAwareContractsTest::test_runtime_import_is_bound_to_context_and_rejects_stale_source`: původní v1. V2 pozitivní roundtrip a `test_v2_import_requires_complete_bound_identity_before_store_mutation`, `test_v2_import_rejects_empty_forged_and_unknown_evidence`. V3 rozlišuje níže popsaný W02 dispatch a graph/store zachovává schema v3. |
 | T003-S13-W01-AC03 | VERIFIED_IN_SCOPE (bounded) | `test_invalid_or_incomplete_facts_never_publish`, `test_capture_status_is_preserved_without_availability_claim`, `test_preflight_rejects_before_spawn_and_keeps_artifact`, `test_postflight_detects_mutation_without_publishing`, `test_process_tree_cleanup_preserves_last_artifact`, `test_keyboard_interrupt_cleans_up_process_group`; běžní potomci stejné POSIX skupiny, žádná izolace odpojených daemonů. |
 | T003-S13-W01-AC04 | PARTIAL | Nové CLI/capability dokumenty a oddělené kroky v change122 odpovídají skutečným testům. Full suite dle aktuálního pokynu NOT_RUN, GH CI NOT_RUN; celé S13/T003 ani Spring/Windows/RTA/value-flow/async/reflection nejsou ověřeny. |
 
@@ -212,7 +212,13 @@ Příkazy a přesné revize uvádí [change151](changes/151_preserveRuntimeObser
 |---|---|---|
 | T003-S13-W02-AC01, AC03 | VERIFIED_IN_SCOPE (publikace importu) | Oprava ověřuje manifest jednou a měnitelné vstupy při každém kroku publikace. Skutečný JDK 21 capture pokrývá změnu zdroje i zachyceného bytecode. Fixture v1 pokrývá změnu workeru. Při odmítnutí zůstanou graf, odvozené pohledy a capture stejné po bajtech a import nespustí proces. [Test a příkazy](changes/163_revalidateRuntimeImportPublication.md). |
 
-Ověření širšího kontraktu W02 včetně receiver/type evidence zůstává PARTIAL.
+## T003-S13-W02 — příjemce a místo volání Java rozhraní
+
+| Acceptance | Ověření | Důkaz a rozsah |
+|---|---|---|
+| T003-S13-W02-AC01 | VERIFIED_IN_SCOPE | `test_jdk21_interface_dispatch_binds_concrete_receiver_and_call_site` používá dvě skutečné Java implementace, dva vybrané compiler kontexty, CLI capture a offline import. `callgraph callees` ukáže přesný bytecode call site, cílovou metodu a příjemce. Oba statické kandidáty zachovává. |
+| T003-S13-W02-AC02, AC03 | VERIFIED_IN_SCOPE | `test_jdk21_interface_dispatch_revalidates_sanitized_fact_offline` pokrývá neplatné údaje, cizí konfiguraci, přidaná pozorování a vydávání v3 factu za v2. `test_jdk21_interface_dispatch_rejects_unlocated_instruction_in_same_caller` ověřuje odmítnutí skutečné konkatenace a lambdy s chybějícím řádkem `INVOKEDYNAMIC` v capture i offline importu se zachováním grafu, pohledů a artefaktu. Další testy ověřují dvě instrukce na témže řádku, zastaralý zdroj před spuštěním a obnovu výstupů po změně bytecode v průběhu publikace. |
+| T003-S13-W02-AC04 | PARTIAL | [Change182](changes/182_bindRuntimeInterfaceDispatch.md) zaznamenává baseline a ověření přesného rozsahu. Širší receiver/type kontrakt a T003-AC13 zůstávají PARTIAL. |
 
 ## T051 — projektové workflows, 2026-11-15
 

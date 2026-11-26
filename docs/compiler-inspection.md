@@ -231,7 +231,7 @@ BuildManifest v1 přijímá volitelný `contexts[].config_fingerprint` jako SHA-
 deklarované netajné konfigurace, přesně 64 malých hexadecimálních znaků.
 `inspect code` převezme hodnotu pouze ze zvolené varianty a uloží ji do jejího
 compiler kontextu vedle `manifest_hash` a původu exportu. Manifesty bez pole lze
-nadále importovat a použít k inspekci. Runtime v2 používá uloženou hodnotu pro
+nadále importovat a použít k inspekci. Runtime v2 a v3 používají uloženou hodnotu pro
 kontrolu před spuštěním. [Příklad](runtime-trace.md#spuštění).
 
 BuildPlan obsahuje přesné argv, executable/exporter checksum, úplný inventář
@@ -1662,7 +1662,12 @@ inventory for freshness checks.
 `callgraph callers` a `callees` zobrazí doložené importované hrany jako
 `RUNTIME_OBSERVED`. `callgraph path` a statické cykly používají compiler
 call sites. V2 pozorování `call` a `dispatch` vyžadují volatelné symboly
-obou konců ve vybraném compiler kontextu. Import ověří jeho čerstvost také
+obou konců ve vybraném compiler kontextu. V3 `interface_dispatch` přidává
+`call_site` a `receiver_type`, když skutečný Java stack frame označí jedinou
+instrukci `INTERFACE` a cíl odpovídá statickému kandidátovi stejného kontextu.
+Každá fyzická instrukce volání volající metody musí mít řádek svázaný s jejím
+bytecode. Chybějící pozice omezuje v3 pozorování pro danou metodu.
+Pozorování zachová všechny statické kandidáty. Import ověří čerstvost také
 při publikaci grafu. Původ dokladů opakovaného importu uvádí
 [kontrakt runtime importu](runtime-trace.md#opakovaný-import-a-navigace).
 
