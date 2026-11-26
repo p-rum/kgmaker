@@ -716,7 +716,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         if cached is not None:
             local, local_schema = copy.deepcopy(cached)
         else:
-            local, _, error = feature.current_graph(root)
+            local, _, error = feature.current_graph(root, _named_fk_columns=False)
             local_schema = None
             if repo.get('flyway'):
                 configs = repo['flyway'] if isinstance(repo['flyway'], list) else [repo['flyway']]
