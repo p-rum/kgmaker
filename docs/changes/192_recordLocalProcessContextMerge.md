@@ -114,16 +114,31 @@ Cílená sada plánovače pro tento head měla **13 PASS / 0 SKIP**.
 SHA-256 JUnit `207a9f6449cf63cce596d64214299aa52554a506ddc8b54356a94e90e110dfbf`.
 Úplná sada měla v tomto místním dokumentačním běhu stav NOT_RUN.
 
-## Ověření doplnění po sloučení #177
+## Historické ověření doplnění po sloučení #177
 
-Tento místní běh používá head #176 `7df1adfe796a1e61537bf071c75fd553738a0a03`
-a základ `main` `a2adbe2e8666fbc76bf87b0aa2fd2be288bdf6bc`. Záznamy v matici
-mají celkem 135 položek, z toho 107 MERGED, 26 PLANNED, jednu PR_OPEN a jednu
-IN_PROGRESS. V porovnání s touto revizí `main` se mění pouze doklad T025,
+Následující plán a JUnit patří headu #176 `4cdd1e2080984d683c1d78aaeab3e049c6654444`
+proti tehdejšímu `main` `a2adbe2e8666fbc76bf87b0aa2fd2be288bdf6bc`. Záznamy
+v matici měly celkem 135 položek, z toho 107 MERGED, 26 PLANNED, jednu PR_OPEN
+a jednu IN_PROGRESS. Oproti uvedenému `main` se změnil doklad T025,
 dodání T043 a odvozená blokace T044. V delegaci o 32 položkách připadlo místo
 po T043 na ověření T003-S10-W02 a zbývajících 31 položek zachovalo pořadí.
 SHA-256 plánu `dd77c0f5d2a0467307e2b576bfcd9dc5719bddb24eeed3d8e149c6c61dba6f42`.
 
-Stejný příkaz pro plánovač má **13 PASS / 0 SKIP**. SHA-256 JUnit
+Stejný příkaz pro plánovač měl **13 PASS / 0 SKIP**. SHA-256 JUnit
 `46d425c91719625a1913da0b6af95316733749e108f53fd240715937263487eb`.
-Úplná sada má pro tento místní dokumentační běh stav NOT_RUN.
+Úplná sada měla pro tento místní dokumentační běh stav NOT_RUN.
+
+## Ověření doplnění po sloučení #178
+
+Tento místní běh ověřuje spojení headu #176
+`4cdd1e2080984d683c1d78aaeab3e049c6654444` se základem `main`
+`044c461dc1c63367a50522261df70a375cccb492`. Plán má 135 položek, z toho
+107 MERGED, 26 PLANNED, jednu PR_OPEN a jednu IN_PROGRESS. V porovnání s tímto
+základem se mění doklad T025, dodání T043 a odvozené blokace T044. Ověření
+T003-S10-W02 vstupuje do seznamu 32 položek po odchodu T043. W03 nadále čeká
+na stav VERIFIED_IN_SCOPE svého předchůdce. SHA-256 plánu
+`459d25f148365ec1a431de538a36707461f7ac19b45ab0ac96eb976b50c33f70`.
+
+Cílená sada plánovače má **13 PASS / 0 SKIP**. SHA-256 JUnit
+`bd8f7c72964ae77e9aa666751fa7a6552ea3a25e0364de9ea3fa015992a95aac`.
+Úplná sada má pro tento dokumentační běh stav NOT_RUN.

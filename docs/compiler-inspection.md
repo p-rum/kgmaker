@@ -1664,14 +1664,18 @@ inventory for freshness checks.
 Python API `inspect_jvm` s explicitním `project_model` může publikovat nový
 vybraný modul i tehdy, když jinému modulu už při začátku inspekce nesedí
 bajty zachyceného `.java` nebo `.kt` souboru. Model musí doložit výhradní
-vlastnictví všech zachycených souborů bez překryvu. Počet a cesty zachycených
-souborů zastaralého kontextu musí souhlasit. Podporovaný případ používá
+vlastnictví všech zachycených souborů bez překryvu. Při změně bajtů musí
+souhlasit seznam cest. Samostatným podporovaným případem je pouze odstranění
+zachycených vstupů vyjmenovaných v `files` nezměněného modelu. Uložená
+generace musí doložit otisk a stejného jediného vlastníka každé smazané cesty.
+Podporovaný případ používá
 stejnou distribuci workeru a classpath omezený na její obsahově ověřené
 knihovny. Stará compiler evidence dotčeného modulu se vyřadí a v grafu
 zůstane záznam `STALE_COMPILER_CONTEXT` s důvodem. Vybraný a ostatní platné
 kontexty se ověří před atomickou publikací. Opětovná kontrola bajtů navíc
-pokrývá vstupy kontextu označeného v této publikaci jako `STALE`. Pozdní
-změna těchto bajtů, nejasné vlastnictví nebo propletené důkazy zachovají
+pokrývá vstupy kontextu označeného v této publikaci jako `STALE` a u smazaného
+vstupu vyžaduje jeho fyzickou nepřítomnost. Pozdní změna bajtů nebo návrat
+souboru, nejasné vlastnictví nebo propletené důkazy zachovají
 předchozí generaci a vrátí `STALE`.
 
 Kontrola vlastnictví zahrnuje odkazy v uloženém CFG, odkazy framework důkazů
@@ -1694,7 +1698,8 @@ inspect_jvm(Path("./service"), module="shipping", project_model=project_model)
 
 Tento rozsah platí pro publikující volání bez `build_context`, explicitního
 výběru `sources` a bytecode výstupů. CLI s manifestem, frontend a sdílené
-moduly mají vlastní omezení. [Ověření a hranice W02](changes/185_publishIsolatedJvmContext.md).
+moduly mají vlastní omezení. [Ověření změny bajtů](changes/185_publishIsolatedJvmContext.md) ·
+[Ověření odstranění vstupu](changes/194_retireDeletedCompilerPeer.md).
 
 ## Pozorované hrany a statické cesty
 
