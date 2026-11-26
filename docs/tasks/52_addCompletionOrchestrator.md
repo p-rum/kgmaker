@@ -1,5 +1,11 @@
 # T052 — Completion Orchestrator
 
+Používání tohoto workflow nad vlastním vývojovým checkoutem je od 2026-11-24
+vypnuté dle [T049-S08](49_separateTargetAgents.md#t049-s08--vývoj-bez-vlastního-kgmakeru).
+Níže zůstává historický cílový kontrakt T052; implementace a testy nad oddělenými
+fixture se zachovávají. Completion skill není aktivní vývojový vstup.
+
+
 - Task ID: T052
 - Revision: 3
 - Datum: 2026-11-25

@@ -1,9 +1,15 @@
 # T049 — Oddělení vývojového agenta KGMakeru a agentů cílového projektu
 
+Revize 2 přidává nezávislý T049-S08 podle výslovného pokynu uživatele:
+vývoj samotného nástroje nesmí používat jeho vlastní graf ani workflow runtime.
+S01–S07 a AC01–AC12 zůstávají samostatným cílovým rozsahem revize 1.
+Jejich původní baseline a PLANNED/NOT_RUN nejsou tímto krokem uzavřené.
+
+
 | Položka | Hodnota |
 |---|---|
-| Task ID / Revision | T049 / 1 |
-| Datum / stav dokumentu | 2026-11-11 / SPECIFICATION |
+| Task ID / Revision | T049 / 2 |
+| Datum / stav dokumentu | 2026-11-24 / SPECIFICATION |
 | Baseline | `main` @ `8aae58c0ca280c13ce19ccb6a7c4e3cd46005f10` |
 | Dodání / ověření nové funkce | PLANNED / NOT_RUN |
 | Vazby | [Pravidla vývoje](../../AGENTS.md), [instrukce Copilotu](../../.github/copilot-instructions.md), [T045 review](45_addCodeReviewAgent.md), [T046 šablony](46_addTemplatesTestsAndTraceability.md), [T048 předání](48_completeImplementationHandoff.md) |
@@ -16,7 +22,7 @@ Vlastník repozitáře inicializuje KGMaker, dodá šablonu svého týmu nebo ji
 
 - [cli.py](../../src/kgmaker/cli.py) v `init(root, force=False)` vybírá hook, hlavního agenta, architekta, extraktor, analytika, datového auditora, orchestrátora, implementaci, testy, review, instrukce Copilot, profily Junie a poznámky. Doplňuje také `.gitignore`. Zmapuj skutečné cílové cesty a spotřebitele konstant před změnou. `scan` není instalátor.
 - [agents.py](../../src/kgmaker/agents.py), [analysis_agent.py](../../src/kgmaker/analysis_agent.py) a [data_agent.py](../../src/kgmaker/data_agent.py) jsou další zdroje distribuovaných instrukcí. Dnešní šablona review odkazuje na dokumentaci každého kroku a některé role mají obecné `execute` nebo `*`. [test_init.py](../../tests/test_init.py) je výchozí regrese.
-- Projektové instrukce KGMakeru, jeho verzované profily a `.codex/agents/code-review.toml` patří vývoji nástroje. Zachovej jejich workflow včetně T045. Cílovým rolím zachovej jejich užitečné schopnosti pro graf, analýzu, testování a lokální implementaci v rozsahu doložených oprávnění.
+- Projektové instrukce KGMakeru, jeho verzované profily a `.codex/agents/code-review.toml` patří vývoji nástroje. Zachovej přímé zdrojové/testové/PR workflow včetně T045; starší self-use povinnosti ruší S08. Cílovým rolím zachovej jejich užitečné schopnosti pro graf, analýzu, testování a lokální implementaci v rozsahu doložených oprávnění.
 - T046-S02 je součástí uvedené baseline. Prověř znovupoužití [artifact_templates.py](../../src/kgmaker/artifact_templates.py), bezpečných cest, hashů a zápisu s obnovou. Profil agenta má vlastní schéma. [templates.py](../../src/kgmaker/templates.py) analyzuje šablony ve skenovaném kódu. Celý T046 ani T048 nejsou release závislostí.
 - Mimo rozsah revize 1 je volání LLM, automatický výběr pravidel z kódu, automatický merge v cílovém projektu a změny algoritmů skenování. Budoucí LLM smí pouze navrhnout tentýž profil k editaci a potvrzení uživatelem.
 
@@ -106,3 +112,30 @@ Návrhy větví níže odpovídají jednotlivým předáním. Před zahájením 
 6. Před ready ověř čistý diff, závislosti a skutečně provedené testy nad příslušným base/head. Implementační agent předá PR s odkazy na zadání, change note a důkazy. Merge provádí pouze oprávněný reviewer podle aktuálních pravidel projektu. Platí nezávislé APPROVE nad aktuálním HEAD a skutečné serverové ochrany. GH CI vykazuj podle skutečnosti dle revize AGENTS.md z 2026-11-03.
 
 **Definition of Done.** Všechny deklarované schopnosti mají důkaz z odpovídající vrstvy. Průvodce, balíček i migrace prošly testy v podporované matici, dokumentace odpovídá skutečnému CLI a uživatel pozná omezení své instalace. Neověřené hostitele nebo otevřená acceptance vypiš jednotlivě; uzavření dílčího PR nesmí uzavřít celý T049.
+
+## T049-S08 — Vývoj bez vlastního KGMAKERu
+
+- Baseline: `edb65e57ca4de1743c810689c78e069cd86b2b41` (main, 2026-11-24).
+- Závislosti: pouze baseline; nezávisí na nedodaných S01–S07.
+- Dodání: PR_OPEN ([#153](https://github.com/p-rum/kgmaker/pull/153)); ověření VERIFIED_IN_SCOPE, přesné kontroly v change169 a stavové matici.
+- T049-R08: Odstraň vlastní session hook, cílové Copilot/Junie agenty a commands,
+  aktivní skilly včetně completion, verzované grafy a povinnost `kgmaker check`
+  v CI. Vývojové profily mají číst zdroje, testy a Git bez KGMAKER runtime.
+- Kontrakty: AGENTS, Copilot instrukce, `.codex/agents/*.toml`, CI, README,
+  `tests/test_skills.py`, `tests/test_workflow_profiles.py`, `tests/test_completion.py`.
+- Non-goals: změna parserů, veřejného CLI/API, distribuovaných Python templates,
+  formátů historických artefaktů, merge pravidel nebo cizích rozpracovaných změn.
+- T049-AC13: V checkoutu nejsou aktivní self-use hook/skills/target agents ani
+  verzovaný `.kgmaker/` obsah. Profily a CI nevyžadují vlastní graf nebo runtime.
+  Ověř přímým čtením konfigurace, inventářem souborů, TOML parserem a Git diffem.
+- T049-AC14: Existující init/skills/workflow/completion regrese projdou na
+  oddělených cílových fixture. Parita templates se ověřuje ve vytvořeném cíli;
+  completion test použije kopii vstupního inventáře. Produkční templates beze změn.
+- Migrace: Nové checkouty nemají self-use integraci. Lokální historická data
+  `.kgmaker/` jsou ignorována a nejsou autoritou. Staré otevřené větve při
+  integraci nesmějí znovu přidat odstraněné hooky/grafy/skills. Již běžící host
+  může držet staré instrukce do nové session; nový uživatelský pokyn má přednost.
+- DoD: oba AC ověřené, český záznam kroku, aktualizované návody, matice,
+  acceptance a registry. Předat reviewovatelný diff/PR bez self-use nástrojů.
+- Zbývající omezení: žádný runtime zákaz manuálního použití CLI; obecná funkce
+  init nad libovolnou explicitní cestou zůstává veřejně kompatibilní.

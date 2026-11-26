@@ -7,7 +7,7 @@ s modelem `gpt-5.6-luna` a `model_reasoning_effort = "medium"`.
 
 Implementační agent smí implementovat pouze své zadání. Jeho instrukce vyžadují kontrolu
 závislostí, architektonickou rekognoskaci, izolovaný worktree, samostatnou větev,
-povinné testy, dokumentaci, sémantickou aktualizaci, commit, push a samostatný
+povinné testy, dokumentaci, commit, push a samostatný
 pull request. Implementační agent PR nemerguje.
 
 Samostatný [`code_review`](code-review.toml) používá `gpt-6.1-sol` s reasoning
@@ -40,8 +40,9 @@ Po vytvoření PR předej jeho URL agentovi code_review; po APPROVE ověř a pro
 
 Koordinátor smí spustit pouze agenty, jejichž závislosti jsou splněné. Agenti se
 stejnými soubory nebo navazujícími kontrakty se nespouštějí souběžně.
-Interní Copilot [`kgmaker-review`](../../.github/agents/kgmaker-review.agent.md)
-hodnotí artifact úlohy v `kgmaker task`; nenahrazuje review GitHub PR.
+Rekognoskace i review používají přímo zdroje, testy, Git a PR. Profily
+nevyžadují vlastní graf ani KGMAKER task/workflow/completion. Cílové Copilot
+agenty a skilly tento checkout neinstaluje; viz [T049-S08](../../docs/changes/169_removeRepositorySelfUse.md).
 
 ## Registr
 

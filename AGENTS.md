@@ -6,8 +6,28 @@ Před prací čti tento soubor, `.github/copilot-instructions.md`, `docs/tasks/R
 a relevantní zadání. Kód a testy dokládají současné chování; zadání stanovuje cílové
 chování. Zelené CI malé fixture není důkaz podpory libovolného produkčního projektu.
 Aktuální stav a mezery udržuj v `docs/production-analysis-progress.md`.
-Před významnou implementací proveď architektonickou rekognoskaci dle instrukcí
-`kgmaker-architect`; při nedostupné delegaci proveď stejnou kontrolu přímo.
+Před významnou implementací proveď rekognoskaci přímým čtením zdrojů, testů,
+zadání a Git diffu. Používej běžné vyhledávání (`rg`) a projektový test runner.
+
+## Vývoj bez vlastního KGMAKERu — pokyn uživatele 2026-11-24
+
+Tento repozitář nepoužívá KGMAKER k vlastní analýze ani řízení vývoje.
+Nespouštěj nad jeho checkoutem init, scan, status/check, query, semantic, memory,
+feature/testgen/trace ani task/workflow/completion jako vývojový postup.
+Nevytvářej vlastní graf, sémantické patche ani runtime workflow artefakty.
+Vývoj nesmí záviset na funkčnosti nástroje, který právě opravujeme.
+
+Toto pravidlo nahrazuje starší pokyny k self-use v zadáních, historických
+change notes a již načtených profilech/skills. Úlohy, výsledky testů a review
+dokládej přímo v zadání, change note a PR. Nativní hostitelské agenty a T045
+review lze používat bez KGMAKER runtime. Při integraci starší větve neobnovuj
+odstraněné hooky, aktivní skilly, cílové agenty ani verzovaný `.kgmaker/` obsah.
+
+Vývoj a testování samotných funkcí KGMAKERu zůstává povolené: CLI a Python API
+ověřuj na oddělených fixture/dočasných cílových projektech. Distribuované
+templates v `src/kgmaker/` patří cílovým projektům; neinstaluj je do tohoto
+checkoutu. Lokální historické `.kgmaker/` soubory nejsou vývojovým podkladem.
+Podrobnosti: [T049-S08](docs/tasks/49_separateTargetAgents.md#t049-s08--vývoj-bez-vlastního-kgmakeru).
 
 ## Povinné názvy a číslování
 
@@ -28,7 +48,7 @@ Před významnou implementací proveď architektonickou rekognoskaci dle instruk
 - Každá změna veřejného chování současně upraví README, příslušnou capability dokumentaci, CLI příklady a stavovou matici. Specifikace musí být označena jako cíl, nikoli hotová funkce.
 - Instrukce dodávané `kgmaker init` musí zůstat konzistentní s jejich Python templates. Zachovej ochranu upravených uživatelských souborů; nepoužívej automaticky `--force`.
 - Ověř relevantní existující testy, nulovou mutaci při chybě a čistotu diffu. Worker testy hlásí chybějící toolchain jako SKIP/blocked, ne PASS. Dokumentační změna nepotřebuje nové testy kopírující text pravidel.
-- Generované grafy obnov příkazem, neupravuj je ručně. Sémantický patch vytvářej pouze s doloženými vazbami pro aktuální packet; pokud takové změny nejsou, nic nevymýšlej.
+- Testovací grafy a sémantické patche vytvářej pouze v oddělených fixture. Vlastní graf ani implementační paměť tohoto repozitáře se neudržuje.
 - Předej reviewovatelný PR s odkazem na zadání a dokument změn. Implementační agent PR nemerguje. Uživatelský pokyn pro [T045](docs/tasks/45_addCodeReviewAgent.md) výslovně pověřuje projektového `code_review` agenta mergováním po jeho review APPROVE nad aktuálním HEAD a splnění kontrol; pro ostatní PR platí zákaz merge bez explicitního pokynu.
 
 ## Merge kontroly — uživatelská revize 2026-11-03

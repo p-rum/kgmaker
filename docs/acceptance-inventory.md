@@ -1,5 +1,15 @@
 # Inventář acceptance T001 a T002
 
+## T049-S08 — odstranění vlastní integrace, 2026-11-24
+
+| Acceptance | Ověření | Rozsah |
+|---|---|---|
+| T049-AC13 | VERIFIED_IN_SCOPE | Inventář odstraněných vstupů, 101 TOML profilů, CI bez vlastní indexové brány a diff PASS |
+| T049-AC14; T050-R04 | VERIFIED_IN_SCOPE | 111 testů PASS / 0 SKIP na původním headu; po integraci main 171 testů PASS / 0 SKIP včetně instalace v izolovaných cílech |
+
+[Přesné kontroly a omezení](changes/169_removeRepositorySelfUse.md).
+Historické self-use kroky níže jsou doklady svých revizí, nikoli pokyny k obnově.
+
 ## T056 — Funkce a toky dat v Excelu, 2026-11-25
 
 | Kritérium | Ověření | Důkaz |
@@ -52,8 +62,7 @@ Dodání MERGED v [#155](https://github.com/p-rum/kgmaker/pull/155) jako
 Opravená PR větev po review: 133 PASS / 0 SKIP včetně wheelu; [příkazy a distribuce](changes/170_manageProjectInstallation.md).
 Dodání MERGED v [#154](https://github.com/p-rum/kgmaker/pull/154) jako
 `1e782a119e5ae54d22bfc8d7c22c565ed651815a`. [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
-
-
+SPECIFICATION T053 není označení dodání.
 
 ## T046-S03/S04 — schéma dalších hodnot, 2026-11-20
 

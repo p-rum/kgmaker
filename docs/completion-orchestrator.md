@@ -1,13 +1,15 @@
 # Completion Orchestrator
 
-T052 koordinuje dokončování repozitáře KGMAKER. Lokální příkaz plánování čte
-[existující stavový inventář](production-analysis-progress.md) a jeho odkazy
-do [registru zadání](tasks/README.md). Pro vykonání plánu používá podporovaný
-hostitel [repozitářový skill](../.agents/skills/kgmaker-completion/SKILL.md) a
-[stávající workflow](delivery-workflow.md).
+Používání T052 pro vývoj samotného KGMAKERu bylo vypnuto pokynem uživatele
+2026-11-24. Vývoj pokračuje přímým čtením zdrojů, testy, Gitem a PR review;
+repozitářový completion skill byl odstraněn. [T049-S08](changes/169_removeRepositorySelfUse.md).
+
+Následující text zachovává kontrakt implementovaného příkazu a historického
+workflow. Příklady patří do oddělené testovací kopie inventáře, nikoli do tohoto
+vývojového checkoutu. Implementace a izolované regresní testy zůstávají zachované.
 
 ```bash
-kgmaker completion plan --root /repo/kgmaker --jobs 3
+kgmaker completion plan --root /tmp/completion-fixture --jobs 3
 kgmaker task list --root /path/to/item-worktree
 kgmaker task show "$KGMAKER_TASK_ID" --root /path/to/item-worktree
 kgmaker completion handoff "$KGMAKER_TASK_ID" --root /path/to/item-worktree

@@ -1,5 +1,17 @@
 # Aktuální stav a zbývající práce
 
+## Vývoj bez vlastního KGMAKERu — 2026-11-24
+
+T049-S08 je PR_OPEN ([#153](https://github.com/p-rum/kgmaker/pull/153)) / VERIFIED_IN_SCOPE:
+111 cílených testů PASS / 0 SKIP na původním headu; po integraci main
+171 cílených testů PASS / 0 SKIP, 101 TOML profilů validních, kontrola
+odstraněných vstupů a čistoty diffu PASS.
+Aktivní self-use instrukce, hook, cílové agenty/skilly, verzované grafy a CI
+kontrola vlastního indexu jsou odstraněny. Vývoj používá zdroje, Git a testy.
+Historické T052 runtime checkpointy níže se neobnovují jako vývojové workflow.
+Distribuované funkce a templates zůstávají zachované; T049-S01–S07 nedokončené.
+[Záznam kroku a kontroly](changes/169_removeRepositorySelfUse.md).
+
 ## T056 — Funkce a toky dat v Excelu, 2026-11-25
 
 Dodání sleduje [PR #161](https://github.com/p-rum/kgmaker/pull/161). `behavior.md` zachycuje statické doklady zdrojů, vzorců a VBA
@@ -65,8 +77,6 @@ Legacy rozpoznání má explicitní seznam otisků. Windows upgrade a uninstall,
 mají vlastní stav a ověření.
 [Kontrakty a příklady](project-installation.md) ·
 [Záznam kroků](changes/170_manageProjectInstallation.md) · [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
-
-
 
 ## T052 — první běh dokončení 2026-11-19
 
@@ -180,14 +190,13 @@ sloučených funkcí. SPECIFICATION je stav zadání a zůstává oddělený od 
 
 | Skupina | MERGED | PLANNED | PR_OPEN | Celkem |
 |---|---:|---:|---:|---:|
-| T003 work packages | 49 | 10 | 1 | 60 |
+| T003 work packages | 50 | 10 | 0 | 60 |
 | T004 / T005–T044 | 29 | 11 | 0 | 40 |
 | T046 etapy | 6 | 0 | 0 | 6 |
 | T047 kroky | 1 | 11 | 1 | 13 |
-| Celkem (včetně sdílených kontraktů T047) | 85 | 32 | 2 | 119 |
+| Celkem (včetně sdílených kontraktů T047) | 86 | 32 | 1 | 119 |
 
-T003/T004 mají podle níže uvedených atomických řádků 21 položek v `PLANNED`
-a jednu v `PR_OPEN`.
+T003/T004 mají podle níže uvedených atomických řádků 21 položek v `PLANNED`.
 W09 a S09-W05 jsou `MERGED`. Součet vyjadřuje evidovaný stav dodání.
 T047 není dalších 13 nezávislých
 implementací; sloupec omezení určuje upstream vlastníky. `PARTIAL` znamená nalezený

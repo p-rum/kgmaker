@@ -225,7 +225,6 @@ def test_example_configuration_and_init_instruction_parity(tmp_path):
     paths += [Path('.junie/commands/kgmaker-analyze-feature.md'), Path('.github/copilot-instructions.md')]
     for path in paths:
         assert DELIVERY_INSTRUCTIONS.strip() in (tmp_path / path).read_text()
-        assert DELIVERY_INSTRUCTIONS.strip() in (root / path).read_text()
     custom = tmp_path / '.github/copilot-instructions.md'
     custom.write_text('My instructions')
     init(tmp_path)

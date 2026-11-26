@@ -1,7 +1,7 @@
 # T050 — Skilly KGMakeru v cílovém projektu
 
-- Task ID: **T050**; Revision: **1**
-- Datum: **2026-11-15**; stav dokumentu: **SPECIFICATION** (cílové chování).
+- Task ID: **T050**; Revision: **2**
+- Datum: **2026-11-24**; stav dokumentu: **SPECIFICATION** (cílové chování).
 - Baseline: `main` @ `193c89b4d461047fd3330fd74892c5830ba8ac81`.
 - Depends on: existující `init`, semantic/feature/data-check CLI a dodané T046
   testgen kontrakty. Související [T049](49_separateTargetAgents.md) zůstává
@@ -25,13 +25,13 @@ commit/push/merge, nové modelové API či změna graph/store/packet schématu.
 | T050-R01 | `src/kgmaker/skills.py` obsahuje explicitní seznam instalovaných cest a Python templates; nové resources fungují i v instalovaném wheelu. |
 | T050-R02 | Pět stručných skillů má rozlišující name/description, funkční relativní references a konkrétní příkazy odpovídající současnému CLI. Samostatně respektují pravidla cíle a rozsah oprávnění. |
 | T050-R03 | `init` instaluje skilly do `.agents/skills/`, běžné opakování zachová existující obsah. Neplatná/symlinková nová cílová cesta se odmítne před jakýmkoli zápisem init. `scan` není instalátor. |
-| T050-R04 | Spravované kopie v tomto repozitáři odpovídají templates; starý uživatelsky smazaný `.agents/skills/kgmaker` se neobnovuje. Dokumentace odděluje dodání od ověření. |
+| T050-R04 | Kopie v dočasném cílovém projektu odpovídají templates; vývojový checkout nemá aktivní skilly (T049-S08); starý uživatelsky smazaný `.agents/skills/kgmaker` se neobnovuje. Dokumentace odděluje dodání od ověření. |
 
 ## Kroky, acceptance a ověření
 
 | Krok | Výstup | Acceptance |
 |---|---|---|
-| T050-S01 | Templates a návody pro pět samostatných workflow, spravované kopie, CLI init integrace s preflightem; README a návod. | T050-AC01, AC02, AC03 |
+| T050-S01 | Templates a návody pro pět samostatných workflow, kopie v cílovém projektu, CLI init integrace s preflightem; README a návod. | T050-AC01, AC02, AC03 |
 | T050-S02 | Regrese ochrany souborů a parity, kontrola wheelu mimo checkout, validace skillů; change note, matice a acceptance inventář. | T050-AC01 až AC05 |
 
 - **T050-AC01:** init v prázdném cíli vytvoří celý explicitní seznam skillů a
