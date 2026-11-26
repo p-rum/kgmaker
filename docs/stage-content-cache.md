@@ -47,7 +47,10 @@ samotných konců řádků i změnu uloženého výběru bez odpovídající nov
 
 Java otisk zahrnuje `lib/ct.sym` a na POSIX přesné bajty `LANG`, `LC_ALL`
 a `LC_CTYPE` včetně hodnot mimo UTF-8 a rozdílu mezi nepřítomnou a prázdnou hodnotou. V uloženém
-klíči je jen SHA-256 prostředí. Chybějící nebo nečitelný vstup otisku
+klíči je jen SHA-256 prostředí. Na Linuxu se do otisku přidává obsah
+`lib/libjli.so` a `lib/server/libjvm.so` ve standardním rozložení JDK.
+[Ověření nativních vstupů](changes/180_bindLinuxJdkNativeInputs.md).
+Chybějící nebo nečitelný vstup otisku
 znamená `INCOMPLETE_INPUT_CLOSURE`, pokud živá inspekce proběhne úspěšně.
 Při výběru přes symbolický odkaz `java` tvoří otisk bajty cílové binárky
 a její JDK vstupy, i když má cílová binárka jiné jméno. Spustitelná binárka

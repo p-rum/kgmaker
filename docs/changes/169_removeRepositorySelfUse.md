@@ -242,3 +242,20 @@ skillů nadále vytváří oddělený cílový projekt.
   bez jobů; nový merge není tímto výsledkem ověřen.
 - **NOT_RUN:** úplná sada, Windows, živí hostitelé a nezávislé review nového
   merge. Předchozí review se na nový head nepřenáší.
+
+## Pátá integrace main — T049-S08 / AC13–AC14, T050-R04
+
+Výchozí head `cde1428eb008fcc055b9286cc5089384afc41d18`, společná base
+`5ff2c0846056353605ccb9ab271bd86847c6e661`, integrovaný main
+`49bab32c50436782a2009455a36ada41c06be42f`. Main se během předchozí
+integrace posunul o #164. Konflikty tří vlastních grafů `.kgmaker/GRAPH.md`,
+`.kgmaker/GRAPH.mmd` a `.kgmaker/semantic.json` řeší jejich odstranění.
+Příchozí změna cache Linux JDK a její testy i návody se slučují bez úprav.
+Veřejné API, registr a příklady se tímto řešením nemění; kompatibilita a
+omezení příchozí změny jsou popsány v [change180](180_bindLinuxJdkNativeInputs.md).
+
+- **PARTIAL:** `JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64 PATH=/usr/lib/jvm/temurin-21-jdk-amd64/bin:$PATH PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-merge-20261126/bin/python -m pytest -q -p no:cacheprovider --tb=short -ra --basetemp /tmp/kgmaker-merge-20261126-cache tests/test_stage_content_cache.py tests/test_stage_content_cache_actual.py` — 69 PASS / 9 SKIP; JVM a TypeScript workery chybí.
+- **PASS:** `git diff --cached --check`; inventář sledovaných self-use cest
+  je prázdný.
+- **NOT_RUN:** úplná sada, skutečné workery, Windows, CI a nezávislé review
+  nového merge. Předchozí testy a review nejsou důkazem celého nového headu.

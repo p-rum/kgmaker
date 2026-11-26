@@ -10,6 +10,7 @@ from copy import deepcopy
 from hashlib import file_digest
 import os
 from pathlib import Path
+import sys
 import time
 
 from .analysis_model import canonical, digest, file_hash
@@ -138,8 +139,11 @@ def launch_inputs(argv):
     is_java = (os.path.normcase(launcher.name) in java_names
                or os.path.normcase(executable.name) in java_names)
     if is_java:
+        platform_files = ('release', 'lib/modules', 'lib/ct.sym')
+        if sys.platform == 'linux':
+            platform_files += ('lib/libjli.so', 'lib/server/libjvm.so')
         try:
-            for relative in ('release', 'lib/modules', 'lib/ct.sym'):
+            for relative in platform_files:
                 target = executable.parent.parent / relative
                 if not target.is_file():
                     return None

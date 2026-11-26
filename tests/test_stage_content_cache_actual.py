@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 import shutil
+import sys
 import zipfile
 
 import pytest
@@ -86,10 +87,14 @@ def test_actual_jvm_locale_drift_preserves_published_generation(tmp_path, monkey
     assert changes == [when]
     assert outputs() == before
     jdk = Path(inspection.command('jvm', options['home'])[0]).resolve().parent.parent
-    platform_symbols = jdk / 'lib/ct.sym'
+    platform_inputs = ['lib/ct.sym']
+    if sys.platform == 'linux':
+        platform_inputs.extend(('lib/libjli.so', 'lib/server/libjvm.so'))
     worker_stage = load_graph(root).extraction_cache['entries'][0]
     assert worker_stage['key']['stage'] == 'worker-analysis'
-    assert worker_stage['key']['launch']['files'][str(platform_symbols)] == file_hash(platform_symbols)
+    for relative in platform_inputs:
+        path = jdk / relative
+        assert worker_stage['key']['launch']['files'][str(path)] == file_hash(path)
 
 
 @pytest.mark.skipif(os.name != 'posix', reason='POSIX Java launcher symlink')

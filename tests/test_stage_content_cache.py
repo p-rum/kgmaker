@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 import pytest
 
@@ -13,6 +14,9 @@ from kgmaker.extraction_cache import launch_inputs
 from kgmaker.model import KnowledgeGraph
 from kgmaker.scanner import scan_repository
 from kgmaker.worker_protocol import WorkerError
+
+
+LINUX_JAVA_NATIVE_FILES = ('lib/libjli.so', 'lib/server/libjvm.so')
 
 
 @pytest.fixture
@@ -73,7 +77,10 @@ def java_launch(tmp_path, monkeypatch):
         monkeypatch.delenv(name, raising=False)
     jdk = tmp_path / 'jdk'
     java = jdk / 'bin/java'
-    for path in (java, jdk / 'release', jdk / 'lib/modules', jdk / 'lib/ct.sym'):
+    files = [java, jdk / 'release', jdk / 'lib/modules', jdk / 'lib/ct.sym']
+    if sys.platform == 'linux':
+        files.extend(jdk / relative for relative in LINUX_JAVA_NATIVE_FILES)
+    for path in files:
         path.parent.mkdir(exist_ok=True, parents=True)
         path.write_text(path.name, encoding='utf-8')
     return [str(java)], jdk / 'lib/ct.sym'
@@ -82,7 +89,10 @@ def java_launch(tmp_path, monkeypatch):
 def test_launch_capture_hashes_without_materializing_platform_files(java_launch, monkeypatch):
     argv, ct_sym = java_launch
     java = Path(argv[0])
-    files = (java, ct_sym, ct_sym.with_name('modules'), ct_sym.parent.parent / 'release')
+    jdk = java.parent.parent
+    files = [java, ct_sym, ct_sym.with_name('modules'), jdk / 'release']
+    if sys.platform == 'linux':
+        files.extend(jdk / relative for relative in LINUX_JAVA_NATIVE_FILES)
     expected = {str(path): file_hash(path) for path in files}
     read_bytes = Path.read_bytes
 
@@ -130,6 +140,37 @@ def test_java_launch_capture_binds_ct_sym_contents(java_launch):
     assert changed['files'][str(platform_symbols.resolve())] == file_hash(platform_symbols)
     platform_symbols.unlink()
     assert launch_inputs(argv) is None
+
+
+@pytest.mark.skipif(sys.platform != 'linux', reason='Linux Java native libraries')
+@pytest.mark.parametrize('relative', LINUX_JAVA_NATIVE_FILES)
+def test_java_launch_capture_binds_linux_native_library(java_launch, relative):
+    argv, platform_symbols = java_launch
+    library = platform_symbols.parent.parent / relative
+    original = library.read_bytes()
+    before = launch_inputs(argv)
+    assert before['files'][str(library)] == file_hash(library)
+
+    library.write_bytes(original.upper())
+    changed = launch_inputs(argv)
+    assert changed != before
+    assert changed['files'][str(library)] == file_hash(library)
+
+    library.write_bytes(original)
+    assert launch_inputs(argv) == before
+
+
+def test_non_linux_java_launch_needs_no_linux_native_libraries(java_launch, monkeypatch):
+    argv, platform_symbols = java_launch
+    jdk = platform_symbols.parent.parent
+    for relative in LINUX_JAVA_NATIVE_FILES:
+        (jdk / relative).unlink(missing_ok=True)
+    monkeypatch.setattr(sys, 'platform', 'darwin')
+    captured = launch_inputs(argv)
+    assert set(captured['files']) == {
+        str(Path(argv[0]).resolve()), str(jdk / 'release'),
+        str(jdk / 'lib/modules'), str(platform_symbols),
+    }
 
 
 @pytest.mark.skipif(os.name != 'posix', reason='POSIX Java launcher alias')
@@ -181,19 +222,28 @@ def test_relative_java_path_stays_bound_to_selection_cwd(tmp_path, monkeypatch, 
     assert Path(argv[0]).resolve() == controller / 'jdk/bin/java-real'
 
 
-def test_unreadable_java_launcher_allows_live_inspection_without_cache(transport, java_launch, monkeypatch):
+@pytest.mark.parametrize(('relative', 'unavailable'), [
+    ('bin/java', 'unreadable'),
+    pytest.param('lib/libjli.so', 'missing', marks=pytest.mark.skipif(sys.platform != 'linux', reason='Linux Java native library')),
+    pytest.param('lib/server/libjvm.so', 'unreadable', marks=pytest.mark.skipif(sys.platform != 'linux', reason='Linux Java native library')),
+])
+def test_unavailable_java_launch_input_allows_live_inspection_without_cache(transport, java_launch, monkeypatch, relative, unavailable):
     root, _, _, _, calls, _ = transport
-    argv, _ = java_launch
+    argv, platform_symbols = java_launch
+    target = (platform_symbols.parent.parent / relative).resolve()
     monkeypatch.setattr(inspection, 'command', lambda *args, **kwargs: argv)
 
-    open_file = Path.open
+    if unavailable == 'missing':
+        target.unlink()
+    else:
+        open_file = Path.open
 
-    def open_readable(path, *args, **kwargs):
-        if path == Path(argv[0]).resolve():
-            raise PermissionError('launcher bytes unavailable')
-        return open_file(path, *args, **kwargs)
+        def open_readable(path, *args, **kwargs):
+            if path == target:
+                raise PermissionError('launcher input bytes unavailable')
+            return open_file(path, *args, **kwargs)
 
-    monkeypatch.setattr(Path, 'open', open_readable)
+        monkeypatch.setattr(Path, 'open', open_readable)
     result = inspection.inspect_jvm(root)
     assert result['exit_code'] == 0
     assert calls == {'analyze': 1, 'graph': 1, 'framework': 1}
@@ -201,6 +251,31 @@ def test_unreadable_java_launcher_allows_live_inspection_without_cache(transport
         ('BYPASS', 'INCOMPLETE_INPUT_CLOSURE'),
     }
     assert not store.load_graph(root).extraction_cache
+
+
+@pytest.mark.skipif(sys.platform != 'linux', reason='Linux Java native libraries')
+@pytest.mark.parametrize('relative', LINUX_JAVA_NATIVE_FILES)
+def test_java_native_library_change_after_analysis_preserves_generation(transport, java_launch, monkeypatch, relative):
+    root, _, _, _, calls, _ = transport
+    argv, platform_symbols = java_launch
+    library = platform_symbols.parent.parent / relative
+    monkeypatch.setattr(inspection, 'command', lambda *args, **kwargs: argv)
+    cold = inspection.inspect_jvm(root)
+    assert {stage['reason'] for stage in cold['cache']['stages']} == {'UNVERIFIED_REPLAY'}
+    before = snapshot(root / '.kgmaker')
+    request = inspection.request_worker
+
+    def change_after_analyze(*args, **kwargs):
+        response = request(*args, **kwargs)
+        library.write_bytes(library.read_bytes().upper())
+        return response
+
+    monkeypatch.setattr(inspection, 'request_worker', change_after_analyze)
+    with pytest.raises(WorkerError, match='launcher changed') as error:
+        inspection.inspect_jvm(root)
+    assert error.value.status == 'STALE'
+    assert calls == {'analyze': 2, 'graph': 1, 'framework': 1}
+    assert snapshot(root / '.kgmaker') == before
 
 
 def test_public_inspect_cold_warm_reexecutes_all_stages(transport):

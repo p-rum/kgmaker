@@ -112,6 +112,12 @@ publikaci. W01-AC01 zůstává `PARTIAL` a persistentní warm HIT sleduje
 [Přesná evidence a hranice](changes/178_reduceLiveInspectionOverhead.md) ·
 [Sloučení a ověření](changes/174_reconcileMergedDelivery.md#t003-s10-w01-a-ac01ac04).
 
+Další dílčí ověření AC01 a AC03 na Linuxu zachycuje `lib/libjli.so`
+a `lib/server/libjvm.so`. Regrese porovnávají jejich obsah se skutečným
+JDK 21, ověřují neúplný otisk při chybějícím či nečitelném vstupu a po
+změně izolované fixture vyžadují `STALE` se zachováním grafu.
+[Provedené kontroly a hranice](changes/180_bindLinuxJdkNativeInputs.md).
+
 ## T003-S10-W02 — reverse dependency indexy
 
 Čtecí report z [#130](https://github.com/p-rum/kgmaker/pull/130) je MERGED
