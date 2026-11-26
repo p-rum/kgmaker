@@ -85,8 +85,8 @@ class WorkspaceTests(unittest.TestCase):
         (self.root / 'frontend/src/page.tsx').write_text('interface Other { value: string; }')
         real = feature.current_graph
         roots = []
-        def capture(root, *args):
-            roots.append(root.name); return real(root, *args)
+        def capture(root, *args, **kwargs):
+            roots.append(root.name); return real(root, *args, **kwargs)
         with patch('kgmaker.feature.current_graph', side_effect=capture):
             snapshot_workspace(self.manifest)
         self.assertEqual(['frontend'], roots)

@@ -9,7 +9,7 @@ from .compiler_sources import (
     JVM_JPA_SOURCE_SNAPSHOTS, JVM_RAW_CAPTURE_PREFIX, JVM_RAW_SOURCE_SNAPSHOT, JVM_SOURCE_SNAPSHOTS,
     compiler_source_digest, jvm_raw_capture_id, normalized_source_projection, unsupported_kotlin_source,
 )
-from .model import KnowledgeGraph
+from .model import KnowledgeGraph, Node
 from .store import load_graph, load_graph_generation
 from .worker_protocol import WorkerError
 
@@ -636,9 +636,25 @@ def retain_compiler_layer(root: Path, syntax: KnowledgeGraph) -> KnowledgeGraph:
     return _merge_contexts(syntax, stored, published, layer_context_ids=active_ids, source_omissions=omissions)
 
 
+def _fk_operation_owns_column(operation: Node, column_id: str) -> bool:
+    """Bind the named target to the operation that actually replayed it."""
+    metadata = operation.metadata
+    witness = metadata.get('foreign_key_operation_targets') if isinstance(metadata, dict) else None
+    if not isinstance(witness, dict):
+        return False
+    line = witness.get('source_line')
+    snapshot = metadata.get('schema_snapshot_fingerprint')
+    columns = witness.get('column_ids')
+    return (witness.get('operation_id') == operation.id and witness.get('source_file') == operation.path
+            and type(line) is int and line > 0 and type(operation.line) is int and line == operation.line
+            and isinstance(snapshot, str) and witness.get('schema_snapshot_fingerprint') == snapshot
+            and isinstance(columns, list) and _reference_ids(columns) and len(set(columns)) == len(columns)
+            and column_id in columns)
+
+
 def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
     """Derive positive relationships from one already-published generation."""
-    from .schema_replay import persistence_pair
+    from .schema_replay import FK_COLUMN_RELATION, persistence_pair
 
     index = defaultdict(list)
     if graph.schema_version == 1:
@@ -673,8 +689,35 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
             return persistence_pair(record.get("database_id"), record.get("stream_id"))
         return None
 
+    @cache
+    def replay_scope(node_id):
+        node = nodes[node_id]
+        pair = realm(node)
+        if pair is None:
+            return None
+        record = node.metadata['persistence_realm']
+        config = record.get('config_fingerprint')
+        snapshot = node.metadata.get('schema_snapshot_fingerprint')
+        target = record.get('target')
+        if (isinstance(target, str) and target and all(isinstance(value, str) and re.fullmatch(r'[a-f0-9]{64}', value)
+                                                       for value in (config, snapshot))):
+            return pair, config, target, snapshot
+        return None
+
+    def schema_relation(edge, source, target):
+        left = realm(source)
+        return (left and left == realm(target) and edge.source_file == source.path
+                and edge.confidence == 'EXTRACTED' and edge.evidence_kind == 'SYNTAX_CANDIDATE'
+                and type(edge.source_line) is int and edge.source_line > 0)
+
+    foreign_key_tables = defaultdict(list)
     migration_operations = defaultdict(list)
     for edge in graph.edges:
+        if edge.kind == 'foreign_key_to':
+            source, target = nodes[edge.source], nodes[edge.target]
+            if (source.kind == 'db_constraint' and target.kind == 'db_table'
+                    and edge.source_line == source.line and schema_relation(edge, source, target)):
+                foreign_key_tables[source.id].append(target)
         if edge.kind != "operation_targets" or nodes[edge.target].kind not in {"db_table", "db_column"}:
             continue
         operations = migration_operations[edge.target]
@@ -704,14 +747,32 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
                         and proof.get("origin_trust") == "LOCAL_COMPILER_INPUTS"
                         and proof.get("source_file") == edge.source_file and proof.get("sha256") == checksum):
                     compiler_edges[(edge.source, edge.target, edge.kind, context_id, edge.source_file)].add(identity)
+        elif (edge.kind, source.kind, target.kind) == (FK_COLUMN_RELATION, 'db_constraint', 'db_column'):
+            scope = replay_scope(source.id)
+            if (scope is None or replay_scope(target.id) != scope or edge.source_line != source.line
+                    or not schema_relation(edge, source, target)):
+                continue
+            reference = source.metadata.get('foreign_key_targets')
+            ids = reference.get('column_ids') if isinstance(reference, dict) else None
+            if not _reference_ids(ids) or target.id not in ids or len(set(ids)) != len(ids):
+                continue
+            column = target.metadata.get('schema_object')
+            tables = [table for table in foreign_key_tables[source.id] if replay_scope(table.id) == scope]
+            if (len(tables) != 1 or tables[0].id != reference.get('table_id')
+                    or not isinstance(column, list) or len(column) != 3
+                    or any(not isinstance(component, str) or not component for component in column)
+                    or tables[0].metadata.get('schema_object') != column[:-1]):
+                continue
+            for operation in migration_operations.get(target.id, ()):
+                if replay_scope(operation.id) == scope and _fk_operation_owns_column(operation, target.id):
+                    add(operation.path, source.path, source.id, 'SCHEMA_DEPENDENT', relation=edge.kind,
+                        source_line=edge.source_line, evidence_kind='MIGRATION_DERIVED', dependency_id=target.id,
+                        operation_id=operation.id, operation_line=operation.line)
         elif (edge.kind, source.kind, target.kind) in {
             ("foreign_key_to", "db_constraint", "db_table"),
             ("derived_from", "db_view_field", "db_column"),
         }:
-            left = realm(source)
-            if (left and left == realm(target) and edge.source_file == source.path
-                    and edge.confidence == "EXTRACTED" and edge.evidence_kind == "SYNTAX_CANDIDATE"
-                    and type(edge.source_line) is int and edge.source_line > 0):
+            if schema_relation(edge, source, target):
                 witness = {"relation": edge.kind, "source_line": edge.source_line,
                            "evidence_kind": "MIGRATION_DERIVED", "dependency_id": target.id}
                 operations = migration_operations.get(target.id)

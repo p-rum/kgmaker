@@ -167,9 +167,21 @@ cestu (u závěru feature `null`), stav a seznam `reasons`:
 | Druh | Stav | Důvod |
 |---|---|---|
 | `COMPILER_CALLER` | `RECHECK` | Přímý lokální `declared_target` s dvojicí compiler důkazů ze stejného obsahově ověřeného kontextu. Report uvádí identitu kontextu, call site a obou důkazů. Přenos dopadu sleduje přesnou identitu zasaženého symbolu přes volání uvnitř souboru i mezi soubory. |
-| `SCHEMA_DEPENDENT` | `RECHECK` | Cizí klíč k tabulce nebo explicitní projekce view k jeho zdrojovému sloupci ve stejném deterministicky přehrávaném Flyway streamu. Report uvádí grafovou vazbu a identitu objektu. Je-li dostupná uložená vazba `operation_targets` k tomuto objektu, uvádí také identitu a řádek příslušné migrační operace, včetně zachycených operací před poslední změnou objektu. |
+| `SCHEMA_DEPENDENT` | `RECHECK` | Cizí klíč k tabulce nebo explicitní projekce view k jeho zdrojovému sloupci ve stejném deterministicky přehrávaném Flyway streamu. Uložená vazba `foreign_key_references_column` označí celý cizí klíč včetně důvodu pro každý doložený pojmenovaný sloupec. Report uvádí grafovou vazbu a identitu objektu. Pro uloženou vazbu `operation_targets` uvádí i identitu a řádek migrační operace, včetně zachycených operací před poslední změnou objektu. |
 | `CONTRACT_DECLARATION` | `RECHECK` | Doložená deklarace endpointu v zachycené OpenAPI JSON/YAML se zdrojovou grafovou vazbou, použitelnou variantou a jejím fingerprintem. Porovnává se hash původních bajtů z registrace. |
 | `FEATURE_CONCLUSION` | `STALE` | Přímá platná citace souboru z požadavku na vstup, capability match, impact path nebo test plan v použité lokální revizi. Report uvádí identitu citace, revizi a starý i aktuální hash původních bajtů. Použitá revize vyžaduje souhlas kandidáta, receipt a původního packetu. Lidské rozhodnutí odkazuje na odpověď v packetu. |
+
+Při úplném lokálním přehrání verzovaných migrací ukládá `kgmaker scan` vazby
+`REFERENCES parent(col)` i pro složené klíče se všemi přesně rozlišenými sloupci.
+Pro důvod ve výstupu se musí shodovat uložená tabulka, sloupec, cizí klíč a
+migrační operace v jednom otisku replaye a databázovém streamu. Uložený
+záznam operace musí uvádět přesný sloupec mezi svými cíli a doložit svou
+identitu, zdrojovou cestu a řádek. Starší grafy mohou uvádět důvody pro
+tabulky a view. Nové doklady pro sloupce vytvoří `scan`. Například po
+změně dříve uložené operace `ALTER COLUMN` spusťte
+`kgmaker impact --evidence-only --format json src/main/resources/db/migration/V3__alter.sql`.
+Neúplné přehrání, dodaný snapshot nebo implicitní `REFERENCES parent`
+mohou používat původní vazbu na tabulku. [Ověření](changes/191_indexNamedForeignKeyColumns.md).
 
 `changed_sources` porovnává soubory stejným způsobem jako uložený graf.
 U textových zdrojů scanneru je to hash textu s normalizovanými konci řádků.
