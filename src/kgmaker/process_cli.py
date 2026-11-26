@@ -70,6 +70,16 @@ def _render(args):
         triggers = discover_process_triggers(workspace, graph, source_coverage=coverage,
             scope=args.scope, selected_contexts=selected)
 
+    if selected:
+        # Check every explicit pin before T025 narrows the inventory to one trigger context.
+        current_pins = {
+            (service_id, row['repo_id'], row['module'], row['context_id'])
+            for service_id, service in triggers.context_selection['services'].items()
+            for row in service['contexts'] if row['status'] == 'CURRENT'
+        }
+        if any((*key, context_id) not in current_pins for key, context_id in selected.items()):
+            _fail('INVALID_SELECTOR')
+
     try:
         view = build_local_process(graph, triggers, trigger_id, process_id=process_id, revision=revision)
     except ProcessPathError as error:

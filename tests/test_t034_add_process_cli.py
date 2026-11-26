@@ -37,9 +37,13 @@ def test_workspace_entry_and_stored_process_use_one_current_canonical_view(tmp_p
     orders, = [context for context in selected['orders']['contexts'] if context['status'] == 'CURRENT']
     payments, = [context for context in selected['payments']['contexts'] if context['status'] == 'CURRENT']
     assert orders['context_id'] != payments['context_id']
-    write_json(tmp_path / 'contexts.json', {'schema_version': 1, 'contexts': [
+    pins_document = {'schema_version': 1, 'contexts': [
         {'service_id': name, 'repo_id': name, 'module': 'app', 'context_id': context['context_id']}
-        for name, context in [('orders', orders), ('payments', payments)]]})
+        for name, context in [('orders', orders), ('payments', payments)]]}
+    write_json(tmp_path / 'contexts.json', pins_document)
+    wrong_sibling_pin = deepcopy(pins_document)
+    wrong_sibling_pin['contexts'][1]['context_id'] = orders['context_id']
+    write_json(tmp_path / 'wrong-sibling-pin.json', wrong_sibling_pin)
 
     original_popen = subprocess.Popen
 
@@ -95,6 +99,10 @@ def test_workspace_entry_and_stored_process_use_one_current_canonical_view(tmp_p
     before = files(tmp_path)
     assert cli(monkeypatch, capsys, *prefix, *pins, *saved,
                '--expected-fingerprint', view.content_fingerprint) == (0, out, '')
+    invalid_pins = [cli(monkeypatch, capsys, *prefix, *selection, '--context-selection', 'wrong-sibling-pin.json')
+                    for selection in (entry, saved)]
+    assert [(code, len(stdout)) for code, stdout, _ in invalid_pins] == [(2, 0), (2, 0)]
+    assert [json.loads(stderr)['code'] for _, _, stderr in invalid_pins] == ['INVALID_SELECTOR'] * 2
     for extra, exit_code, diagnostic in (
         ((), 2, 'INVALID_ARGUMENTS'),
         ((*entry, *saved), 2, 'INVALID_ARGUMENTS'),

@@ -57,8 +57,10 @@ the entire canonical content, omitting generation metadata as defined by
 to the current directory. `--scope` defaults to `production` and also accepts
 `test`, `test_fixture`, `development` and `unknown`. Optional `--context-selection`
 uses the [architecture selection JSON](architecture-json-cli.md) schema 1 with
-`service_id`, `repo_id`, `module`, and `context_id`. Use the same selection on
-replay. Existing original indexes are required in every workspace checkout.
+`service_id`, `repo_id`, `module`, and `context_id`. Every supplied pin must
+match a `CURRENT` row in the selected scope, even for services outside the
+rendered path. Use the same selection on replay. Existing original indexes are
+required in every workspace checkout.
 Local replay reads those files and current sources through the shared provider.
 Read-only Git may check checkout identity. Rendering issues no worker, build,
 network request or store/cache write. T025 defaults bound the traversal to depth

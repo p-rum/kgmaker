@@ -42,6 +42,17 @@ vrátily exit 0 pro oba selektory se shodnými bajty. Dříve vytvořený aktuá
 se shodným baseline skončila `PROCESS_VIEW_STALE`, exit 3 a prázdný stdout.
 Devět souborů workspace a tři explicitní pin/view dokumenty zůstaly shodné.
 
+Nezávislá kontrola ve stejné dvouslužbové Javac fixture zkopírovala platné ID
+kontextu `orders` do pinu `payments`. Zmrazený kód `b4de6912840204f32c80cc2dae087fa0ee351cc6`
+propustil `--entry` s exit 0 a odmítl `--process` jako zastaralý s exit 3.
+Nový regresní test na stejném kódu selhal. Oprava ověřuje čtveřici
+služba/repozitář/modul/kontext vůči řádkům `CURRENT` z T024 dříve, než T025
+zúží projekci. Oba selektory vracejí `INVALID_SELECTOR`, exit 2 a prázdný
+stdout. Přímé CLI ověření stejné fixture zachovalo 12 souborů. Správné piny
+vrátily původní JSON. Běh T034, T019 a T025 s aktuálním připnutým workerem a
+JDK 21.0.6 skončil **80 PASS / 0 SKIP / 0 FAIL** za 48,48 s. Test pokrývá i
+výběr bez pinů a legacy flow. Kontrakty T008 a architecture se nemění.
+
 ## T034-S05 — dokumentace a zbývající ověření (AC06)
 
 Aktuální příklady a limity uvádějí [README](../../README.md#local-technical-process-paths-t025),
