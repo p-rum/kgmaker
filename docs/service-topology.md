@@ -81,7 +81,21 @@ characters. There are no click directives, raw HTML labels or remote resources.
 
 See the [T021 CLI contract and example](architecture-json-cli.md#architecture-topology-mermaid-t021)
 and [change138](changes/138_rejectForeignTopologyEvidence.md) for acceptance and current
-parser/render results. T022's topology Markdown remains a separate renderer.
+parser/render results.
+
+## Markdown report (T022)
+
+`--format markdown` presents the same filtered topology as the JSON and Mermaid
+formats. The report embeds the unchanged Mermaid diagram and lists the captured
+services, relationships, resolution, scope, selected contexts and evidence refs.
+Each known omitted boundary keeps its ID and reason. An upstream incomplete
+inventory stays explicit. Source IDs and references are retained as provenance;
+the topology capture leaves source locations unavailable and current source
+observation `NOT_CHECKED`.
+
+The renderer is deterministic and operates only on the supplied view. The
+existing capture and explicit `--view-cache` publication paths remain the same.
+[CLI contract and example](architecture-json-cli.md#architecture-topology-markdown-t022).
 
 ## Historical validation checkpoint
 
