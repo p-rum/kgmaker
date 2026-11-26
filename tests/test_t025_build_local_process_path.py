@@ -9,7 +9,7 @@ import pytest
 from kgmaker.control_flow import from_body
 from kgmaker.flow import process
 from kgmaker.model import Node, Edge
-from kgmaker.process_model import ProcessView
+from kgmaker.process_model import ProcessDefinition, ProcessView
 from kgmaker.process_triggers import discover_process_triggers
 from kgmaker.process_paths import build_local_process, ProcessPathError
 from test_t024_discover_process_triggers import inputs
@@ -290,6 +290,7 @@ private fun cleanup() {}
     assert len(bounded.steps)<=2 and bounded.technical_view.coverage['truncated']
     assert any(n.attributes.get('boundary_reason')=='node limit' for n in bounded.steps)
     assert result.technical_status=='PARTIAL'
+    assert result.definition.to_dict()['context_selection'] == inv.context_selection
     assert (graph.to_dict(),inv.to_dict())==before
     assert saved=={p.relative_to(root).as_posix():p.read_bytes() for p in (root/'.kgmaker').rglob('*') if p.is_file()}
     recursive=next(n for n in inv.nodes if next(s for s in graph.symbols if s['id']==n.attributes['entry_symbol_id'])['name']=='recursive')
@@ -346,6 +347,113 @@ private fun cleanup() {}
     guarded=build_local_process(altered,inv,entry.id,process_id='process:wrong-target')
     assert not any(method_names.get(n.attributes.get('method'))=='virtualChild' for n in guarded.steps)
     assert any(site['id'] in n.original_ids and n.attributes.get('boundary_reason') for n in guarded.steps)
+
+
+def test_actual_local_process_carries_only_its_selected_context_to_label_packet(tmp_path):
+    from kgmaker.analysis_model import file_hash, write_json
+    from kgmaker.inspection import inspect_jvm
+    from kgmaker.process_semantics import ProcessLabelPacketError, prepare_process_label_packet
+    from kgmaker.workspace import load_workspace, snapshot_workspace
+    from test_t024_discover_process_triggers import actual_prerequisites
+
+    jars = actual_prerequisites('k1')
+    worker_home = Path(__file__).resolve().parents[1] / 'workers'
+    services = ('orders', 'payments')
+    for name in services:
+        root = tmp_path / name
+        source = root / 'src/main/java/demo/Controller.java'
+        source.parent.mkdir(parents=True)
+        source.write_text('''package demo;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+@RestController public class Controller {
+ @GetMapping("/entry") public String entry(boolean flag) {
+   if (flag) return "left"; else return "right";
+ }
+}''')
+        inspected = inspect_jvm(root, home=worker_home, module='app', classpath=jars,
+            build_context={'spring_component_packages': ['demo']})
+        assert not any(row.get('reason', '').startswith('ERROR:') for row in inspected['diagnostics'])
+    manifest = tmp_path / 'workspace.json'
+    write_json(manifest, {'schema_version': 1, 'workspace_id': 'separate-process-contexts',
+        'repositories': [{'id': name, 'role': 'backend', 'path': name} for name in services],
+        'services': [{'id': name, 'backend_repo': name, 'frontend_repos': [], 'test_repos': [],
+                      'contract': {'repo_id': name, 'path': 'api.json'}} for name in services],
+        'service_ownership': {'schema_version': 1, 'services': [
+            {'id': name, 'roots': [{'repo_id': name, 'path': 'src'}],
+             'modules': [{'repo_id': name, 'id': 'app'}], 'external_systems': []} for name in services]}})
+
+    def files():
+        return {path.relative_to(tmp_path): file_hash(path) for path in tmp_path.rglob('*') if path.is_file()}
+
+    before_files = files()
+    workspace = load_workspace(manifest)
+    _, coverage, _, graph, _ = snapshot_workspace(manifest, persist_cache=False)
+    with patch('subprocess.Popen', side_effect=AssertionError('offline projection started a process')), \
+            patch('socket.socket', side_effect=AssertionError('offline projection opened a connection')):
+        inventory = discover_process_triggers(workspace, graph, source_coverage=coverage)
+        before = deepcopy((workspace, graph.to_dict(), inventory.to_dict()))
+        selected = inventory.context_selection['services']
+        orders, = [row for row in selected['orders']['contexts'] if row['status'] == 'CURRENT']
+        payment, = [row for row in selected['payments']['contexts'] if row['status'] == 'CURRENT']
+        assert orders['context_id'] != payment['context_id']
+        trigger, = [node for node in inventory.nodes if node.owner_id == 'service:orders']
+        process_view = build_local_process(graph, inventory, trigger.id, process_id='process:orders')
+        packet = prepare_process_label_packet(process_view)['packet']
+        assert packet['identity']['context_ids'] == [orders['context_id']]
+        assert set(packet['identity']['context_selection']['services']) == {'orders'}
+        assert packet['identity']['baseline_fingerprint'] == process_view.technical_view.baseline_fingerprint
+        assert packet['identity']['process_content_hash'] == process_view.content_fingerprint
+        document = process_view.to_dict()
+        expected_selection = {'services': {'orders': selected['orders']}}
+        assert document['definition']['context_selection'] == expected_selection
+        assert document['technical_view']['context_selection'] == expected_selection
+        assert {row['scope'] for row in document['technical_view']['provenance']} == {'production'}
+        assert {cid for row in document['technical_view']['provenance'] for cid in row['context_ids']} == {orders['context_id']}
+        assert process_view.technical_status == 'PARTIAL'
+        assert {'true', 'false'} <= {edge.relation for edge in process_view.transitions}
+
+        # ProcessView still decodes the previous representation. The strict
+        # packet validator must reject its genuinely foreign context, not repair it.
+        foreign = deepcopy(document)
+        old_selection = deepcopy(inventory.context_selection)
+        foreign['definition']['context_selection'] = old_selection
+        foreign['technical_view']['context_selection'] = old_selection
+        foreign['definition_fingerprint'] = ProcessDefinition.from_dict(foreign['definition']).content_fingerprint
+        with pytest.raises(ProcessLabelPacketError, match='SELECTION_CONTEXT_MISMATCH'):
+            prepare_process_label_packet(ProcessView.from_dict(foreign))
+    assert (workspace, graph.to_dict(), inventory.to_dict()) == before
+    assert files() == before_files
+
+
+def test_local_process_preserves_selection_envelope_for_strict_label_packet(tmp_path):
+    from kgmaker.architecture_model import ViewDocument
+    from kgmaker.process_semantics import ProcessLabelPacketError, prepare_process_label_packet
+
+    workspace, graph, coverage, method, _ = setup(tmp_path)
+    trigger_inventory, trigger_id = inventory(workspace, graph, coverage, method)
+    captured = trigger_inventory.to_dict()
+    captured['context_selection']['extra_capture_metadata'] = {'version': 1}
+    current = ViewDocument.from_dict(captured)
+    last_valid = tmp_path / 'last-valid.json'
+    last_valid.write_text('previous generation')
+
+    def files():
+        return {path.relative_to(tmp_path): path.read_bytes() for path in tmp_path.rglob('*') if path.is_file()}
+
+    before_files = files()
+    before = deepcopy((graph.to_dict(), current.to_dict()))
+    with patch('subprocess.Popen', side_effect=AssertionError('offline projection started a process')), \
+            patch('socket.socket', side_effect=AssertionError('offline projection opened a connection')):
+        valid = build_local_process(graph, trigger_inventory, trigger_id, process_id='process:orders')
+        assert prepare_process_label_packet(valid)['packet']['identity']['process_id'] == 'process:orders'
+        result = build_local_process(graph, current, trigger_id, process_id='process:orders')
+        with pytest.raises(ProcessLabelPacketError, match='UNSUPPORTED_SELECTION_SHAPE'):
+            prepare_process_label_packet(result)
+        assert result.definition.to_dict()['context_selection'] == current.context_selection
+        assert result.technical_view.context_selection == current.context_selection
+    assert (graph.to_dict(), current.to_dict()) == before
+    assert files() == before_files
 
 
 @pytest.mark.parametrize('version',[1,2])

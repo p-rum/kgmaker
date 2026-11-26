@@ -142,3 +142,32 @@ Záznam má SHA-256 `32abf9cc00c07154068bc7ad5d5a999f89ef863357007c07d0427b82e93
 
 Úplná standardní sada této opravy, běh mimo Linux a GitHub Actions mají
 při lokálním předání stav `NOT_RUN`.
+
+## Přenos opravy po sloučení #174 — kroky 4 a 5
+
+První rodič je `bc6ed2156524ab15295cc12f6be31f12715b736b` se stromem
+`46953afe386067c1c119793dd1f0e0d891b869d7`. Druhý je skutečný `main`
+`cb9848520b056518d028ceb8010ec6a6f9a43a2f` se stromem
+`833ec83af3495311aafabb25a0f5de87181d1c62`. Soubory FK a jejich testy
+mají přesné bajty prvního rodiče. Implementace, testy a příručky T025
+mají přesné bajty druhého rodiče. Společný README, acceptance a stavová
+matice odpovídají nezávislému třícestnému sloučení. Graf zachovává všech
+464 historických epizod obou rodičů. [Change190](190_bindLocalProcessContext.md).
+
+Cílená sada uvedená výše má na společném vstupu **31 PASS / 0 SKIP** za
+0,63 s. Skutečný lokální replay, starší tabulkové a view důvody, workspace
+a plánovač prošly. Pytest, sestavení manifestu a jeho porovnání mají exit 0.
+SHA-256 JUnit je `428ad83fb806ba1f3c30579981d5b05e1ddbc9f4d59fd283b921fa868090f9fe`
+a shodného manifestu `53243b4213d910b0ac91ecb553731d165a91538913c3631a7c5ae8cfc01bb45e`.
+
+Čerstvý lokální běh `scan` a `impact --evidence-only --format json` má
+exit 0. Jeden přesný důvod odkazuje na vlastní cílový sloupec operace.
+Uložené soubory mají před reportem i po něm shodné bajty. SHA-256 JSON
+je `e4f4d700712e5202d4b02cd02c83ac1cf6095224afa71060d23ca69f63c72ee9`.
+Plán má proti `main` shodu 134 ostatních položek a pořadí všech 32 úloh.
+T025 včetně odkazu na #174 odpovídá druhému rodiči. W02 uvádí #130 a #175
+ve stavu `MERGED/PARTIAL` a W03 čeká na W02 `VERIFIED_IN_SCOPE`. SHA-256
+výřezu plánu je `6adb6cec0942028d7843d0c24637a5a6cf3f36c6bb5886e64e5766785016eae5`.
+
+Úplná standardní sada společného stromu, běh mimo Linux a GitHub Actions
+mají při lokálním předání stav `NOT_RUN`.
