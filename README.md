@@ -1011,7 +1011,9 @@ topology into a typed T023 ProcessView. Branches, call-sites and exception paths
 are preserved; root budgets, recursion, uncertain dispatch and missing/async
 bodies stay explicit boundaries. No business identity or runtime execution is
 inferred. Incomplete or malformed optional local-operation metadata cannot supply
-proof during scope projection. See [API, selected-snapshot proof and limits](docs/process-paths.md).
+proof during scope projection. The process definition and technical view carry
+the selected trigger's current compiler context, including when the workspace
+inventory has several services. See [API, selected-snapshot proof and limits](docs/process-paths.md).
 
 ### Kafka interface catalogue
 

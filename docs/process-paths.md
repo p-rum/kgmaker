@@ -46,6 +46,14 @@ Caller-to-site `declares_call` and site-to-declaration `resolves_to` edges and
 proofs must agree with the original call-site/context/source/range. Mutation of
 an unrelated target, scope or proof cannot borrow a different method's body.
 
+The definition and technical view share the selected trigger's current compiler
+context. Services bound to that context retain their original matching context
+rows and coverage rows without a selected context. The input inventory remains
+part of the baseline fingerprint. Other fields of the supplied selection
+envelope are preserved for downstream validation. This lets [T030](process-label-packets.md)
+prepare a packet for one local trigger in a workspace that has other current
+compiler contexts. [T025/T030 regression evidence](changes/190_bindLocalProcessContext.md).
+
 The adapter is pure and validates supplied content relationships. It does not
 read, refresh, attest or authenticate a physical checkout; callers remain
 responsible for obtaining current compiler/provider snapshots before projection.

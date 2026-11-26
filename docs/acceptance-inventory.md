@@ -1177,6 +1177,12 @@ S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource neg
 | AC05 | Canonical declaration, source file scope/hash, selected context and both call-site edges/proofs; missing CFG/unsupported legacy remains UNKNOWN/PARTIAL | Current physical snapshots are caller responsibility |
 | AC06 | [Capability](process-paths.md), [note73](changes/73_buildLocalProcessPath.md), README/status updates | T024 PR59 dependency, required full and release pending |
 
+T025-AC04/05/09. Nová Javac 21 regrese ověřuje lokální trigger z jednoho ze
+dvou fyzických repozitářů s aktuálním compiler kontextem. Definice, technický
+pohled a T030 souhlasí na vybraném kontextu a vstupní graf, inventář a soubory
+zůstávají shodné. Dříve čitelný ProcessView s cizím výběrem T030 stále odmítne.
+[Change190](changes/190_bindLocalProcessContext.md).
+
 ## T011 — typed HTTP consumer inventory
 
 AC01 lazy/static intent, AC02 dynamic URI/source identity, AC03 actual Feign and
@@ -1377,6 +1383,13 @@ T012 dependency merged; independent finalpair review/ready/merge separate.
 | AC06 | spec Rev2, Python API/capability docs, note90, descendant proof | exact final review/PR pending |
 
 No model call, semantic approval, T031 apply or T034 CLI is supplied by this row.
+
+T030-AC01/04/05. Cílený doklad T025 → T030 zachovává lokální identitu a vazby na
+scope a baseline v Javac 21 workspace se dvěma kontexty. Cizí kontext se
+stále odmítá. Neznámá pole obálky výběru se zachovají pro přísnou validaci,
+která je odmítne kódem `UNSUPPORTED_SELECTION_SHAPE`. Širší acceptance T030
+zůstává PARTIAL.
+[Change190](changes/190_bindLocalProcessContext.md).
 
 T030 full support is ONE actual descendant2df55 run2587PASS10allowedSKIP, not a
 standalone parent full. ALL1990parent IDs classified1980PASS10allowedSKIP; all47own

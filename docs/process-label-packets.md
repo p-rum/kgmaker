@@ -35,6 +35,15 @@ semantically unordered technical records and generation timestamps do not change
 identity. Ordered expansion, source/evidence changes and changed captured document
 hashes do. No source freshness or runtime availability is newly inferred.
 
+For a local T025 path, the declared `context_ids` and selected compiler rows
+refer to the same trigger context. This holds when the supplied workspace contains
+several services. An older broad view remains readable as a `ProcessView`. To
+prepare a packet, render it again from the original explicit trigger/provider
+inputs. A foreign selected context still fails with `SELECTION_CONTEXT_MISMATCH`.
+An unsupported key in the outer selection envelope still fails with
+`UNSUPPORTED_SELECTION_SHAPE`.
+[Local path contract](process-paths.md#input-and-evidence-boundaries).
+
 ## Privacy and explicit documents
 
 No raw labels, descriptions, conditions, configuration, compiler annotation values,

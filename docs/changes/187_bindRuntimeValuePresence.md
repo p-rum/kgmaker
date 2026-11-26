@@ -221,3 +221,31 @@ python -m pytest -q -p no:cacheprovider --tb=short \
   tests/test_runtime_value_presence.py tests/test_availability.py tests/test_runtime_trace_producer.py \
   -k 'test_runtime_value_presence or observed_approved_input or unapproved_or_different_business_mapping or runtime_keeps_callable'
 ```
+
+## Krok 9 — přenos po #174
+
+T003-S13-W03-AC01–AC04. Opravený první rodič
+`ba26581ac474186270e9b306ae7b00389a6f7a1e` je přenesen nad skutečný `main`
+`cb9848520b056518d028ceb8010ec6a6f9a43a2f`. Sloučený T025 předává vybraný
+kontext z ProcessView do T030. Jeho implementace, testy a odkaz na #174
+pocházejí z aktuálního `main`. Oprava fyzického dokladu i její testy mají
+bajty prvního rodiče. Plánovač zachovává ostatních 134 řádků a pořadí všech
+32 položek. W03 zůstává `IN_PROGRESS / PARTIAL` s #171 a samostatnou podmínkou
+ověření pro S10-W03. [Změna 190](190_bindLocalProcessContext.md).
+
+Přesný výběr na přeneseném kódu má 6 PASS, 0 FAIL, 0 SKIP, 100 mimo výběr,
+raw exit 0 a 146,49 s s Temurin JDK 21.0.6+7 a původním JVM workerem.
+Běžná kompilace znovu doložila `PRESENT`, `ABSENT` a schválený živý `data-check`.
+Čtyři případy neúplného nebo nejednoznačného fyzického důkazu zablokovaly
+offline import a zachovaly výstupy. Prošel také původní runtime import.
+JUnit má SHA-256 `aab85942dde73222215e9d633ddb6e2b7f20bd0d39104f37998bffd5d21c0f2d`,
+manifest vstupů `46b27fe28ebca580bf54a3233b5c8cce3902dada810aa5b8d508d93857403de8`
+a projekce fyzických operandů
+`1f66836108a2c8a745ea9ae1578d43a5414a4d739318e9a7e56f0a92cacdcf71`.
+Úplná sada, Windows a GitHub Actions jsou v tomto kroku `NOT_RUN`.
+
+```sh
+python -m pytest -q -p no:cacheprovider --tb=short \
+  tests/test_runtime_value_presence.py tests/test_runtime_trace_producer.py \
+  -k 'actual_java_value_presence_affects_only_matching_live_data_check or actual_java_value_requires_selected_physical_proof or runtime_keeps_callable'
+```
