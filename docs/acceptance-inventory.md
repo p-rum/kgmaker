@@ -1,5 +1,15 @@
 # Inventář acceptance T001 a T002
 
+## T056 — Funkce a toky dat v Excelu, 2026-11-25
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T056-AC01 | VERIFIED_IN_SCOPE | Syntetický 15listý OOXML sešit, tři zdroje a deklarovaná query tabulka na cestě do výstupu; VBA HTTP a výpočet na vstupu s doloženými řádky. |
+| T056-AC02 | VERIFIED_IN_SCOPE | Kontext `IFERROR`, alternativní definice VBA, oddělené pozorování a statická inference, odkaz na původní buňku nebo řádek. Regrese překryvu rozsahu bez `cell`, zachování definice přes `Format` a přepisu po `End If`; [změna 178](changes/178_fixExcelBehaviorLineage.md). |
+| T056-AC03 | VERIFIED_IN_SCOPE | Report CLI a příprava, redakce výchozího reportu a packetu, kompatibilní inventář a exporty. Živý Copilot a produkční sešit mají stav NOT_RUN. |
+
+[Doklady](changes/177_extractExcelBehavior.md).
+
 
 ## T055 — Copilot skill pro migraci Excelu, 2026-11-25
 

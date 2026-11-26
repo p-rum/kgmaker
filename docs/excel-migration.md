@@ -44,12 +44,46 @@ kgmaker excel migrate prepare --workbook Fakturace.xlsm --dependency Sazby.xlsx 
 kgmaker excel migrate export --workbook Fakturace.xlsm --dependency Sazby.xlsx --out-dir migrace
 ```
 
-`prepare` vytvoří nový adresář s `inventory.json`, `packet.json` a
-`subjects.jsonl`. `export` používá stejný výběr zdrojů, znovu ověří jejich
+`prepare` vytvoří nový adresář s `behavior.md`, `inventory.json`, `packet.json`
+a `subjects.jsonl`. `export` používá stejný výběr zdrojů, znovu ověří jejich
 otisky a sestaví všechny tři finální soubory do nového podadresáře `result`.
 Volitelně přijímá `--candidate` a `--jira-template`. Existující výsledky se
 zachovají. Při souběžné výměně výstupního adresáře nebo souboru příkaz ohlásí
 chybu. Při úklidu ověřuje vlastnictví jednotlivých cest. Na straně kgmakeru se nespouští Copilot ani jiný model.
+
+## Funkce a tok dat v sešitu
+
+`behavior.md` vznikne před plánem a Jira exportem. Uvádí deklarované zdroje dat,
+vstupní události, výpočty, zápisy VBA a možné výstupy s adresou buňky nebo
+modulem, procedurou a řádkem. Sleduje mezilistové odkazy až ke zdroji tam,
+kde je statický řetězec rozpoznaný. Například `IFERROR` označí výpočet s náhradní
+větví a v cestě k výsledku ukáže možné zdroje z obou větví. Poslední část
+uvádí mezery v dokladech a hranice analýzy.
+
+Konkrétní syntaktické důkazy zahrnují `WEBSERVICE`, odkazy na další sešity,
+deklarace připojení OOXML a vazby query tabulek. VBA sleduje deklarace podporovaných
+HTTP klientů, přípravu a odeslání požadavku, čtení odpovědi a návaznost na
+lokální přiřazení. Známá nepřepisující intrinsic volání, například `Format`,
+nepřeruší vazbu vstupní hodnoty. Alternativní definice zůstávají uvnitř
+podporovaných větví; přímé přiřazení po jejich uzavření starší definici přepíše.
+Neznámá volání dál ruší možné přepsané definice. Výstupní buňka v zobrazeném listu
+je kandidát na prezentaci.
+Změna `Caption`, `Text`, `Visible` či `MsgBox` dokládá příslušný zápis nebo volání;
+skutečné zobrazení závisí na běhu. Neprůhledné integrace přes COM, Power Query, dynamicky sestavené
+adresy, aktivní sešit a skutečné výsledky externího volání mohou vyžadovat další
+doklady.
+
+Ve velkém sešitu lze z již vytvořeného inventáře vypsat jeden list i s cestami
+do ostatních listů a sešitů.
+
+```sh
+kgmaker excel behavior --inventory migrace/inventory.json --book main --sheet Vysledky
+```
+
+Výchozí report uvádí strukturu a identifikátory důkazů. `--include-source`
+v `prepare` nebo `behavior` přidá přesné vzorce, příkazy VBA, hodnoty a identity
+zdrojů podle stejného souhlasu jako u packetu. Lokální příkaz čte výhradně
+inventář a volání ani vzorce nevyhodnocuje. [Rozsah a ověření](changes/177_extractExcelBehavior.md)
 
 ## Sešity a plán
 

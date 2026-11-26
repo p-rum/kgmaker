@@ -35,6 +35,7 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T053 | [53_manageProjectInstallation.md](53_manageProjectInstallation.md) | Upgrade a úplné odstranění integrace v cílovém projektu | SPECIFICATION, revize 1; ověření viz stavová matice |
 | T054 | [54_addExcelMigration.md](54_addExcelMigration.md) | Analýza VBA a sešitů, Kotlin/JVM plán a ruční Jira Cloud import | SPECIFICATION, revize 1 |
 | T055 | [55_automateExcelMigration.md](55_automateExcelMigration.md) | Copilot skill pro přípravu Kotlin plánu a Jira CSV ze sešitů | SPECIFICATION, revize 1 |
+| T056 | [56_extractExcelBehavior.md](56_extractExcelBehavior.md) | Statický popis funkcí sešitu, cest od zdrojů k výstupům a nejistot | SPECIFICATION, revize 1 |
 
 T046 je již registrováno v `main`: kroky S01–S06 byly sloučeny v PR #41, #42,
 #43, #44, #45 a #40.

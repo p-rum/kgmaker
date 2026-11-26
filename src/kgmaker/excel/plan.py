@@ -8,7 +8,7 @@ from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 
 from ..analysis_model import ID_PATTERN, AnalysisError, canonical, digest
-from .source import MAX_ARTIFACT_BYTES, VERSION, WORKER, bounded_json
+from .source import INVENTORY_WORKERS, MAX_ARTIFACT_BYTES, VERSION, bounded_json
 
 ARCHITECTURE = {
     "domain": "Model workbook inputs, outputs, errors and typed values.",
@@ -21,6 +21,7 @@ ARCHITECTURE = {
 # The artifact size is the effective bound for producer and consumer alike.
 MAX_INVENTORY_ROWS = MAX_ARTIFACT_BYTES // 16
 TASK_KINDS = {"implementation", "verification"}
+SOURCE_FIELDS = {"formula", "source", "reference", "value", "cached_value", "number_format"}
 TASK_FIELDS = {
     "id", "kind", "title", "target", "implementation", "inputs", "outputs",
     "acceptance", "tests", "depends_on", "citations", "covers",
@@ -57,7 +58,7 @@ def load_inventory(path: Path) -> dict:
     required = {"schema_version", "analyzer", "worker", "manifest_sha256", "main", "status",
                 "workbooks", "evidence", "subjects", "relations", "inventory_id"}
     object_fields(data, required, set(), "Inventory")
-    if (data["schema_version"] != 1 or data["analyzer"] != VERSION or data["worker"] != WORKER
+    if (data["schema_version"] != 1 or data["analyzer"] != VERSION or data["worker"] not in INVENTORY_WORKERS
             or data["inventory_id"] != digest({k: v for k, v in data.items() if k != "inventory_id"})):
         raise AnalysisError("Inventory is invalid or uses an incompatible analyzer version")
     evidence = {}
@@ -143,6 +144,7 @@ def packet(inventory, *, book=None, entity=None, include_source=False, budget=32
             "Every coverage subject needs a task in covers or a deferred entry with id and reason.",
             "Choose verification tasks for unresolved behavior and make downstream work depend on them.",
             "Use workbook observations and label unverified outcomes. Consult additional packets as needed.",
+            "Read the behavior report for specific inputs, calculations and outputs before drafting tasks.",
         ],
         "template": candidate_template(inventory),
         "selected_subjects": len(subjects),
@@ -156,12 +158,17 @@ def packet(inventory, *, book=None, entity=None, include_source=False, budget=32
     if used + 16 > budget:
         raise AnalysisError("Packet metadata exceeds the byte budget. Increase --budget.")
     included = set()
-    for key in sorted(selected, key=lambda item: (item != entity, item not in subjects, item)):
+    def priority(key):
+        kind = evidence[key]["kind"]
+        return (key != entity, kind in {"gap", "gap-group"}, key not in subjects,
+                kind not in {"external-source", "vba-module", "vba-operation", "entrypoint"}, key)
+
+    for key in sorted(selected, key=priority):
         item = evidence[key]
         if not include_source:
-            item = {field: value for field, value in item.items() if field not in {"formula", "source", "reference", "value", "cached_value"}}
+            item = {field: value for field, value in item.items() if field not in SOURCE_FIELDS}
             item["locator"] = {field: value for field, value in item["locator"].items() if field != "reference"}
-        if include_source and "source" in item:
+        if include_source and item["kind"] == "vba-module" and "source" in item:
             # Narrow a module to the queried procedure when possible. All line
             # numbers remain relative to the original module.
             location = evidence[entity]["locator"] if entity else {}

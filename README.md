@@ -68,6 +68,8 @@ Restart Copilot CLI after installing the hook. Each new session refreshes the gr
 
 Ask Copilot `Use $kgmaker-excel-migration to prepare the Kotlin plan and Jira CSV for Fakturace.xlsm with Sazby.xlsx as a dependency.` The skill prepares the inputs, writes and validates the plan, and produces both exports. It uses static analysis only and forbids macro execution.
 
+`kgmaker excel migrate prepare` also writes `behavior.md` with data sources, calculations, entry points and available paths to displayed results. Use `kgmaker excel behavior --inventory <dir>/inventory.json --sheet <name>` for a focused view of a sheet and its upstream paths.
+
 ## Commands
 
 Offline production classification, graph schema v2 and scoped evidence views are

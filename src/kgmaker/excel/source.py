@@ -17,7 +17,8 @@ from ..worker_protocol import WorkerError, request_worker
 from ..workbooks import MAX_ENTRIES, MAX_EXPANDED_BYTES, MAX_XML_BYTES, binary_format
 
 VERSION = "excel-migration-2"
-WORKER = "excel-poi-6.0.0-2"
+WORKER = "excel-poi-6.0.0-3"
+INVENTORY_WORKERS = ("excel-poi-6.0.0-2", WORKER)
 MAX_BOOK_BYTES = 32 * 1024 * 1024
 MAX_TOTAL_BYTES = 128 * 1024 * 1024
 MAX_ARTIFACT_BYTES = 64 * 1024 * 1024
