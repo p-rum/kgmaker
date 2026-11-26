@@ -1319,6 +1319,8 @@ canonical prefix that fits `--max-nodes`. `--output .kgmaker/flows/process.md` p
 the loaded index and source snapshot; rendering
 never launches workers. See [flow formats, limits and compatibility](docs/unified-flow-views.md)
 and [change128](docs/changes/128_unifiedFlowViews.md).
+The opt-in benchmark compares a 100-service topology and a cyclic CFG against
+a supplied source revision on the same runner. [Benchmark commands and scope](docs/unified-flow-views.md#t043-scale-benchmark)
 
 
 ### Obsahová cache explicitní inspekce (T003-S10-W01)

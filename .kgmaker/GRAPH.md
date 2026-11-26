@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 608
+- Scope: production; omitted files: 610
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `caf5bbf3b85b397ae45cd240a61bd73d7be25f0b751c04e8c18a84c0c5ec8d0b`; content: `4bc16fc0911ca9e3bbd8ccaf9c37a12e7498a79abae7b902e13e10ac2ba31274`; freshness: CONTENT_VERIFIED
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 462
+- Implementation episodes: 463
 - Inferred/ambiguous relationships: 9062/0
 
 ## Architecture diagram
@@ -3009,6 +3009,7 @@ flowchart LR
 - **Change Acceptance a skutečné kontroly, Aktualizace stavu, Aktuální stav a zbývající práce** — changed; files: docs/acceptance-inventory.md, docs/changes/90_prepareProcessLabelPacket.md, docs/process-label-packets.md, docs/production-analysis-progress.md, src/kgmaker/process_semantics.py; validation: credential_red=failed, coalesced_pure_153=passed, strict_full=unknown
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/32_selectServiceContexts.md, docs/production-analysis-progress.md; validation: t006-focused=passed, t005-workspace-regressions=passed, full-pytest-on-07ad865=passed, full-suite-toolchain-gates=skipped, rebase-focused=passed
 - **Change Doložený merge souborově vázaného ověření T047-S10, Kontroly dokumentačního kroku, Ověření kandidáta a merge** — current; files: docs/changes/158_recordFileBoundVerificationMerge.md; validation: literal_receipt_digests=passed, t032_targeted=passed, completion_plan=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/189_reduceBoundedCfgTraversal.md, docs/production-analysis-progress.md, docs/unified-flow-views.md; validation: bounded_cfg_focus=passed, scale_contract=passed, same_runner_gate=passed, semantic=passed, planner=passed
 - **fix(t003): validate full JDK before installed worker smoke** — changed; files: docs/changes/83_classifyOptionalCompilerPrerequisites.md, tests/test_coroutine_mapping.py, tests/test_optional_compiler_prerequisites.py, tests/test_orm_xml_overrides.py, tests/test_worker_install.py; validation: optional-full-957=passed, strict-matrix-123-coverage=passed, optional-prerequisites-644=skipped
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/32_selectServiceContexts.md, docs/production-analysis-progress.md; validation: t006-focused=passed, t005-workspace-regressions=passed, full-pytest=passed, full-suite-toolchain-gates=skipped, semantic-validate=passed
 - **Merge remote-tracking branch 'origin/main' into feat/t003-s08-01-typescript-project-references** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/36_resolveTypeScriptProjectReferences.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: strict284=passed, ts-project-references=passed, fingerprint=passed, methodology12=passed
@@ -3067,7 +3068,7 @@ flowchart LR
 - **Change Akceptace a ověření, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .codex/agents/README.md, .codex/agents/code-review.toml, AGENTS.md, README.md, docs/changes/72_makeGithubCiOptional.md; validation: profiles=passed, links=passed
 - **Change Aktuální audit dodání — 2026-11-12, Aktuální oddělený T020 checkpoint — 2026-11-06, Aktuální stage ověření — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/60_enforceOptionalLocalApprovals.md; validation: review_documentation_fix=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/architecture.md, docs/changes/121_invalidateDerivedViews.md; validation: targeted-pytest=passed, diff-check=passed, full-suite=skipped, runtime-toolchain=skipped
-- **Bound repeated edge scans in the control-flow projection** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/189_reduceBoundedCfgTraversal.md, docs/production-analysis-progress.md, docs/unified-flow-views.md; validation: bounded_cfg_focus=passed, output_equivalence=passed, edge_visit_probe=passed, semantic=passed, planner=passed
+- **Bound repeated edge scans in the control-flow projection** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/189_reduceBoundedCfgTraversal.md, docs/production-analysis-progress.md, docs/unified-flow-views.md; validation: bounded_cfg_focus=passed, output_equivalence=passed, edge_visit_probe=passed, semantic=passed, planner=passed
 - **Integrate dependency dispatch with Kotlin JPA metadata** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: pure-integration=passed, actual-compiler-receipt=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/145_buildReverseDependencyIndexes.md, docs/production-analysis-progress.md, docs/stage-content-cache.md; validation: targeted83=passed, semantic=passed
 - **fix(queries): preserve snapshots and compiler contract authority** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/129_criteriaSpecificationQuerydsl.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: integration=passed, worker_source_identity=passed

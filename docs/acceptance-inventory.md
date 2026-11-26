@@ -1736,10 +1736,10 @@ reviewovaným rodičům PASS; runtime/W06 sady se tímto výsledkem znovu nedokl
 
 | Kritérium | Ověření | Důkaz a rozsah |
 |---|---|---|
-| T043-AC01, T043-AC02 | PARTIAL | Lokální regrese T043-S02 ověřují nejdelší přípustný prefix CFG, započtení sdílených hranic a počet návštěv hran při dvojnásobném větvení. Topologie a širší rozpočty mají vlastní ověření. |
-| T043-AC03 | NOT_RUN | Lokální měření větvení dokládá opravu. Generátor 100 služeb a 10 000 vazeb, cold/warm srovnání, maximum paměti a relativní benchmark gate mají zbývající rozsah T043-S01/S03. |
-| T043-AC04, T043-AC05 | PARTIAL | Regrese ověřují neměnnost vstupu, shodu výstupu, původní ID, společné koncové body i explicitní hranice cyklu. Dochovaná evidence zachovává `NOT_OBSERVED` a `UNKNOWN`. |
-| T043-AC06 | PARTIAL | Změna, testy a odpovídající dokumentace mají lokální doklad. [Change189](changes/189_reduceBoundedCfgTraversal.md). |
+| T043-AC01, T043-AC02 | PARTIAL | Regrese ověřují nejdelší přípustný prefix CFG, sdílené hranice a počet návštěv hran při dvojnásobném větvení. Topologie 100 služeb a 10 000 vazeb má doložený uzlový a skokový limit. Proces zachovává přesnou hranici hloubky. Zbývá společný rozpočet zdrojové diagnostiky. |
+| T043-AC03 | VERIFIED_IN_SCOPE | Stejný syntetický vstup a shodné výstupy na stejném Cloud runneru. Cold, warm a maximum alokací Pythonu prošly relativní hranicí 25 %. [Měření a postup](changes/189_reduceBoundedCfgTraversal.md). |
+| T043-AC04, T043-AC05 | PARTIAL | Regrese ověřují neměnnost vstupu, shodu výstupu, původní ID, rozlišení kontextu a zobrazené výstupní hranice. Dochovaná evidence zachovává `NOT_OBSERVED` a `UNKNOWN`. Rozsah mimo uvedené fixture má vlastní ověření. |
+| T043-AC06 | PARTIAL | Opravu a její ověření sleduje [PR #173](https://github.com/p-rum/kgmaker/pull/173). [Change189](changes/189_reduceBoundedCfgTraversal.md). |
 
 ## T028 — Potential asynchronous process paths
 

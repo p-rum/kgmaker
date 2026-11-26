@@ -71,7 +71,45 @@ Rozsah opravy a příklad CLI jsou v [README](../../README.md#unified-flow-repor
 [popisu CFG](../unified-flow-views.md) a [stavové matici](../production-analysis-progress.md).
 Stav ověření T043 zůstává PARTIAL.
 
-T043-S01 a T043-S03 mají zbývající rozsah včetně generátoru 100 služeb
-a 10 000 vazeb, porovnání cold/warm, měření maxima paměti a 25% gate.
-Benchmark celého rozsahu T043, úplná pytest sada, hostované CI a nové
-spuštění compiler workeru či Mermaid parseru mají stav NOT_RUN.
+## T043-S01 a T043-S03 / T043-AC03
+
+Opt-in `tests/benchmarks/t043_view_performance.py` používá stávající
+fixture T017 a veřejné producenty `filter_topology`, `flow.build_report`
+a `flow.render`. Generuje 100 služeb s 10 000 samostatnými vazbami a CFG
+s 1 600 větvemi a 1 600 zpětnými hranami. Topologie měří rozpočet pěti uzlů
+a pěti skoků. CFG měří rozpočet 800 uzlů. [Příkaz a metodika](../unified-flow-views.md#t043-scale-benchmark)
+
+Na stejném Cloud runneru použil benchmark Linux 6.18.57 x86-64, CPython
+3.12.14 a pět logických CPU. Tři čerstvé procesy na variantu střídaly
+výchozí zdroj `346536495db749a6a1d79f89b388b55f9db3da83` a kandidáta
+`aa3f7c17a246613d805e2d6a6e0cede892dae507`. Cold znamená první report
+v každém procesu a warm medián tří navazujících reportů. Samostatný
+průchod měří špičku alokací Pythonu. Otisky vstupních fixture a výstupů
+se shodují. Benchmark vrátil **0** a všechny metriky prošly hranicí 25 %.
+
+| Případ | Cold před a po v ms | Warm před a po v ms | Špička před a po v bajtech |
+|---|---|---|---|
+| Topologie | 1 187,5 → 953,5 | 990,6 → 993,0 | 32 679 566 → 32 679 566 |
+| Cyklický CFG | 121,9 → 18,4 | 120,4 → 17,0 | 995 600 → 995 640 |
+
+Jde o místní relativní měření. SHA-256 úplné zprávy se vzorky
+`549ef6d19d9256d2af69d4e0d86ff433803989237e38dc60afdd7abfc1a05962`.
+Opakování ze samostatného archivu stejné výchozí revize prošlo všemi
+šesti kontrolami. SHA-256 druhé zprávy
+`24cf941f8f641a92968facb2a13dc4d866fb6dbc4d9310f736a089e0d60bb2f5`.
+
+## Rozsah testů benchmarku a zbývající ověření
+
+**4 PASS** v `tests/test_t043_bound_view_performance.py` dokládají úplný
+inventář všech 10 000 ID, omezení uzlů a skoků topologie, explicitní hranici
+velkého cyklického CFG, přesné místo hloubkového omezení v procesu a výpočet
+relativní hranice 25 %. Negativní případy ověřují odmítnutí neplatného
+rozpočtu a neporovnatelných vstupních nebo výstupních otisků. SHA-256 JUnit
+`c470c849db3c53e95bb353968d5e545d8056dd8e1bc9ebb33384fb650645b86d`.
+
+Samostatná sonda zachovala v reportu s jediným uzlem 1 024 zdrojových
+diagnostik a 1 026 položek coverage. Společná mez diagnostiky pro CFG
+a ostatní pohledy má zbývající rozsah T043-S02. SHA-256 sondy
+`245f9f1b07a9dbf9335631ab703faa001371d5089e6d6ef4fe617f52ab50a928`.
+Úplná pytest sada, hostované CI a nové spuštění compiler workeru či Mermaid
+parseru mají v tomto doplnění stav NOT_RUN. [PR #173](https://github.com/p-rum/kgmaker/pull/173)

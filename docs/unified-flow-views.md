@@ -97,3 +97,30 @@ sets without reversing stored edges. An actual single-context frontend capture
 retains its HTTP-response→state→JSX path in all formats. Selecting that context
 does not import a second compiler variant or a mixed-context backend bridge;
 such omitted claims remain explicit context-boundary gaps.
+
+## T043 scale benchmark
+
+The static fixture supplies the public topology filter with 100 service nodes
+and 10,000 distinct binding edges. The CFG fixture has 1,600 branches and
+1,600 loop-back edges. The same fixtures run against the selected baseline
+and the current checkout. Run from the repository root with its test
+dependencies available.
+
+```sh
+baseline_dir=$(mktemp -d)
+git archive 346536495db749a6a1d79f89b388b55f9db3da83 src | tar -x -C "$baseline_dir"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests python tests/benchmarks/t043_view_performance.py \
+  --baseline-source "$baseline_dir/src" --samples 3 > t043-benchmark.json
+```
+
+Each sample starts a fresh Python process. Cold is its first report on the
+prepared fixture. Warm is the median of three subsequent reports. A separate
+pass records the peak allocated Python bytes during report construction and
+JSON serialization. Timing starts after imports and fixture construction.
+The order of source revisions alternates for each case on the same runner. The report carries
+raw samples, medians, runner details, parameters and the SHA-256 of every
+fixture and output. The gate requires the same fixture and output identities.
+The benchmark exits 1 if any candidate median exceeds the matching baseline
+median by more than 25%, or 2 if the run cannot be compared. Pytest checks
+output contracts and the arithmetic gate with fixed input metrics.
+[Measured baseline and remaining scope](changes/189_reduceBoundedCfgTraversal.md)
