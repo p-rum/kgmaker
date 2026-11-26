@@ -3,14 +3,14 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 606
+- Scope: production; omitted files: 607
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `28b1485e163ed1fae9188a858330e88c089b4211ccee78c7deb18e33a2e921c0`; content: `575607376ba87161f73d111f01eabbbed3fcda7abf6538f9e40ca963ee26c4e2`; freshness: CONTENT_VERIFIED
+- Context: `a05718cc0b9c31e28435fffc748014963fee05d37f93e765451a2b1b0a1e0baa`; content: `f57376138405f649a97f9579cbaabd6d2fb76cc1639fef6ec9d72e668ce4b17e`; freshness: CONTENT_VERIFIED
 - Files indexed: 124
 - Symbols and sections: 1710
 - Internal imports: 521
-- Heuristic cross-file calls: 9060
+- Heuristic cross-file calls: 9061
 - PostgreSQL tables/columns: 0/0
 - Kafka topics: 0
 - API endpoints: 0
@@ -18,8 +18,8 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 458
-- Inferred/ambiguous relationships: 9060/0
+- Implementation episodes: 460
+- Inferred/ambiguous relationships: 9061/0
 
 ## Architecture diagram
 
@@ -2696,6 +2696,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/69_versionReactUiEvents.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: ui_matrix43=passed, full624_pass10_skip=passed, semantic=passed, candidate_remote_ci_not_run=unknown
 - **Record verified current-parent Kafka acceptance and full evidence** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/77_scopeKafkaCodeBindings.md, docs/compiler-inspection.md; validation: historical-full19b=passed, parent-pure43=passed, available-case-equivalence=passed, new-parent-full=unknown
 - **Record reviewed reverse-dependency report integration** — changed; files: docs/acceptance-inventory.md, docs/changes/174_reconcileMergedDelivery.md, docs/production-analysis-progress.md, docs/production-scope.md; validation: completion-plan-gates=passed, pr160-merged-receipt=passed, completion-focused-tests=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/188_anchorTypeScriptNodeLauncher.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: native-relative-path=passed, focused-cache-workers=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/146_recordTopologyMerge.md, docs/production-analysis-progress.md; validation: planner=passed, semantic=passed
 - **Change Acceptance a ověření, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/58_propagateViewEvidence.md, docs/production-analysis-progress.md; validation: focused=passed, full_suite=unknown, semantic_validate=passed, scan=passed, kgmaker_check=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest191=passed
@@ -2849,6 +2850,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/137_prepareIncrementalMutationOracle.md, docs/production-analysis-progress.md, fixtures/incremental-integrity/README.md; validation: relocated-source-only=passed, focused-scope-131=passed, full-suite=unknown
 - **fix(t020): retain validated content identity in Markdown snapshot header** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/changes/100_renderInterfaceMarkdown.md; validation: corrected_renderer49=passed, historical_expanded176=passed, root_source_review=passed, strict_full_not_run=unknown
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Atomické work packages pro dokončení T003** — removed; files: .codex/agents/README.md, .codex/agents/t003-s03-w01-external-toolchain-selection.toml, .codex/agents/t003-s03-w02-gradle-custom-variants.toml, .codex/agents/t003-s03-w03-gradle-included-builds.toml, .codex/agents/t003-s03-w04-kotlin-compiler-options.toml; validation: agent-profiles=passed, toml=passed, codex-loader=passed, links=passed, pytest197=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/185_publishIsolatedJvmContext.md, docs/changes/188_anchorTypeScriptNodeLauncher.md, docs/compiler-inspection.md; validation: after172-exact-node-and-jvm-composition=passed, after172-native-planner-and-cli=passed, full-standard=unknown
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Atomické work packages pro dokončení T003** — removed; files: .codex/agents/README.md, .codex/agents/t003-s03-w01-external-toolchain-selection.toml, .codex/agents/t003-s03-w02-gradle-custom-variants.toml, .codex/agents/t003-s03-w03-gradle-included-builds.toml, .codex/agents/t003-s03-w04-kotlin-compiler-options.toml; validation: agent-profiles=passed, toml=passed, codex-loader=passed, links=passed, pytest197=passed
 - **Reconcile delivered work after the Excel skill integration** — changed; files: docs/acceptance-inventory.md, docs/changes/174_reconcileMergedDelivery.md, docs/production-analysis-progress.md, docs/production-scope.md; validation: inventory-plan=passed, pr130-merged-receipt=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/160_bindJvmSourceBytes.md, docs/compiler-inspection.md, docs/process-paths.md; validation: t025-javac-baseline-regression=failed, t025-real-native-and-offline-proof=passed
@@ -3075,7 +3077,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-07, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/changes/111_reconcileDeliveryStatus.md, docs/interface-contracts.md; validation: delivery-inventory=passed, cli-help=passed, diff-check=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — removed; files: .github/workflows/pr-review.yml, README.md, docs/acceptance-inventory.md, docs/changes/154_fixPrReviewPythonAndCoverage.md, docs/production-analysis-progress.md; validation: embedded-python=passed, coverage-smoke=passed, scoped-64=passed, hosted-review=unknown
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/41_projectServiceInventory.md, docs/production-analysis-progress.md; validation: focused=passed, full=passed, toolchain_skips=skipped, semantic=passed, scan=passed
-- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: docs/acceptance-inventory.md, docs/changes/185_publishIsolatedJvmContext.md, docs/changes/186_reconcileInstallationCompletionInventory.md, docs/production-analysis-progress.md, docs/tasks/50_addTargetProjectSkills.md; validation: after170-source-and-cli-bindings=passed, after170-native-and-inventory=passed, full-standard=unknown
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/185_publishIsolatedJvmContext.md, docs/changes/186_reconcileInstallationCompletionInventory.md, docs/production-analysis-progress.md, docs/tasks/50_addTargetProjectSkills.md; validation: after170-source-and-cli-bindings=passed, after170-native-and-inventory=passed, full-standard=unknown
 - **Verify overload removal during Kotlin signature mutation** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/137_prepareIncrementalMutationOracle.md, docs/production-analysis-progress.md, fixtures/incremental-integrity/README.md; validation: scoped-strict-130=passed, upstream-t032-43=passed, full-suite=unknown
 - **stack authoritative schema Retry and JPQL parent into contracts** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/85_attachInterfaceContracts.md, docs/interface-contracts.md, docs/production-analysis-progress.md; validation: combined-descendant2df-full2587pass10optional=passed, t013-parent2116-and-own45pass=passed, actual-currentcomposition444pass=passed
 - **Change Acceptance a ověření, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/58_propagateViewEvidence.md, docs/production-analysis-progress.md; validation: focused=passed
@@ -8279,6 +8281,7 @@ flowchart LR
 - `src/kgmaker/inspection.py` may call `46 in `src/kgmaker/analysis_model.py`` (name match at line 706; src/kgmaker/inspection.py:706; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `46 in `src/kgmaker/analysis_model.py`` (name match at line 715; src/kgmaker/inspection.py:715; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `46 in `src/kgmaker/analysis_model.py`` (name match at line 857; src/kgmaker/inspection.py:857; INFERRED 0.85)
+- `src/kgmaker/inspection.py` may call `297 in `src/kgmaker/build_model.py`` (name match at line 133; src/kgmaker/inspection.py:133; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `297 in `src/kgmaker/build_model.py`` (name match at line 96; src/kgmaker/inspection.py:96; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `66 in `src/kgmaker/classification.py`` (name match at line 484; src/kgmaker/inspection.py:484; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `66 in `src/kgmaker/classification.py`` (name match at line 536; src/kgmaker/inspection.py:536; INFERRED 0.85)

@@ -130,7 +130,7 @@ def command(language: str, home: Path | None = None, *, kotlin_backend="k1") -> 
         if value_marker is not None and (type(value_marker) is not int or value_marker != 1
                 or not (home / "typescript/frontend_values.cjs").is_file()):
             raise WorkerError("TypeScript value flow helper unavailable or unsupported", "TOOLCHAIN_UNAVAILABLE")
-    return [node, str(script)]
+    return [str(Path(node).absolute()), str(script)]
 
 
 def distribution(language: str, home=None, *, kotlin_backend="k1") -> list[dict]:

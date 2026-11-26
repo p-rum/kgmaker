@@ -110,6 +110,13 @@ JDK 21, ověřují neúplný otisk při chybějícím či nečitelném vstupu a 
 změně izolované fixture vyžadují `STALE` se zachováním grafu.
 [Provedené kontroly a hranice](changes/180_bindLinuxJdkNativeInputs.md).
 
+Dílčí ověření W01-AC03 a W01-AC04 potvrzuje, že relativní `PATH` pro Node
+umožní skutečnou inspekci TypeScriptu i při odlišném pracovním adresáři
+workeru. `test_actual_typescript_anchors_relative_node_path_before_worker_cwd`
+pokrývá absolutní kontrolu, relativní výběr a bajty publikovaných výstupů.
+Živá inspekce hlásí `BYPASS/UNVERIFIED_REPLAY`. W01-AC01 zůstává `PARTIAL`.
+[Doklad a prostředí](changes/188_anchorTypeScriptNodeLauncher.md).
+
 ## T003-S10-W02 — reverse dependency indexy
 
 Čtecí report z [#130](https://github.com/p-rum/kgmaker/pull/130) je MERGED

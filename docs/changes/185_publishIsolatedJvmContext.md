@@ -283,3 +283,49 @@ KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfDat
 Graf zachovává všech 457 historických epizod obou rodičů. Úplná standardní
 sada společného stromu, běh mimo Linux a GitHub Actions mají při tomto
 lokálním předání stav `NOT_RUN`.
+
+## Přenos opravy po sloučení #172 — kroky 4 a 5
+
+První rodič je `312b3e85e6b92f5893ea46e83ea1f2bcc5d01803` se stromem
+`8d5a597c2ac5729b10212cfded120e1d916ba763`. Druhý je skutečný `main`
+`538d61d80ba991cbff5413973d92e7c6ec79e2aa` se stromem
+`132d262d3d0aad67c31fccacc7443d4b18e3a8c3`. Nezávislé třícestné sloučení
+`inspection.py` je shodné se souborem prvního rodiče s jedinou změnou
+TypeScript větve `command`, která použije absolutní cestu k vybranému
+Node launcheru. `graph_provider.py` a test W02 mají přesné bajty prvního
+rodiče, test relativní cesty Node přesné bajty druhého rodiče. Kontrola
+pokryla i 453 dalších nedokumentačních vstupů předchozí cílené sady.
+[Change188](188_anchorTypeScriptNodeLauncher.md).
+
+Inventář používá řádek W01 z druhého rodiče a řádek W02 z prvního.
+Zachovává tak oba doložené rozsahy a kroky T050 a T053 z #170. Plán má
+135 položek, 106 `MERGED` a 29 `PLANNED`. Hodnoty všech položek i pořadí
+32 úloh v dispatch odpovídají `main`. W01 a W02 mají `MERGED/PARTIAL`
+a W03 stále čeká na `VERIFIED_IN_SCOPE` pro W02. SHA-256 výřezu plánu je
+`3554bc20edd7e56a93c89c41b8ecc3751b442b28f9361b31bb050160a3dc16a4`.
+
+Čerstvá nativní zkouška `kgmaker inspect code --manifest <manifest modulu>`
+má očekávaný exit 3 a `STALE` při změně jiného modulu. Grafový otisk i
+zachycené kontexty mají před pokusem a po něm stejné hodnoty. Po `scan`
+opakované volání uspělo, zachovalo platný kontext a vyřadilo zastaralé
+důkazy. SHA-256 výsledku je
+`0845f84645c25adb772881395caebfc8c9a82545e9618238625daf613cc65fe8`.
+
+Čerstvá cílená sada s JDK 21.0.6+7, K1, K2, Node 24.22.3 a TypeScriptem
+5.7.3 má **19 PASS / 0 SKIP** za 142,20 s. Ověřila izolaci a rollback
+JVM, obě cesty výběru Node, opakovanou živou inspekci s `BYPASS` a plánovač.
+Pytest, sestavení manifestu a jeho porovnání mají exit 0.
+SHA-256 JUnit je `684a51e41b3a06904f7b2853452206f863b98cb82c763b6a2740011e5e8382d1` a shodné 715řádkové manifesty
+mají SHA-256 `1eab21dad169f5a014b7cd13f643c31977d5f0b539c2576f9f34b7e3d4aca8ab`.
+
+```bash
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData \
+  python -m pytest -n 2 --dist load --maxschedchunk=1 -q --tb=short -ra \
+    -p no:cacheprovider -o tmp_path_retention_policy=failed \
+    tests/test_reverse_dependency_index.py tests/test_completion.py tests/test_stage_content_cache_actual.py \
+    -k 'test_completion or test_actual_jvm_stale_peer_checks_cfg_and_typed_proof_references or test_actual_jvm_isolated_stale_peer_publication_and_guards or test_actual_jvm_stale_peer_requires_unambiguous_runtime_proof_owner or test_actual_typescript_anchors_relative_node_path_before_worker_cwd or test_actual_typescript_preflight_and_analysis_run_on_every_explicit_inspection'
+```
+
+Graf zachovává všech 459 historických epizod obou rodičů. Úplná standardní
+sada společného stromu, běh mimo Linux a GitHub Actions mají při tomto
+lokálním předání stav `NOT_RUN`.
