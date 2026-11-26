@@ -73,6 +73,17 @@ První rodič `18d46e8d1cee1b7d669b62bd953574809f4a6fe3` se skládá s `main`
 `c4a1edb59f140faeafba0d5e979023bba185f3f1`. Validátor, fixture a komentář
 SDK mají stejné bajty jako první rodič. Kanonické záznamy [T025 a T043 po #176](192_recordLocalProcessContextMerge.md),
 [T034 po #180](196_recordProcessRenderMerge.md) a W02 po #178 pocházejí z `main`.
-Stav S13-W03 zůstává `IN_PROGRESS / PARTIAL`. Výsledky z kroku 4 patří
-prvnímu rodiči. Opakované nativní ověření a úplná sada nad složeným stromem
-mají při této přípravě stav `NOT_RUN`.
+
+## Krok 7 — záznam draftu #181
+
+Při otevření měl [draft #181](https://github.com/p-rum/kgmaker/pull/181) head
+`1f6d909a612633fafbc70b15b3f6597445bce30d` a strom
+`e63e1a405da899fd1638b48a43727e3f7327fdb3`. Jeho base byl
+`c4a1edb59f140faeafba0d5e979023bba185f3f1`. Složené zdroje prošly sadou
+plánovače a živé dostupnosti s **22 PASS / 0 SKIP / 0 FAIL**, raw exit 0.
+SHA-256 JUnit `9c9f353e691b57a320895dd558d19cd868df6b454c083e131d9f872c34973935`.
+Nativní výsledky z kroku 4 patří prvnímu rodiči. Opakované nativní ověření
+a úplná sada mají pro strom při otevření draftu stav `NOT_RUN`.
+Samostatný výřez [#171](https://github.com/p-rum/kgmaker/pull/171) je sloučený
+na `7e9fa691417706562c875a01a40606350ae058ea`. Celý S13-W03 zůstává
+`IN_PROGRESS / PARTIAL`.
