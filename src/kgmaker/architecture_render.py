@@ -1,7 +1,8 @@
-"""Pure bounded interface Markdown; no capture, resolver, store or installer."""
+"""Pure bounded views of existing interface and topology snapshots."""
 import hashlib
 import json
 import math
+import re
 import unicodedata
 
 from .architecture_model import ViewDocument,ViewNode,ViewEdge
@@ -142,6 +143,103 @@ def _topology_relation(edge):
     return label,async_relation
 
 
+def _topology_snapshot(value):
+    if type(value) not in (dict,ViewDocument):_topology_fail()
+    _bounded(value)
+    if type(value) is ViewDocument:
+        raw={'document':value.to_dict(include_generation_metadata=False)}
+        is_envelope=False
+    else:
+        raw=value
+        is_envelope='document' in raw
+    if 'document' in raw:
+        if is_envelope:
+            if set(raw)-{'schema_version','rules_version','document','filtering'}:
+                _topology_fail()
+            if 'filtering' not in raw or not isinstance(raw['filtering'],dict):_topology_fail()
+            filtering=raw['filtering']
+            required={'schema_version','rules_version','document','filtering'}
+            if (set(raw)!=required or type(raw['schema_version']) is not int or raw['schema_version']!=1
+                    or raw['rules_version']!='topology-filter-1'):
+                _topology_fail()
+        else:filtering=None
+    else:
+        filtering=None
+        raw={'document':raw}
+    view=ViewDocument.from_dict(raw['document'])
+    if view.kind!='topology':_topology_fail()
+    criteria = filtering.get('criteria', {}) if filtering is not None else {}
+    if not isinstance(criteria, dict):
+        _topology_fail()
+    if criteria.get('scope', view.scope) != view.scope:
+        _topology_fail('TOPOLOGY_MERMAID_FOREIGN_SCOPE')
+    contexts = criteria.get('context_ids')
+    selected = set(_refs(contexts)) if contexts is not None else None
+    visible_evidence_refs = set()
+    for item in (*view.nodes, *view.edges):
+        if item.attributes.get('scope', view.scope) not in (view.scope, 'unknown'):
+            _topology_fail('TOPOLOGY_MERMAID_FOREIGN_SCOPE')
+        if selected is not None and not selected.issuperset(_contexts(item)):
+            _topology_fail('TOPOLOGY_MERMAID_FOREIGN_CONTEXT')
+        visible_evidence_refs.update(item.evidence_refs)
+    for proof in view.provenance:
+        if proof['id'] not in visible_evidence_refs:
+            # T017 retains proof records for the omitted frontier as well.
+            continue
+        if proof.get('scope') not in (None, view.scope, 'unknown'):
+            _topology_fail('TOPOLOGY_MERMAID_FOREIGN_SCOPE')
+        if selected is not None and not selected.issuperset(_refs(proof.get('context_ids', []))):
+            _topology_fail('TOPOLOGY_MERMAID_FOREIGN_CONTEXT')
+    normalized=view.to_dict(include_generation_metadata=False)
+    envelope={**raw,'document':normalized}
+    try:_safe_output(envelope)
+    except ValueError:_topology_fail('UNSAFE_TOPOLOGY_MERMAID')
+    return view, filtering, envelope
+
+
+def _topology_diagram(view, filtering, envelope):
+    node_ids={node.id:'n'+hashlib.sha256(_topology_node_identity(node,view.scope).encode('utf-8')).hexdigest()
+              for node in view.nodes}
+    if len(set(node_ids.values()))!=len(node_ids):
+        _topology_fail('TOPOLOGY_MERMAID_ID_COLLISION')
+    status=view.coverage.get('status','UNKNOWN')
+    truncated=(view.coverage.get('truncated') is True or
+               filtering is not None and filtering.get('truncated') is True)
+    evidence=', '.join(sorted({kind for node in view.nodes for kind in node.evidence_kinds} |
+                              {kind for edge in view.edges for kind in edge.evidence_kinds})) or 'UNKNOWN'
+    title=('Service topology | Scope: '+view.scope+' | Evidence: '+evidence+
+           ' | Coverage: '+str(status)+(' | TRUNCATED' if truncated else '')+
+           ' | runtime/data availability: UNKNOWN | ordering/delivery: NOT_OBSERVED')
+    lines=['---','title: '+json.dumps(title,ensure_ascii=False),'---','flowchart LR',
+           '  %% topology-meta '+_mermaid_json(envelope)]
+    node_by_id={node.id:node for node in view.nodes}
+    for node in sorted(view.nodes,key=lambda item:item.id):
+        kind={
+            'service':'Service',
+            'data_resource':'Resource',
+            'database_resource':'Database resource',
+            'unresolved_data_resource':'Unresolved data resource',
+            'external_system':'External system',
+            'kafka_channel':'Channel',
+            'unresolved_topology_boundary':'Unresolved boundary',
+        }.get(node.kind,'UNKNOWN node kind: '+node.kind)
+        label=kind+' — '+node.label+'; '+node.resolution_status+'; '+node.freshness
+        kinds=', '.join(sorted(node.evidence_kinds)) or 'UNKNOWN'
+        label+='; evidence '+kinds
+        lines.append('  %% topology-node '+_mermaid_json(node.to_dict()))
+        lines.append('  '+node_ids[node.id]+'["'+_mermaid_text(label)+'"]')
+    for edge in sorted(view.edges,key=lambda item:item.id):
+        if edge.source not in node_ids or edge.target not in node_ids:_topology_fail('TOPOLOGY_MERMAID_DANGLING_ENDPOINT')
+        label,async_relation=_topology_relation(edge)
+        label+='; '+edge.resolution_status+'; '+edge.freshness
+        lines.append('  %% topology-edge '+_mermaid_json(edge.to_dict()))
+        arrow='-.->' if async_relation else '-->'
+        lines.append('  '+node_ids[edge.source]+' '+arrow+'|"'+_mermaid_text(label)+'"| '+node_ids[edge.target])
+    result='\n'.join(lines)+'\n'
+    if len(result.encode('utf-8'))>_MAX_OUTPUT_BYTES:_topology_fail('TOPOLOGY_MERMAID_LIMIT')
+    return result
+
+
 def render_topology_mermaid(value):
     """Render a supplied T017 topology result as a pure, bounded Mermaid diagram.
 
@@ -151,100 +249,131 @@ def render_topology_mermaid(value):
     The title carries scope/evidence/coverage without synthetic graph vertices.
     """
     try:
-        if type(value) not in (dict,ViewDocument):_topology_fail()
-        _bounded(value)
-        if type(value) is ViewDocument:
-            raw={'document':value.to_dict(include_generation_metadata=False)}
-            is_envelope=False
-        else:
-            raw=value
-            is_envelope='document' in raw
-        if 'document' in raw:
-            if is_envelope:
-                if set(raw)-{'schema_version','rules_version','document','filtering'}:
-                    _topology_fail()
-                if 'filtering' not in raw or not isinstance(raw['filtering'],dict):_topology_fail()
-                filtering=raw['filtering']
-                required={'schema_version','rules_version','document','filtering'}
-                if (set(raw)!=required or type(raw['schema_version']) is not int or raw['schema_version']!=1
-                        or raw['rules_version']!='topology-filter-1'):
-                    _topology_fail()
-            else:filtering=None
-        else:
-            filtering=None
-            raw={'document':raw}
-        view=ViewDocument.from_dict(raw['document'])
-        if view.kind!='topology':_topology_fail()
-        criteria = filtering.get('criteria', {}) if filtering is not None else {}
-        if not isinstance(criteria, dict):
-            _topology_fail()
-        if criteria.get('scope', view.scope) != view.scope:
-            _topology_fail('TOPOLOGY_MERMAID_FOREIGN_SCOPE')
-        contexts = criteria.get('context_ids')
-        selected = set(_refs(contexts)) if contexts is not None else None
-        visible_evidence_refs = set()
-        for item in (*view.nodes, *view.edges):
-            if item.attributes.get('scope', view.scope) not in (view.scope, 'unknown'):
-                _topology_fail('TOPOLOGY_MERMAID_FOREIGN_SCOPE')
-            if selected is not None and not selected.issuperset(_contexts(item)):
-                _topology_fail('TOPOLOGY_MERMAID_FOREIGN_CONTEXT')
-            visible_evidence_refs.update(item.evidence_refs)
-        for proof in view.provenance:
-            if proof['id'] not in visible_evidence_refs:
-                # T017 retains proof records for the omitted frontier as well.
-                continue
-            if proof.get('scope') not in (None, view.scope, 'unknown'):
-                _topology_fail('TOPOLOGY_MERMAID_FOREIGN_SCOPE')
-            if selected is not None and not selected.issuperset(_refs(proof.get('context_ids', []))):
-                _topology_fail('TOPOLOGY_MERMAID_FOREIGN_CONTEXT')
-        normalized=view.to_dict(include_generation_metadata=False)
-        envelope={**raw,'document':normalized}
-        try:_safe_output(envelope)
-        except ValueError:_topology_fail('UNSAFE_TOPOLOGY_MERMAID')
-
-        node_ids={node.id:'n'+hashlib.sha256(_topology_node_identity(node,view.scope).encode('utf-8')).hexdigest()
-                  for node in view.nodes}
-        if len(set(node_ids.values()))!=len(node_ids):
-            _topology_fail('TOPOLOGY_MERMAID_ID_COLLISION')
-        status=view.coverage.get('status','UNKNOWN')
-        truncated=(view.coverage.get('truncated') is True or
-                   filtering is not None and filtering.get('truncated') is True)
-        evidence=', '.join(sorted({kind for node in view.nodes for kind in node.evidence_kinds} |
-                                  {kind for edge in view.edges for kind in edge.evidence_kinds})) or 'UNKNOWN'
-        title=('Service topology | Scope: '+view.scope+' | Evidence: '+evidence+
-               ' | Coverage: '+str(status)+(' | TRUNCATED' if truncated else '')+
-               ' | runtime/data availability: UNKNOWN | ordering/delivery: NOT_OBSERVED')
-        lines=['---','title: '+json.dumps(title,ensure_ascii=False),'---','flowchart LR',
-               '  %% topology-meta '+_mermaid_json(envelope)]
-        node_by_id={node.id:node for node in view.nodes}
-        for node in sorted(view.nodes,key=lambda item:item.id):
-            kind={
-                'service':'Service',
-                'data_resource':'Resource',
-                'database_resource':'Database resource',
-                'unresolved_data_resource':'Unresolved data resource',
-                'external_system':'External system',
-                'kafka_channel':'Channel',
-                'unresolved_topology_boundary':'Unresolved boundary',
-            }.get(node.kind,'UNKNOWN node kind: '+node.kind)
-            label=kind+' — '+node.label+'; '+node.resolution_status+'; '+node.freshness
-            kinds=', '.join(sorted(node.evidence_kinds)) or 'UNKNOWN'
-            label+='; evidence '+kinds
-            lines.append('  %% topology-node '+_mermaid_json(node.to_dict()))
-            lines.append('  '+node_ids[node.id]+'["'+_mermaid_text(label)+'"]')
-        for edge in sorted(view.edges,key=lambda item:item.id):
-            if edge.source not in node_ids or edge.target not in node_ids:_topology_fail('TOPOLOGY_MERMAID_DANGLING_ENDPOINT')
-            label,async_relation=_topology_relation(edge)
-            label+='; '+edge.resolution_status+'; '+edge.freshness
-            lines.append('  %% topology-edge '+_mermaid_json(edge.to_dict()))
-            arrow='-.->' if async_relation else '-->'
-            lines.append('  '+node_ids[edge.source]+' '+arrow+'|"'+_mermaid_text(label)+'"| '+node_ids[edge.target])
-        result='\n'.join(lines)+'\n'
-        if len(result.encode('utf-8'))>_MAX_OUTPUT_BYTES:_topology_fail('TOPOLOGY_MERMAID_LIMIT')
-        return result
+        return _topology_diagram(*_topology_snapshot(value))
     except TopologyMermaidError:raise
     except (ValueError,TypeError,KeyError,AttributeError,RecursionError,OverflowError,UnicodeError):
         _topology_fail()
+
+
+def render_topology_markdown(value):
+    """Display a captured topology and its boundaries without observing sources."""
+    try:
+        view, filtering, envelope = _topology_snapshot(value)
+        return _topology_markdown(view, filtering, _topology_diagram(view, filtering, envelope))
+    except (ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError, UnicodeError):
+        raise ValueError('Invalid topology Markdown input') from None
+
+
+def _topology_markdown(view, filtering, diagram):
+    lines = []
+    size = 0
+
+    def add(line=''):
+        nonlocal size
+        size += len(line.encode('utf-8')) + 1
+        if size > _MAX_OUTPUT_BYTES:
+            raise ValueError('Topology Markdown output limit')
+        lines.append(line)
+
+    def cell(value):
+        if isinstance(value, (list, tuple, dict)):
+            value = canonical(value)
+        return _text(value)
+
+    def table(headers, rows):
+        add('| ' + ' | '.join(headers) + ' |')
+        add('| ' + ' | '.join('---' for _ in headers) + ' |')
+        for row in rows:
+            add('| ' + ' | '.join(cell(value) for value in row) + ' |')
+        add()
+
+    nodes = sorted(view.nodes, key=lambda node: node.id)
+    edges = sorted(view.edges, key=lambda edge: edge.id)
+    items = [*nodes, *edges]
+    contexts = sorted({context for item in items for context in _contexts(item)})
+    selection = filtering.get('criteria', {}).get('context_ids') if filtering is not None else None
+    add('# Service topology')
+    add()
+    table(('Snapshot', 'Captured value'), (
+        ('View ID', view.view_id), ('Content fingerprint', view.content_fingerprint),
+        ('Baseline', view.baseline_fingerprint), ('Rules', view.rules_version), ('Scope', view.scope),
+        ('Coverage', view.coverage['status']), ('Truncated', view.coverage.get('truncated')),
+        ('Context filter', selection if selection is not None else 'All captured contexts'),
+        ('Context IDs of retained elements', contexts), ('Source observation', 'NOT_CHECKED'),
+    ))
+    if selection is None:
+        table(('Captured context selection', 'Value'), sorted(view.context_selection.items()))
+
+    add('## Diagram')
+    add()
+    # The original diagram is byte-identical, including safe metadata comments.
+    # A longer fence keeps any backtick runs in captured labels inside the diagram.
+    longest_run = max((len(run[0]) for run in re.finditer(r'`+', diagram)), default=0)
+    fence = '`' * max(3, longest_run + 1)
+    add(fence + 'mermaid')
+    add(diagram.removesuffix('\n'))
+    add(fence)
+    add()
+
+    def node_rows(group):
+        return ((node.id, node.attributes.get('logical_id'), node.label, node.kind, _contexts(node),
+                 node.resolution_status, node.freshness, node.evidence_kinds) for node in group)
+
+    node_headers = ('ID', 'Logical ID', 'Label', 'Kind', 'Contexts', 'Resolution', 'Freshness', 'Evidence kinds')
+    add('## Service inventory')
+    add()
+    table(node_headers, node_rows(node for node in nodes if node.kind == 'service'))
+    other_nodes = [node for node in nodes if node.kind != 'service']
+    if other_nodes:
+        add('## Other topology elements')
+        add()
+        table(node_headers, node_rows(other_nodes))
+    add('## Relationships')
+    add()
+    table(('ID', 'Source', 'Target', 'Relation', 'Contexts', 'Resolution', 'Freshness', 'Evidence kinds'),
+          ((edge.id, edge.source, edge.target, edge.relation, _contexts(edge), edge.resolution_status,
+            edge.freshness, edge.evidence_kinds) for edge in edges))
+
+    add('## Scope, limits and omitted boundaries')
+    add()
+    table(('Coverage field', 'Value'), sorted(view.coverage.items()))
+    table(('Limit',), ((limit,) for limit in sorted(view.limits)))
+    if filtering is None:
+        add('Omission inventory unavailable in the captured view.')
+        add()
+    else:
+        names = ('criteria', 'status', 'truncated', 'upstream_truncated', 'omission_inventory_complete',
+                 'omitted_edge_ids', 'omitted_original_ids', 'omitted_original_interface_ids',
+                 'omitted_mapping_ids', 'omitted_release_ids')
+        table(('Filter inventory', 'Captured value'), ((name, filtering.get(name)) for name in names))
+        reasons = {item['id']: item['reason'] for item in filtering.get('omitted_nodes', [])}
+        table(('Omitted node ID', 'Captured reason'),
+              ((identity, reasons.get(identity)) for identity in _refs(filtering.get('omitted_node_ids', []))))
+        table(('Boundary ID', 'Reason', 'Anchor', 'Direction', 'Relation', 'Scope', 'Contexts',
+               'Omitted nodes', 'Omitted edges', 'Evidence refs'),
+              ((row['id'], row['reason'], row.get('anchor_id'), row.get('direction'), row.get('relation'),
+                row.get('scope'), row.get('context_ids'), row.get('omitted_node_ids'), row.get('omitted_edge_ids'),
+                row.get('evidence_refs')) for row in sorted(filtering.get('frontier', []), key=lambda row: row['id'])))
+    table(('Diagnostic', 'Captured details'),
+          ((row.get('code'), {key: value for key, value in row.items() if key != 'code'})
+           for row in sorted(view.diagnostics, key=canonical)))
+
+    add('## Sources and provenance')
+    add()
+    table(('Element ID', 'Original IDs', 'Supporting refs', 'Contradicting refs', 'Unknown refs'),
+          ((item.id, item.original_ids, item.supporting_refs, item.contradicting_refs, item.unknown_refs)
+           for item in items))
+    proofs = {proof['id']: proof for proof in view.provenance}
+    refs = sorted({ref for item in items for ref in item.evidence_refs})
+    # T016 proof rows carry references and a payload hash, without T018's bound source locator.
+    add(r'Source locations: SOURCE\_LOCATOR\_UNAVAILABLE in this topology capture.')
+    add()
+    table(('Evidence ID', 'Kind', 'Freshness', 'Polarity', 'Scope', 'Contexts', 'Source ID',
+           'Source refs', 'Original payload hash'),
+          ((proof['id'], proof['evidence_kind'], proof['freshness'], proof['polarity'], proof.get('scope'),
+            proof.get('context_ids'), proof.get('source_id'), proof.get('source_refs'),
+            proof.get('original_payload_hash')) for proof in (proofs[ref] for ref in refs)))
+    return '\n'.join(lines) + '\n'
 
 
 def _render(document):

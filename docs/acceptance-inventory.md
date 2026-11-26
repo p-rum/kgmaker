@@ -2014,6 +2014,21 @@ Příkazy a výsledky tohoto historického checkpointu jsou v [change132](change
 | T021-AC05 | Cizí scope a explicitní kontext u přímé provenance viditelných uzlů/hran vyvolá chybu. Neznámé hodnoty, omitted-only provenance, PARTIAL/TRUNCATED/UNKNOWN a async delivery boundary jsou zachované. | PASS |
 | T021-AC06 | README, architecture, CLI, service topology, stavová a acceptance matice, [historická změna](changes/132_renderTopologyMermaid.md), [aktuální ověření](changes/138_rejectForeignTopologyEvidence.md), úplná sada a [T045 merge doklad](changes/146_recordTopologyMerge.md). | PASS |
 
+## T022 — Markdown report topologie
+
+Cílené ověření používá veřejný CLI, Markdown-it 3.0.0 a skutečný parser i renderer
+Mermaid 11.4.1/jsdom 26.0.0. Úplná sada a nezávislé review jsou zatím `NOT_RUN`.
+[Přesné výsledky a zbývající ověření](changes/195_renderTopologyMarkdown.md).
+
+| Acceptance | Cílený důkaz | Stav |
+|---|---|---|
+| T022-AC01 | `test_public_topology_three_formats_share_model_and_ids`; všech 13 původních JSON/Mermaid výstupů zachovává bytes. | PASS |
+| T022-AC02 | `test_public_partial_topology_exposes_all_frontiers_and_preserves_cache`; všechny frontier IDs a vynechané uzly/hrany jsou viditelné. | PASS |
+| T022-AC03 | `test_report_is_pure_deterministic_and_abstains_on_missing_source`; stejné bytes, vstup beze změny a zákaz I/O během renderu. | PASS |
+| T022-AC04 | `test_public_rejected_topology_markdown_keeps_last_artifact` a `test_markdown_render_failure_never_publishes_prepared_cache`; původní vstupy i artefakt zůstávají stejné. | PASS |
+| T022-AC05 | `test_foreign_visible_claim_or_proof_is_rejected_without_mutation`, `test_explicit_context_report_does_not_display_uncited_proof_as_selected` a nevyřešená vazba v deterministické fixture. | PASS |
+| T022-AC06 | [Změna](changes/195_renderTopologyMarkdown.md), veřejné příklady a cílené testy jsou připravené. Publikace, úplná sada a review čekají. | PARTIAL |
+
 ## T003-S10-W06 — souběh publikace a poškozená cache
 
 Dodání MERGED v [#129](https://github.com/p-rum/kgmaker/pull/129), merge `c067f9c3c7b3266842fc4f2230b4eaf65182e4df`. Lokální úplné

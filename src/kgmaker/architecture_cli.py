@@ -45,7 +45,7 @@ def _configure(parser):
         child.add_argument('--scope',choices=('production','test','test_fixture','development','unknown'),help='assert snapshot scope; local capture defaults to production')
         child.add_argument('--context-selection',type=Path,help='versioned capture pins; exact assertion in snapshot replay')
         child.add_argument('--strict',action='store_true')
-        formats=('json','markdown') if name=='interfaces' else ('json','mermaid') if name=='topology' else ('json',)
+        formats=('json','markdown') if name=='interfaces' else ('json','mermaid','markdown') if name=='topology' else ('json',)
         child.add_argument('--format',choices=formats,default='json')
         child.add_argument('--expected-fingerprint')
         child.add_argument('--cancel-file',type=Path)
@@ -316,7 +316,10 @@ def run(argv):
         result,fingerprint={'interfaces':_interfaces,'topology':_topology,'explain':_explain}[args.architecture_command](args,selected)
         if args.expected_fingerprint is not None and args.expected_fingerprint!=fingerprint:_fail('EXPECTED_FINGERPRINT_MISMATCH',3)
         _cancel(args);_bounded(result);_safe_output(result)
-        if args.format=='markdown':
+        if args.architecture_command=='topology' and args.format=='markdown':
+            from .architecture_render import render_topology_markdown
+            payload=render_topology_markdown(result)
+        elif args.format=='markdown':
             from .architecture_render import render_interface_markdown
             payload=render_interface_markdown(result)
         elif args.architecture_command=='topology' and args.format=='mermaid':

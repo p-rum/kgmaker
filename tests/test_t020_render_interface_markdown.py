@@ -264,8 +264,7 @@ def test_actual_explicit_contract_and_generated_file_capture_renders_without_rec
     assert doc.to_dict()==original
 
 
-@pytest.mark.parametrize('command',['topology','explain'])
-def test_markdown_is_interfaces_only_and_invalid_path_preserves_last_artifact(command,tmp_path):
+def test_explain_remains_json_only_and_preserves_last_artifact(tmp_path):
     from test_t019_add_architecture_json_cli import run_cli,write
     from test_t016_aggregate_service_topology import labelled_handoff
     from kgmaker.service_topology import aggregate_service_topology
@@ -273,9 +272,8 @@ def test_markdown_is_interfaces_only_and_invalid_path_preserves_last_artifact(co
     view=write(tmp_path/'view.json',aggregate_service_topology(captured).to_dict())
     sentinel=tmp_path/'last-valid';sentinel.write_bytes(b'last valid')
     before={p.name:p.read_bytes() for p in tmp_path.iterdir()}
-    args=[command,'--capture-snapshot',cap,'--format','markdown']
-    if command=='explain':args+=['--snapshot',view,'--element','service:checkout']
-    result=run_cli(*args)
+    result=run_cli('explain','--capture-snapshot',cap,'--format','markdown',
+                   '--snapshot',view,'--element','service:checkout')
     assert result.returncode==2 and result.stdout=='' and 'Traceback' not in result.stderr
     assert {p.name:p.read_bytes() for p in tmp_path.iterdir()}==before
 
