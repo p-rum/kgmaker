@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
@@ -43,6 +44,32 @@ public final class RuntimeTrace {
             record(base + ",\"outcome\":\"THREW\"}");
             throw error;
         }
+    }
+
+    /** Place inside a concrete synchronous Java interface override, passing its actual this. */
+    public void observeInterfaceDispatch(Object receiver) {
+        if (!enabled) return;
+        var frames = StackWalker.getInstance(Set.of(StackWalker.Option.RETAIN_CLASS_REFERENCE,
+            StackWalker.Option.SHOW_HIDDEN_FRAMES))
+            .walk(stack -> stack.skip(1).limit(2).toList());
+        if (frames.size() != 2 || receiver == null) {
+            incomplete = true;
+            return;
+        }
+        var target = frames.get(0);
+        var caller = frames.get(1);
+        if (receiver.getClass() != target.getDeclaringClass() || caller.getLineNumber() <= 0) {
+            incomplete = true;
+            return;
+        }
+        record("{\"kind\":\"interface_dispatch\",\"caller_owner\":" + quote(caller.getClassName())
+            + ",\"caller_name\":" + quote(caller.getMethodName())
+            + ",\"caller_descriptor\":" + quote(caller.getDescriptor())
+            + ",\"source_line\":" + caller.getLineNumber()
+            + ",\"receiver_type\":" + quote(receiver.getClass().getName())
+            + ",\"target_owner\":" + quote(target.getClassName())
+            + ",\"target_name\":" + quote(target.getMethodName())
+            + ",\"target_descriptor\":" + quote(target.getDescriptor()) + "}");
     }
 
     public <T> T bean(String factory, String beanType, Supplier<T> action) {
