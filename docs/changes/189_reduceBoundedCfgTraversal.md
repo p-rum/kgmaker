@@ -155,6 +155,25 @@ i výstupů se shodují. SHA-256 zprávy
 
 Limit se vztahuje na počty zdrojových diagnostik v CFG a procesu. Souhrnný
 bajtový rozpočet, strukturální mezery a diagnostika vztahových pohledů
-zůstávají mimo toto ověření. Plný pytest, hostované CI, nový běh compiler
-workeru a skutečný Mermaid parser mají v tomto dílčím kroku stav NOT_RUN.
+zůstávají mimo toto ověření.
 [Použití a formáty](../unified-flow-views.md) · [PR #173](https://github.com/p-rum/kgmaker/pull/173)
+
+## Ověření Mermaid a standardní sady na revizi 591dacc / T043-AC04 až T043-AC06
+
+Na revizi `591dacc6ac97d30919a1e52524a289e8e002d622` prošly čtyři výstupy
+CLI (běžné a nadlimitní CFG i proces) lokálním `validate_unified.mjs`
+s Mermaid **11.4.1**. Výsledek byl **4 PASS / 0 SKIP** včetně porovnání ID,
+pořadí, hran a strukturované diagnostiky s JSON. Běžné výstupy zůstaly proti
+`cb9848520b056518d028ceb8010ec6a6f9a43a2f` shodné v JSON, Markdownu a Mermaid.
+Mermaid vykreslil všechny čtyři grafy také jako SVG vložené do HTML v jsdom
+26.0.0 s testovacími rozměry textu (**4 PASS / 0 SKIP**). Nativní vykreslení
+v Chromiu 156 má stav NOT_RUN. Spravované prostředí odmítlo operaci Crashpad
+`setsockopt` před načtením stránky. SHA-256 dokladu
+`cc9bbf1a5fe241a1410804a2ddb32832222a5e09381519969372723799e90e32`.
+
+Na stejné revizi prošla lokální standardní sada v Pythonu 3.13.18 s výsledkem
+**2 639 PASS / 1 382 SKIP / 1 očekávaný XFAIL** za 119,29 s. Otisky sledovaných
+souborů před a po běhu jsou shodné. SHA-256 JUnit
+`3808dd985997d97772f541d7845f4b84af17d9cef865be811f011e98d3950c6d`.
+Hostované CI mají pro toto ověření stav NOT_RUN. Celkové ověření T043 zůstává
+PARTIAL v rozsahu uvedeném výše.
