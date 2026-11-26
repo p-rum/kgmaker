@@ -84,8 +84,8 @@ Captured documentary CONFLICT/UNKNOWN remains cited separately. Natural-language
 comparison is always NOT_EVALUATED; the validator neither interprets an 'approved'
 label as approval nor invents a doc/code NLP contradiction detector. Known technical
 status, fingerprints and unresolved/truncated coverage are carried unchanged.
-T032 local review is merged; T034 CLI remains planned. Existing process and
-graph readers are unchanged; the separate versioned report creates no new store.
+T032 local review is merged. CLI annotation validation remains planned. The
+separate versioned report leaves process and graph readers unaffected.
 
 ## Validation attribution
 

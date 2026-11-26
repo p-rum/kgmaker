@@ -1526,6 +1526,17 @@ testfile+5processdependencies exactactual. Original2139parent2129PASS10SKIP;
 currentmain2364+37source/IDunion2401=2391PASS10sameSKIP. No new run/collection.
 See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
 
+## T034 — lokální technický JSON render
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T034-AC01 | PARTIAL | `test_workspace_entry_and_stored_process_use_one_current_canonical_view` ověřuje shodné JSON bajty pro přesný trigger a explicitní ProcessView v reálném Javac workspace se dvěma službami. Interní vyhledání podle samotného ID zůstává otevřené. |
+| T034-AC02 | NOT_RUN | Mutující `apply` a `review` nejsou součástí čtecí dodávky. |
+| T034-AC03 | VERIFIED_IN_SCOPE | Stejný test ověřuje původní `flow render --view process` s Javac a CFG schema 1. |
+| T034-AC04 | VERIFIED_IN_SCOPE | Shoda bajtů vstupů, indexů a posledního validního JSON při chybném výběru, revizi, souboru, pinování a chybějícím původním indexu. Chybný výslovný pin druhé služby skončí u obou selektorů exit 2. Historický jinak platný ProcessView se stejným baseline skončí exit 3. |
+| T034-AC05 | VERIFIED_IN_SCOPE | Přesný kontext `orders`, scope, provenance a obě větve zůstávají v PARTIAL výsledku. Cizí scope nevydá JSON, `--strict` vydá stejný JSON s exit 4. |
+| T034-AC06 | PARTIAL | Výchozí CLI selhalo na chybějícím příkazu. Cílená sada s JDK21 a K1/K2 má 237 PASS / 0 SKIP. [Change193](changes/193_renderLocalProcess.md) uvádí výsledky kandidáta a zbývající release kontroly. |
+
 
 ## T014 — current-parent descendant-result transfer
 
