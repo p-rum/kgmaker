@@ -152,6 +152,14 @@ typovaný `STALE` a shodné uložené bajty při neplatném CFG nebo závislosti
 framework či runtime důkazu na vyřazovaném kontextu. Celé W02-AC01 zůstává `PARTIAL`.
 [Přesné ověření a hranice](changes/185_publishIsolatedJvmContext.md).
 
+`test_actual_jvm_retirement_of_deleted_owned_peer_input` ověřuje totéž po
+fyzickém odstranění zachyceného a stále výhradně deklarovaného vstupu.
+Nativní K1 a K2 zachovají celý nezávislý důkaz, čtecí report ukáže pouze
+doloženého volajícího a návrat souboru během výměny výstupů obnoví předchozí
+generaci. Překryv vlastnictví, nedostupná cesta nebo smíšené změny nedodají
+důkaz odstranění. W02-AC01 zůstává `PARTIAL`.
+[Ověření odstranění JVM vstupu](changes/194_retireDeletedCompilerPeer.md).
+
 `test_explicit_composite_fk_columns_join_historical_migration_operations`
 ověřuje uložené sloupce složeného cizího klíče, přesné cesty operací,
 zachování uloženého grafu čtecím reportem a nový offline scan. Doplňkové

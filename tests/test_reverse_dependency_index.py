@@ -14,7 +14,7 @@ from kgmaker import feature, inspection, store, workspace
 from kgmaker.analysis_model import AnalysisError, digest, inventory_candidate, read_json, write_json
 from kgmaker.callgraph import callees
 from kgmaker.cli import main, scan
-from kgmaker.graph_provider import dependency_impact, validate_context_snapshot
+from kgmaker.graph_provider import _compiler_input_absent, dependency_impact, validate_context_snapshot
 from kgmaker.inspection import command, inspect_jvm
 from kgmaker.model import Edge, KnowledgeGraph, Node
 from kgmaker.store import GRAPH_FILE, save_graph
@@ -42,7 +42,8 @@ def _require_javac_worker():
         pytest.skip(str(error))
 
 
-def _native_jvm_peer_fixture(root, backend, *, overlap=False, edit_peer=True, control_class=False):
+def _native_jvm_peer_fixture(root, backend, *, overlap=False, edit_peer=True, control_class=False,
+                             split_peer=False):
     try:
         argv = command('jvm', kotlin_backend=backend)
         stdlib = Path(argv[-1]).parent / 'lib' / 'kotlin-stdlib.jar'
@@ -60,8 +61,13 @@ def _native_jvm_peer_fixture(root, backend, *, overlap=False, edit_peer=True, co
                                 'fun run(value: Int): Int = target(value)\n')
     java = _write(root, 'edited/src/main/java/Witness.java', 'package edited;\nclass Witness {}\n')
     extra = {'edited': [java.relative_to(root).as_posix()]}
+    if split_peer:
+        peers['edited'].write_text('package edited\nfun target(value: Int): Int = value\n', encoding='utf-8')
+        caller = _write(root, 'edited/src/main/kotlin/Caller.kt',
+                        'package edited\nfun run(value: Int): Int = target(value)\n')
+        extra['edited'] += [caller.relative_to(root).as_posix(), 'edited/src/main/kotlin/Added.kt']
     if overlap:
-        extra['selected'] = extra['edited']
+        extra['selected'] = [peers['edited'].relative_to(root).as_posix()] if split_peer else extra['edited']
     if control_class:
         path = 'control/src/main/java/Independent.java'
         _write(root, path, 'package control;\nclass Independent {}\n')
@@ -182,6 +188,102 @@ def test_actual_jvm_isolated_stale_peer_publication_and_guards(tmp_path, backend
 def test_actual_jvm_overlapping_stale_peer_still_aborts(tmp_path):
     options, _, _, _ = _native_jvm_peer_fixture(tmp_path, 'k1', overlap=True)
     previous = _store_bytes(tmp_path)
+    with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+        inspect_jvm(tmp_path, module='selected', **options)
+    assert error.value.status == 'STALE' and _store_bytes(tmp_path) == previous
+
+
+def test_compiler_input_absence_distinguishes_unavailable_paths(tmp_path):
+    target = 'src/Target.kt'
+    future = tmp_path / target
+    future.parent.mkdir()
+    assert _compiler_input_absent(tmp_path, target)
+    assert not _compiler_input_absent(tmp_path, '../Target.kt')
+    future.write_bytes(b'\xff')
+    assert not _compiler_input_absent(tmp_path, target)
+    future.unlink()
+    with patch.object(Path, 'lstat', side_effect=PermissionError):
+        assert not _compiler_input_absent(tmp_path, target)
+
+
+@pytest.mark.skipif(os.name != 'posix', reason='requires local symlinks')
+def test_compiler_input_absence_rejects_dangling_symlinks(tmp_path):
+    (tmp_path / 'Target.kt').symlink_to('not-here.kt')
+    (tmp_path / 'src').symlink_to('not-here', target_is_directory=True)
+    assert not _compiler_input_absent(tmp_path, 'Target.kt')
+    assert not _compiler_input_absent(tmp_path, 'src/Target.kt')
+
+
+@pytest.mark.parametrize('backend', ['k1', 'k2'])
+def test_actual_jvm_retirement_of_deleted_owned_peer_input(tmp_path, backend):
+    options, peers, _, initial = _native_jvm_peer_fixture(tmp_path, backend, edit_peer=False, split_peer=True)
+    source = peers['edited']
+    path = source.relative_to(tmp_path).as_posix()
+    ids = {item['module']: item['id'] for item in initial.contexts if item.get('analyzer_version')}
+    diagram = tmp_path / store.MERMAID_FILE
+    diagram.write_bytes(diagram.read_bytes() + b'%% deleted peer rollback witness\n')
+    previous = _store_bytes(tmp_path)
+    generation = store.graph_revision(tmp_path)
+    old_bytes = source.read_bytes()
+    source.unlink()
+
+    with patch('subprocess.Popen', side_effect=AssertionError('Unexpected implicit compiler process')):
+        impact = dependency_impact(tmp_path, [path])
+    assert impact['graph_sha256'] == hashlib.sha256(previous[GRAPH_FILE]).hexdigest()
+    assert impact['changed_sources'] == [{'path': path, 'before_sha256': hashlib.sha256(old_bytes).hexdigest(),
+                                          'after_sha256': None}]
+    assert {(r['kind'], r['path'], r['status']) for r in impact['affected']} == {
+        ('COMPILER_CALLER', 'edited/src/main/kotlin/Caller.kt', 'RECHECK')}
+    dry = inspect_jvm(tmp_path, module='selected', publish=False, **options)
+    assert dry['exit_code'] == 0 and dry['coverage']['calls_resolved'] == 1
+    assert store.graph_revision(tmp_path) == generation and _store_bytes(tmp_path) == previous
+
+    added = source.with_name('Added.kt')
+    for incompatible, data in [(source, b'\xff'), (added, b'\xff'), (added, b'package edited\nfun added() = 1\n'),
+                               (tmp_path / 'edited/build.gradle', b'// changed configuration\n')]:
+        incompatible.write_bytes(data)
+        with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+            inspect_jvm(tmp_path, module='selected', **options)
+        assert error.value.status == 'STALE' and _store_bytes(tmp_path) == previous
+        incompatible.unlink()
+
+    original_replace = store.os.replace
+    replaced = []
+
+    def deleted_input_reappears(input_path, destination):
+        original_replace(input_path, destination)
+        if destination == diagram and not replaced:
+            assert destination.read_bytes() != previous[store.MERMAID_FILE]
+            replaced.append(destination)
+            source.write_bytes(old_bytes)
+
+    with patch.object(store.os, 'replace', deleted_input_reappears), \
+            pytest.raises(WorkerError, match='input reappeared or became unavailable before commit') as error:
+        inspect_jvm(tmp_path, module='selected', **options)
+    assert error.value.status == 'STALE' and replaced == [diagram]
+    assert store.graph_revision(tmp_path) == generation and _store_bytes(tmp_path) == previous
+    source.unlink()
+
+    result = inspect_jvm(tmp_path, module='selected', **options)
+    graph = store.load_graph(tmp_path)
+    stale, *retired = _compiler_layer(graph, ids['edited'])
+    assert stale[0]['freshness'] == 'STALE' and 'source/config inputs changed' in stale[0]['stale_reason']
+    assert 'deleted compiler inputs: ' + path in stale[0]['stale_reason']
+    assert not any(retired) and path not in graph.files
+    assert not _compiler_layer(graph, ids['selected'])[0]
+    assert _compiler_layer(graph, ids['control']) == _compiler_layer(initial, ids['control'])
+    assert graph.to_dict() == result['graph']
+    new_site, = [site for site in graph.call_sites if site['context_id'] == result['context']['id']]
+    target = next(symbol for symbol in graph.symbols if symbol['id'] == new_site['declared_target'])
+    assert target['name'] == 'replacement' and target.get('logical_key')
+    assert new_site['sha256'] == hashlib.sha256(peers['selected'].read_bytes()).hexdigest()
+
+
+def test_actual_jvm_overlapping_deleted_peer_input_still_aborts(tmp_path):
+    options, peers, _, _ = _native_jvm_peer_fixture(tmp_path, 'k1', overlap=True,
+                                                   edit_peer=False, split_peer=True)
+    previous = _store_bytes(tmp_path)
+    peers['edited'].unlink()
     with pytest.raises(WorkerError, match='source/config inputs changed') as error:
         inspect_jvm(tmp_path, module='selected', **options)
     assert error.value.status == 'STALE' and _store_bytes(tmp_path) == previous
