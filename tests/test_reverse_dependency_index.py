@@ -1,3 +1,4 @@
+from copy import deepcopy
 from dataclasses import replace
 import hashlib
 import json
@@ -681,6 +682,197 @@ def test_schema_dependency_follows_prior_migration_operations(tmp_path):
     report = dependency_impact(tmp_path, paths)
     assert [reason["dependency_path"] for item in report["affected"] for reason in item["reasons"]] == [paths[1]]
     assert _store_bytes(tmp_path) == store
+
+
+def test_explicit_composite_fk_columns_join_historical_migration_operations(tmp_path):
+    migrations = 'src/main/resources/db/migration/'
+    _write(tmp_path, migrations + 'V1__tables.sql',
+           'CREATE TABLE parent(a INTEGER, b INTEGER, other INTEGER, UNIQUE(b,a));\n'
+           'CREATE TABLE sibling(b INTEGER);\n')
+    fk_path = migrations + 'V2__reference.sql'
+    _write(tmp_path, fk_path, 'CREATE TABLE child(x INTEGER, y INTEGER, '
+           'CONSTRAINT child_parent FOREIGN KEY(x,y) REFERENCES parent(b,a));\n')
+    changes = [(migrations + f'V{n}__{table}_{column}.sql', table, column)
+               for n, (table, column) in enumerate(
+                   [('parent', 'b'), ('parent', 'a'), ('parent', 'other'), ('sibling', 'b')], 3)]
+    for path, table, column in changes:
+        _write(tmp_path, path, f'ALTER TABLE {table} ALTER COLUMN {column} SET DEFAULT 1;\n')
+
+    with patch('subprocess.Popen', side_effect=AssertionError('implicit process')):
+        assert scan(tmp_path, generate_docs=False) == 0
+        graph = store.load_graph(tmp_path)
+        foreign_key = next(node for node in graph.nodes if node.kind == 'db_constraint' and node.path == fk_path)
+        target_ids = {node.name.rsplit('.', 1)[-1]: node.id for node in graph.nodes
+                      if node.kind == 'db_column' and node.name in {'public.parent.a', 'public.parent.b'}}
+        captured = _store_bytes(tmp_path)
+        for path, table, column in changes:
+            _write(tmp_path, path, f'ALTER TABLE {table} ALTER COLUMN {column} SET DEFAULT 2;\n')
+        with patch('kgmaker.schema_replay.reconstruct', side_effect=AssertionError('implicit replay')):
+            report = dependency_impact(tmp_path, [path for path, _, _ in changes])
+        assert _store_bytes(tmp_path) == captured
+        assert scan(tmp_path, generate_docs=False) == 0
+        replayed = store.load_graph(tmp_path)
+        assert replayed.files != graph.files
+        assert {node.id for node in replayed.nodes if node.name in {'public.sibling', 'public.sibling.b'}} == {
+            node.id for node in graph.nodes if node.name in {'public.sibling', 'public.sibling.b'}
+        }
+        assert not dependency_impact(tmp_path, [path for path, _, _ in changes])['affected']
+
+    assert {row['path'] for row in report['changed_sources']} == {path for path, _, _ in changes}
+    assert [(row['kind'], row['id'], row['status']) for row in report['affected']] == [
+        ('SCHEMA_DEPENDENT', foreign_key.id, 'RECHECK'),
+    ]
+    reasons = report['affected'][0]['reasons']
+    assert {(row['dependency_path'], row['dependency_id']) for row in reasons} == {
+        (path, target_ids[column]) for path, _, column in changes[:2]
+    }
+    assert all(row['relation'] == 'foreign_key_references_column' and row['operation_id']
+               and row['operation_line'] == 1 for row in reasons)
+    assert {edge.target for edge in graph.edges if edge.kind == 'foreign_key_references_column'
+            and edge.source == foreign_key.id} == set(target_ids.values())
+    parent = next(node for node in graph.nodes if node.kind == 'db_table' and node.name == 'public.parent')
+    assert foreign_key.metadata['foreign_key_targets'] == {
+        'table_id': parent.id, 'column_ids': [target_ids['b'], target_ids['a']],
+    }
+    assert {edge.target for edge in replayed.edges if edge.kind == 'foreign_key_references_column'
+            and edge.source == foreign_key.id} == set(target_ids.values())
+
+
+def test_explicit_fk_column_rejects_unbound_stored_scope_or_operation(tmp_path):
+    from kgmaker.schema_replay import reconstruct, schema_snapshot_fingerprint
+
+    migrations = 'src/main/resources/db/migration/'
+    tables = migrations + 'V1__parent.sql'
+    _write(tmp_path, tables, 'CREATE TABLE parent(id INTEGER UNIQUE, other INTEGER UNIQUE); '
+           'CREATE TABLE sibling(id INTEGER);\n')
+    _write(tmp_path, migrations + 'V2__fk.sql', 'CREATE TABLE child(p INTEGER, '
+           'CONSTRAINT child_parent FOREIGN KEY(p) REFERENCES parent(id));\n'
+           'CREATE TABLE independent(p INTEGER, '
+           'CONSTRAINT independent_other FOREIGN KEY(p) REFERENCES parent(other));\n')
+    altered = migrations + 'V3__alter.sql'
+    _write(tmp_path, altered, 'ALTER TABLE parent ALTER COLUMN id SET DEFAULT 1;\n')
+    independent = migrations + 'V4__independent.sql'
+    _write(tmp_path, independent, 'ALTER TABLE parent ALTER COLUMN other SET DEFAULT 1;\n')
+    related = 'foreign_key_references_column'
+    graph_path = tmp_path / GRAPH_FILE
+    with patch('subprocess.Popen', side_effect=AssertionError('implicit process')):
+        assert scan(tmp_path, generate_docs=False) == 0
+        captured = read_json(graph_path)
+        fk = next(row['id'] for row in captured['nodes'] if row['name'] == 'public.child.child_parent')
+        edge, = [row for row in captured['edges'] if row['kind'] == related and row['source'] == fk]
+        other, = [row for row in captured['edges'] if row['kind'] == related and row['source'] != fk]
+        parent, = [row['target'] for row in captured['edges'] if row['kind'] == 'foreign_key_to'
+                   and row['source'] == edge['source']]
+        operation, = [row for row in captured['edges'] if row['kind'] == 'operation_targets'
+                      and row['target'] == edge['target'] and row['source_file'] == altered]
+        sibling = next(row['id'] for row in captured['nodes'] if row['name'] == 'public.sibling.id')
+        _write(tmp_path, altered, 'ALTER TABLE parent ALTER COLUMN id SET DEFAULT 2;\n')
+        _write(tmp_path, independent, 'ALTER TABLE parent ALTER COLUMN other SET DEFAULT 2;\n')
+        other_snapshot = schema_snapshot_fingerprint(reconstruct(tmp_path))
+        assert dependency_impact(tmp_path, [altered])['affected'][0]['id'] == edge['source']
+
+        for identity in (edge['source'], edge['target'], parent, operation['source']):
+            malformed = deepcopy(captured)
+            node = next(row for row in malformed['nodes'] if row['id'] == identity)
+            assert node['metadata']['schema_snapshot_fingerprint'] != other_snapshot
+            node['metadata']['schema_snapshot_fingerprint'] = other_snapshot
+            write_json(graph_path, malformed)
+            before = _store_bytes(tmp_path)
+            assert not dependency_impact(tmp_path, [altered])['affected']
+            assert _store_bytes(tmp_path) == before
+
+        wrong_parent = deepcopy(captured)
+        next(row for row in wrong_parent['edges'] if row == edge)['target'] = sibling
+        next(row for row in wrong_parent['edges'] if row == operation)['target'] = sibling
+        write_json(graph_path, wrong_parent)
+        before = _store_bytes(tmp_path)
+        assert not dependency_impact(tmp_path, [altered])['affected']
+        assert _store_bytes(tmp_path) == before
+
+        wrong_column = deepcopy(captured)
+        next(row for row in wrong_column['edges'] if row == edge)['target'] = other['target']
+        write_json(graph_path, wrong_column)
+        before = _store_bytes(tmp_path)
+        assert [row['id'] for row in dependency_impact(tmp_path, [independent])['affected']] == [other['source']]
+        assert _store_bytes(tmp_path) == before
+
+        mismatched_path = deepcopy(captured)
+        next(row for row in mismatched_path['edges'] if row == operation)['source_file'] = tables
+        write_json(graph_path, mismatched_path)
+        before = _store_bytes(tmp_path)
+        assert not dependency_impact(tmp_path, [altered])['affected']
+        assert _store_bytes(tmp_path) == before
+
+        legacy = deepcopy(captured)
+        legacy['edges'] = [row for row in legacy['edges'] if row['kind'] != related]
+        for row in legacy['nodes']:
+            if row['kind'] == 'migration_operation':
+                row['metadata'].pop('schema_snapshot_fingerprint', None)
+        write_json(graph_path, legacy)
+        _write(tmp_path, tables, 'CREATE TABLE parent(id INTEGER UNIQUE, other INTEGER UNIQUE); '
+               'CREATE TABLE sibling(id BIGINT);\n')
+        before = _store_bytes(tmp_path)
+        report = dependency_impact(tmp_path, [tables, altered])
+        assert {(row['id'], row['status']) for row in report['affected']} == {
+            (edge['source'], 'RECHECK'), (other['source'], 'RECHECK'),
+        }
+        assert all([reason['relation'] for reason in row['reasons']] == ['foreign_key_to'] for row in report['affected'])
+        assert _store_bytes(tmp_path) == before
+
+
+@pytest.mark.parametrize('authority', ['implicit', 'missing', 'partial', 'supplied-snapshot'])
+def test_fk_column_projection_requires_all_named_columns_and_complete_local_replay(tmp_path, authority):
+    from kgmaker.schema_replay import graph_entities, reconstruct
+
+    migrations = 'src/main/resources/db/migration/'
+    ddl = 'CREATE TABLE parent(a INTEGER, b INTEGER, UNIQUE(b,a));\n'
+    refs = 'parent' if authority == 'implicit' else 'parent(b,a)'
+    _write(tmp_path, migrations + 'V1__fk.sql', ddl + 'CREATE TABLE child(x INTEGER, y INTEGER, '
+           f'CONSTRAINT child_parent FOREIGN KEY(x,y) REFERENCES {refs});\n')
+    if authority == 'partial':
+        _write(tmp_path, migrations + 'V2__blocked.sql', 'ALTER TABLE parent DROP COLUMN b;\n')
+    with patch('subprocess.Popen', side_effect=AssertionError('implicit process')):
+        schema = reconstruct(tmp_path)
+        assert schema['status'] == ('PARTIAL' if authority == 'partial' else 'COMPLETE')
+        if authority == 'missing':
+            schema['objects'].pop('column:public.parent.a')
+        if authority == 'supplied-snapshot':
+            write_json(tmp_path / 'snapshot.json', {'schema_version': 1, 'objects': schema['objects']})
+            schema = reconstruct(tmp_path, {'mode': 'snapshot', 'initial_snapshot': 'snapshot.json',
+                                            'baseline_version': '1'})
+            assert schema['status'] == 'COMPLETE' and schema.get('snapshot_provenance')
+        _, edges = graph_entities(schema, include_named_fk_columns=True)
+    assert any(edge.kind == 'foreign_key_to' for edge in edges)
+    assert not any(edge.kind == 'foreign_key_references_column' for edge in edges)
+
+
+def test_fk_column_projection_retains_renamed_identity_and_replaces_recreated_target(tmp_path):
+    from kgmaker.schema_replay import graph_entities, reconstruct
+
+    migrations = 'src/main/resources/db/migration/'
+    _write(tmp_path, migrations + 'V1__fk.sql',
+           'CREATE TABLE parent(a INTEGER, b INTEGER UNIQUE);\n'
+           'CREATE TABLE child(x INTEGER, CONSTRAINT child_parent FOREIGN KEY(x) REFERENCES parent(b));\n')
+
+    def references():
+        schema = reconstruct(tmp_path)
+        assert schema['status'] == 'COMPLETE'
+        nodes, edges = graph_entities(schema, include_named_fk_columns=True)
+        edge, = [edge for edge in edges if edge.kind == 'foreign_key_references_column']
+        target = next(node for node in nodes if node.id == edge.target)
+        return (edge.source, edge.target), target.name
+
+    with patch('subprocess.Popen', side_effect=AssertionError('implicit process')):
+        original, name = references()
+        assert name == 'public.parent.b'
+        _write(tmp_path, migrations + 'V2__rename.sql', 'ALTER TABLE parent RENAME COLUMN b TO renamed;\n')
+        renamed, name = references()
+        assert original == renamed and name == 'public.parent.renamed'
+        _write(tmp_path, migrations + 'V3__replace.sql', 'ALTER TABLE child DROP CONSTRAINT child_parent;\n'
+               'ALTER TABLE parent DROP COLUMN renamed; ALTER TABLE parent ADD COLUMN renamed INTEGER UNIQUE;\n'
+               'ALTER TABLE child ADD CONSTRAINT child_parent FOREIGN KEY(x) REFERENCES parent(renamed);\n')
+        recreated, name = references()
+        assert set(recreated).isdisjoint(original) and name == 'public.parent.renamed'
 
 
 @pytest.mark.parametrize("changed_path", ["req/requirement.md", "context.md"])

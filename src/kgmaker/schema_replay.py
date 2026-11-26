@@ -16,6 +16,7 @@ from .flyway import migration_plan
 from .model import Edge, Node
 
 PARSER_VERSION = 'postgres-ddl-4-creation-identity'
+FK_COLUMN_RELATION = 'foreign_key_references_column'
 _CHECKPOINTS: dict[str, dict] = {}
 
 
@@ -615,31 +616,64 @@ def schema_diff(root: Path, config: dict, start: str, end: str) -> dict:
                         for key in sorted(keys) if left['objects'].get(key) != right['objects'].get(key)]}
 
 
-def graph_entities(schema: dict) -> tuple[list[Node], list[Edge]]:
+def _foreign_key_columns(objects: dict, constraint: dict, table: dict) -> tuple:
+    local, remote = constraint.get('columns'), constraint.get('referenced_columns')
+    if (constraint.get('constraint_type') != 'FOREIGN' or not isinstance(local, list)
+            or not isinstance(remote, list) or not remote or len(local) != len(remote)
+            or any(not isinstance(name, str) or not name for name in [*local, *remote])
+            or len(set(local)) != len(local) or len(set(remote)) != len(remote)):
+        return ()
+    names = [(*table['name'], column) for column in remote]
+    targets = tuple(objects.get(Replay.key('column', name)) for name in names)
+    if any(target is None or target.get('kind') != 'column' or target.get('lifecycle') != 'ACTIVE'
+           or target.get('name') != list(name) for target, name in zip(targets, names, strict=True)):
+        return ()
+    return targets
+
+
+def graph_entities(schema: dict, *, include_named_fk_columns: bool = False) -> tuple[list[Node], list[Edge]]:
     nodes, edges = [], []
+    objects = schema['objects']
+    snapshot = schema_snapshot_fingerprint(schema)
+    named_columns = set()
+    declared = (include_named_fk_columns and schema['status'] == 'COMPLETE' and schema['config'].get('mode') == 'versioned'
+                and schema.get('reconstruction_mode') == 'CLEAN_INSTALL_DECLARATION'
+                and schema.get('provenance') == 'MIGRATION_DERIVED' and not schema.get('snapshot_provenance'))
     if schema['inventory']:
         first = schema['inventory'][0]
         database_id = 'database:' + realm_prefix(schema['config'])
         nodes.append(Node(database_id, 'database', schema['config']['database_id'], first['path'], 1,
                           summary='Independent stream; no automatic stream merge or deployment confirmation',
                           metadata={'persistence_realm': schema_realm(schema)}))
-    for item in schema['objects'].values():
+    for item in objects.values():
         evidence = item['last_change']; path = evidence['path']
         kind = 'db_' + item['kind']
+        metadata = {'persistence_realm': schema_realm(schema, schema_name=item['name'][0]),
+                    'schema_object': list(item['name']),
+                    'schema_identity': copy.deepcopy(item.get('creation_identity')),
+                    'schema_snapshot_fingerprint': snapshot}
+        referenced_table = None
+        columns = ()
+        if item['kind'] == 'constraint' and item.get('references'):
+            referenced_table = objects.get(Replay.key('table', tuple(item['references'])))
+            if declared and referenced_table:
+                columns = _foreign_key_columns(objects, item, referenced_table)
+                if columns:
+                    metadata['foreign_key_targets'] = {'table_id': referenced_table['id'],
+                                                       'column_ids': [column['id'] for column in columns]}
         nodes.append(Node(item['id'], kind, '.'.join(item['name']), path, evidence['line'],
-                          item.get('data_type'), 'MIGRATION_DERIVED; ' + schema['status'],
-                          metadata={'persistence_realm': schema_realm(schema, schema_name=item['name'][0]),
-                                    'schema_object': list(item['name']),
-                                    'schema_identity': copy.deepcopy(item.get('creation_identity')),
-                                    'schema_snapshot_fingerprint': schema_snapshot_fingerprint(schema)}))
+                          item.get('data_type'), 'MIGRATION_DERIVED; ' + schema['status'], metadata=metadata))
         if item.get('table'):
-            table = schema['objects'].get(Replay.key('table', tuple(item['table'])))
+            table = objects.get(Replay.key('table', tuple(item['table'])))
             if table:
                 edges.append(Edge(table['id'], item['id'], 'contains_' + item['kind'], source_file=path, source_line=evidence['line']))
-        if item['kind'] == 'constraint' and item.get('references'):
-            table = schema['objects'].get(Replay.key('table', tuple(item['references'])))
-            if table:
-                edges.append(Edge(item['id'], table['id'], 'foreign_key_to', source_file=path, source_line=evidence['line']))
+        if referenced_table:
+            edges.append(Edge(item['id'], referenced_table['id'], 'foreign_key_to', source_file=path,
+                              source_line=evidence['line']))
+            for column in columns:
+                named_columns.add(column['id'])
+                edges.append(Edge(item['id'], column['id'], FK_COLUMN_RELATION,
+                                  source_file=path, source_line=evidence['line']))
         if item['kind'] == 'view':
             for field in item['columns']:
                 identity = item['id'] + ':field:' + field['name']
@@ -651,7 +685,11 @@ def graph_entities(schema: dict) -> tuple[list[Node], list[Edge]]:
         ev = op['evidence']; migration_id = 'migration:' + realm_prefix(schema['config']) + ':' + ev['path']
         if not any(n.id == migration_id for n in nodes):
             nodes.append(Node(migration_id, 'migration', ev['path'], ev['path'], 1, metadata={'persistence_realm': schema_realm(schema)}))
-        nodes.append(Node(op['id'], 'migration_operation', op['kind'], ev['path'], ev['line'], summary=op['unresolved'], metadata={'persistence_realm': schema_realm(schema)}))
+        metadata = {'persistence_realm': schema_realm(schema)}
+        if named_columns.intersection(op['targets']):
+            metadata['schema_snapshot_fingerprint'] = snapshot
+        nodes.append(Node(op['id'], 'migration_operation', op['kind'], ev['path'], ev['line'],
+                          summary=op['unresolved'], metadata=metadata))
         edges.append(Edge(migration_id, op['id'], 'migration_changes', source_file=ev['path'], source_line=ev['line']))
         for target in op['targets']:
             if any(n.id == target for n in nodes):

@@ -152,6 +152,13 @@ typovaný `STALE` a shodné uložené bajty při neplatném CFG nebo závislosti
 framework či runtime důkazu na vyřazovaném kontextu. Celé W02-AC01 zůstává `PARTIAL`.
 [Přesné ověření a hranice](changes/185_publishIsolatedJvmContext.md).
 
+`test_explicit_composite_fk_columns_join_historical_migration_operations`
+ověřuje uložené sloupce složeného cizího klíče, přesné cesty operací,
+zachování uloženého grafu čtecím reportem a nový offline scan. Doplňkové
+kontroly ověřují stejnojmenné i jiné sloupce, neúplné zachycení,
+přejmenování, novou identitu po opětovném vytvoření a starší grafy.
+W02-AC01 má stav `PARTIAL`. [Ověření sloupců](changes/191_indexNamedForeignKeyColumns.md).
+
 ## T045 — doplňující automatická kontrola PR
 
 T045-S03 / T045-AC04. Workflow PR Review používá plugin `pytest-cov` a
