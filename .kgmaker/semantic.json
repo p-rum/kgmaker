@@ -95,7 +95,7 @@
     "docs/changes/186_reconcileInstallationCompletionInventory.md": "885a4f8b6b101a8f287c78e373226c9dc546829c927dc47a2f12be90104016dc",
     "docs/changes/187_bindRuntimeValuePresence.md": "43f0bdd7a30193ec9597397a181ae3d666b7e94060e65a7c0751df44724d1d37",
     "docs/changes/188_anchorTypeScriptNodeLauncher.md": "aeb2d6c53c6832e643bcd84bb67974d15bfb0f7512f6eb2fd54d20bcab960e0a",
-    "docs/changes/189_reduceBoundedCfgTraversal.md": "427d26ce4f9ed913fd80dd4935adac374def0439f0ddb234eb692b0403b1ea20",
+    "docs/changes/189_reduceBoundedCfgTraversal.md": "77c140fd7793d13ad0156574b2a9f241821d1fa4845142a43c107299f18ff0c8",
     "docs/changes/190_bindLocalProcessContext.md": "69ec8cd4e4362810cd87c5dd27d032330432d5ee532695f694682d25753de0e7",
     "docs/changes/1_addProductionScope.md": "01d4001f03b21b1115d6461514f4b643d12cff3ae03bcaabfb6645bb3dd15113",
     "docs/changes/26_addCodeReviewAgent.md": "b3daa09ab9ec31c301fbaa1afe2101becde926ea5db35260c4ab7582f49a023d",
@@ -507,7 +507,7 @@
     "src/kgmaker/feature_cli.py": "f932f98ce13ee284c2142d7bb1da0cdd1bb430e6976c6d21bd77f29bb130bc1a",
     "src/kgmaker/field_flow.py": "0fc2122a05c6562dbafdff9d7b0b2934fd1e9cbfe19be4e94f1fe7ca7f80ad39",
     "src/kgmaker/flow.py": "da7bf6b94f33b5faf4e1225cf33218742b5118ba9b7fdba7439d59fbfb6d48d7",
-    "src/kgmaker/flow_report.py": "10a3cdfc2458c4cb00ca0e8202bab010f7961116894315fe9c13a1f10ae879c7",
+    "src/kgmaker/flow_report.py": "7d6e29b3dd72edd071fc249a2576cf9b670162026f2a1ac52b564aa03708bb85",
     "src/kgmaker/flyway.py": "e12a1f0c3e806ba759391032b0c502359e300b6ef641ca0a96fb39a1efa3f64e",
     "src/kgmaker/framework.py": "c1e3f98123b479370009069fc48b1664b9ed10cf7a8396578a578bb91f30f97d",
     "src/kgmaker/frontend_flow.py": "1a08bb941a178b487f23c136ee57fbe7794d8838d4bc8d94314fdf443205153c",
@@ -695,7 +695,7 @@
     "tests/test_t032_persist_process_review.py": "ff49e0ae0564f9fe00cb390ec17e23f3a1099b06a501e275a636e30c0c0dc797",
     "tests/test_t033_catalog_business_processes.py": "1b3b738a0020544b25b126a6a959b3af9199f4c383856c2f6df1f58ffaf95866",
     "tests/test_t037_invalidate_derived_views.py": "63d667f88d6d1011b6afdf0d0bd6e6ffd37a147fbb245b9934577a958b41714e",
-    "tests/test_t043_bound_view_performance.py": "82e1b0aefc3e4502cd8b6bc51b38371c8eb9c5c550c55043dcb8e1a231a97644",
+    "tests/test_t043_bound_view_performance.py": "532cabe574c51c694ec90e79e772574d05b299a90f7883cd14770003f124e3eb",
     "tests/test_templates.py": "222296f34f4f5104c3f9a45fcf261e6ea56de3b9538c8513f9f84df21621ac16",
     "tests/test_tsconfig_freshness.py": "d00a44dbd85f647977db916b12834da28d7b7172bc8de1b549b30c5785aeac85",
     "tests/test_typescript_callback_limits.py": "56c2352acc12345711affda070907a93a9eb4dd051b2275877b2130f8683490e",
@@ -3121,26 +3121,6 @@
       "evidence": "The task evidence cites the compiled Java fixture that exercises both presence outcomes."
     },
     {
-      "source": "function:src/kgmaker/flow_report.py:finalize::116",
-      "target": "concept:docs/unified-flow-views.md:unified_cfg_flow_report",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/flow_report.py",
-      "source_line": 118,
-      "evidence": "One finalizer retains CFG adjacency and stable display order, original evidence and source IDs, localized gaps and explicit non-observed execution."
-    },
-    {
-      "source": "function:src/kgmaker/flow_report.py:publish::263",
-      "target": "concept:docs/unified-flow-views.md:unified_cfg_flow_report",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/flow_report.py",
-      "source_line": 265,
-      "evidence": "Report publication validates and renders before the shared atomic writer, checks deadline/cancellation and a supplied snapshot validation callback before replace and cleans only attempt-created empty directories on abort."
-    },
-    {
       "source": "function:tests/test_unified_flow_views.py:test_three_formats_share_cfg_order_provenance_and_gaps::44",
       "target": "concept:docs/unified-flow-views.md:unified_cfg_flow_report",
       "kind": "validates",
@@ -3279,6 +3259,26 @@
       "source_file": "README.md",
       "source_line": 234,
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
+    },
+    {
+      "source": "function:src/kgmaker/flow_report.py:finalize::119",
+      "target": "concept:docs/unified-flow-views.md:unified_cfg_flow_report",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/flow_report.py",
+      "source_line": 121,
+      "evidence": "One finalizer retains CFG adjacency and stable display order, original evidence and source IDs, localized gaps and explicit non-observed execution."
+    },
+    {
+      "source": "function:src/kgmaker/flow_report.py:publish::266",
+      "target": "concept:docs/unified-flow-views.md:unified_cfg_flow_report",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/flow_report.py",
+      "source_line": 268,
+      "evidence": "Report publication validates and renders before the shared atomic writer, checks deadline/cancellation and a supplied snapshot validation callback before replace and cleans only attempt-created empty directories on abort."
     }
   ],
   "episodes": [
@@ -289625,6 +289625,174 @@
         }
       ],
       "id": "episode:b17a8f04b46a4d07ce3a5e336d86564b600ffb5934d4770bb80e7fb63a46ad9b"
+    },
+    {
+      "base_commit": "b94f5dcd8d482bae277935e1b6912b6212add084",
+      "head_commit": "b94f5dcd8d482bae277935e1b6912b6212add084",
+      "worktree_fingerprint": "fca213422ce42826749351092641824d8e815b107aeeadaa58ea0916f90a100c",
+      "title": "Change Kontrola vynechané historické diagnostiky / T043-S04 a T043-AC04, Omezení zdrojové diagnostiky / T043-S02, T043-AC01, T043-AC04 a T043-AC05, Ověření Mermaid a standardní sady na revizi 591dacc",
+      "changed_files": [
+        {
+          "path": "docs/changes/189_reduceBoundedCfgTraversal.md",
+          "status": "M",
+          "sha256": "77c140fd7793d13ad0156574b2a9f241821d1fa4845142a43c107299f18ff0c8"
+        },
+        {
+          "path": "src/kgmaker/flow_report.py",
+          "status": "M",
+          "sha256": "7d6e29b3dd72edd071fc249a2576cf9b670162026f2a1ac52b564aa03708bb85"
+        },
+        {
+          "path": "tests/test_t043_bound_view_performance.py",
+          "status": "M",
+          "sha256": "532cabe574c51c694ec90e79e772574d05b299a90f7883cd14770003f124e3eb"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/flow_report.py:PublicationSnapshot::314",
+        "class:src/kgmaker/flow_report.py:PublicationSnapshot::317",
+        "class:src/kgmaker/flow_report.py:RenderBudget::247",
+        "class:src/kgmaker/flow_report.py:RenderBudget::250",
+        "file:docs/changes/189_reduceBoundedCfgTraversal.md:189_reduceBoundedCfgTraversal.md",
+        "file:src/kgmaker/flow_report.py:flow_report.py",
+        "file:tests/test_t043_bound_view_performance.py:test_t043_bound_view_performance.py",
+        "function:src/kgmaker/flow_report.py:__init__::251",
+        "function:src/kgmaker/flow_report.py:__init__::254",
+        "function:src/kgmaker/flow_report.py:__init__::318",
+        "function:src/kgmaker/flow_report.py:__init__::321",
+        "function:src/kgmaker/flow_report.py:_bound_source_diagnostics::27",
+        "function:src/kgmaker/flow_report.py:_diagnostic_gap::19",
+        "function:src/kgmaker/flow_report.py:_label::187",
+        "function:src/kgmaker/flow_report.py:_label::190",
+        "function:src/kgmaker/flow_report.py:_sources::344",
+        "function:src/kgmaker/flow_report.py:_sources::347",
+        "function:src/kgmaker/flow_report.py:_stale::341",
+        "function:src/kgmaker/flow_report.py:_stale::344",
+        "function:src/kgmaker/flow_report.py:check::257",
+        "function:src/kgmaker/flow_report.py:check::260",
+        "function:src/kgmaker/flow_report.py:check::283",
+        "function:src/kgmaker/flow_report.py:check::286",
+        "function:src/kgmaker/flow_report.py:check::366",
+        "function:src/kgmaker/flow_report.py:check::369",
+        "function:src/kgmaker/flow_report.py:finalize::116",
+        "function:src/kgmaker/flow_report.py:finalize::119",
+        "function:src/kgmaker/flow_report.py:gap::129",
+        "function:src/kgmaker/flow_report.py:gap::132",
+        "function:src/kgmaker/flow_report.py:markdown::212",
+        "function:src/kgmaker/flow_report.py:markdown::215",
+        "function:src/kgmaker/flow_report.py:mermaid::191",
+        "function:src/kgmaker/flow_report.py:mermaid::194",
+        "function:src/kgmaker/flow_report.py:ordered_cfg::73",
+        "function:src/kgmaker/flow_report.py:ordered_cfg::76",
+        "function:src/kgmaker/flow_report.py:output_path::294",
+        "function:src/kgmaker/flow_report.py:output_path::297",
+        "function:src/kgmaker/flow_report.py:paths::349",
+        "function:src/kgmaker/flow_report.py:paths::352",
+        "function:src/kgmaker/flow_report.py:publish::263",
+        "function:src/kgmaker/flow_report.py:publish::266",
+        "function:src/kgmaker/flow_report.py:render::239",
+        "function:src/kgmaker/flow_report.py:render::242",
+        "function:src/kgmaker/flow_report.py:visit::95",
+        "function:src/kgmaker/flow_report.py:visit::98",
+        "function:tests/test_t043_bound_view_performance.py:source_diagnostics::105",
+        "function:tests/test_t043_bound_view_performance.py:test_t043_bounds_source_diagnostics_before_mirroring_coverage::110",
+        "function:tests/test_t043_bound_view_performance.py:test_t043_caps_process_diagnostics_without_changing_call_provenance::154",
+        "function:tests/test_t043_bound_view_performance.py:test_t043_diagnostic_overflow_does_not_report_node_truncation::137",
+        "function:tests/test_t043_bound_view_performance.py:test_t043_large_cyclic_root_has_a_single_explicit_boundary::58",
+        "function:tests/test_t043_bound_view_performance.py:test_t043_overflow_cannot_hide_malformed_diagnostics::192",
+        "function:tests/test_t043_bound_view_performance.py:test_t043_overflow_cannot_hide_nonfinite_legacy_coverage::205",
+        "function:tests/test_t043_bound_view_performance.py:test_t043_process_depth_stops_at_the_exact_nested_call::76",
+        "function:tests/test_t043_bound_view_performance.py:test_t043_relative_gate_rejects_regressions_and_changed_fixtures::90",
+        "function:tests/test_t043_bound_view_performance.py:test_t043_render_caps_already_mirrored_legacy_source_diagnostics::172",
+        "function:tests/test_t043_bound_view_performance.py:test_t043_scale_preserves_all_binding_ids_within_node_and_hop_limits::21",
+        "section:docs/changes/189_reduceBoundedCfgTraversal.md:Kontrola vynechané historické diagnostiky / T043-S04 a T043-AC04::181",
+        "section:docs/changes/189_reduceBoundedCfgTraversal.md:Omezení zdrojové diagnostiky / T043-S02, T043-AC01, T043-AC04 a T043-AC05::116",
+        "section:docs/changes/189_reduceBoundedCfgTraversal.md:Ověření Mermaid a standardní sady na revizi 591dacc / T043-AC04 až T043-AC06::161",
+        "section:docs/changes/189_reduceBoundedCfgTraversal.md:Počet průchodů přes hrany při omezení zdrojového CFG::1",
+        "section:docs/changes/189_reduceBoundedCfgTraversal.md:Rozsah testů benchmarku a zbývající ověření::101",
+        "section:docs/changes/189_reduceBoundedCfgTraversal.md:T043-S01 a T043-S03 / T043-AC03::74",
+        "section:docs/changes/189_reduceBoundedCfgTraversal.md:T043-S02 / T043-AC01, T043-AC02 a T043-AC05::7",
+        "section:docs/changes/189_reduceBoundedCfgTraversal.md:T043-S04 / T043-AC01, T043-AC02, T043-AC04 a T043-AC05::26",
+        "section:docs/changes/189_reduceBoundedCfgTraversal.md:T043-S05 / T043-AC06::68",
+        "workbook:fixtures/excel-migration/Rates.xlsx:Rates.xlsx",
+        "workbook_cell:fixtures/excel-migration/Rates.xlsx:Rates!B2",
+        "workbook_sheet:fixtures/excel-migration/Rates.xlsx:Rates"
+      ],
+      "graph_delta": {
+        "added": [
+          "class:src/kgmaker/flow_report.py:PublicationSnapshot::317",
+          "class:src/kgmaker/flow_report.py:RenderBudget::250",
+          "function:src/kgmaker/flow_report.py:__init__::254",
+          "function:src/kgmaker/flow_report.py:__init__::321",
+          "function:src/kgmaker/flow_report.py:_label::190",
+          "function:src/kgmaker/flow_report.py:_sources::347",
+          "function:src/kgmaker/flow_report.py:_stale::344",
+          "function:src/kgmaker/flow_report.py:check::260",
+          "function:src/kgmaker/flow_report.py:check::286",
+          "function:src/kgmaker/flow_report.py:check::369",
+          "function:src/kgmaker/flow_report.py:finalize::119",
+          "function:src/kgmaker/flow_report.py:gap::132",
+          "function:src/kgmaker/flow_report.py:markdown::215",
+          "function:src/kgmaker/flow_report.py:mermaid::194",
+          "function:src/kgmaker/flow_report.py:ordered_cfg::76",
+          "function:src/kgmaker/flow_report.py:output_path::297",
+          "function:src/kgmaker/flow_report.py:paths::352",
+          "function:src/kgmaker/flow_report.py:publish::266",
+          "function:src/kgmaker/flow_report.py:render::242",
+          "function:src/kgmaker/flow_report.py:visit::98",
+          "function:tests/test_t043_bound_view_performance.py:test_t043_overflow_cannot_hide_nonfinite_legacy_coverage::205",
+          "section:docs/changes/189_reduceBoundedCfgTraversal.md:Kontrola vynechané historické diagnostiky / T043-S04 a T043-AC04::181"
+        ],
+        "removed": [
+          "class:src/kgmaker/flow_report.py:PublicationSnapshot::314",
+          "class:src/kgmaker/flow_report.py:RenderBudget::247",
+          "function:src/kgmaker/flow_report.py:__init__::251",
+          "function:src/kgmaker/flow_report.py:__init__::318",
+          "function:src/kgmaker/flow_report.py:_label::187",
+          "function:src/kgmaker/flow_report.py:_sources::344",
+          "function:src/kgmaker/flow_report.py:_stale::341",
+          "function:src/kgmaker/flow_report.py:check::257",
+          "function:src/kgmaker/flow_report.py:check::283",
+          "function:src/kgmaker/flow_report.py:check::366",
+          "function:src/kgmaker/flow_report.py:finalize::116",
+          "function:src/kgmaker/flow_report.py:gap::129",
+          "function:src/kgmaker/flow_report.py:markdown::212",
+          "function:src/kgmaker/flow_report.py:mermaid::191",
+          "function:src/kgmaker/flow_report.py:ordered_cfg::73",
+          "function:src/kgmaker/flow_report.py:output_path::294",
+          "function:src/kgmaker/flow_report.py:paths::349",
+          "function:src/kgmaker/flow_report.py:publish::263",
+          "function:src/kgmaker/flow_report.py:render::239",
+          "function:src/kgmaker/flow_report.py:visit::95",
+          "workbook:fixtures/excel-migration/Rates.xlsx:Rates.xlsx",
+          "workbook_cell:fixtures/excel-migration/Rates.xlsx:Rates!B2",
+          "workbook_sheet:fixtures/excel-migration/Rates.xlsx:Rates"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "focused_boundaries",
+          "status": "passed"
+        },
+        {
+          "label": "output_equivalence",
+          "status": "passed"
+        },
+        {
+          "label": "semantic",
+          "status": "passed"
+        },
+        {
+          "label": "planner",
+          "status": "passed"
+        },
+        {
+          "label": "diff_check",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:83056ff8f06ab76a4e4699a7ba11750a48810d26ab434d265f1668da534ca09f"
     }
   ]
 }

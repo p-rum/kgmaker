@@ -177,3 +177,23 @@ souborů před a po běhu jsou shodné. SHA-256 JUnit
 `3808dd985997d97772f541d7845f4b84af17d9cef865be811f011e98d3950c6d`.
 Hostované CI mají pro toto ověření stav NOT_RUN. Celkové ověření T043 zůstává
 PARTIAL v rozsahu uvedeném výše.
+
+## Kontrola vynechané historické diagnostiky / T043-S04 a T043-AC04
+
+Na revizi `b94f5dcd8d482bae277935e1b6912b6212add084` mohl report s více než
+256 zdrojovými diagnostikami vynechat i historickou odvozenou položku coverage
+s hodnotou `NaN` a přepsat předchozí platný report. `flow_report.py` nyní každou
+položku této podoby před vynecháním ověří stejnou serializací jako ostatní mezery
+coverage. Neplatná položka znovu vyvolá `ValueError` před zápisem.
+
+`test_t043_overflow_cannot_hide_nonfinite_legacy_coverage` zachytí výjimku
+a ověří shodu předchozího výstupu, adresáře i vstupního reportu. Na výchozím
+`main` `7e9fa691417706562c875a01a40606350ae058ea` test prošel, na `b94f5dc`
+selhal očekávaným způsobem bez vyvolané výjimky. SHA-256 záporného JUnit
+`82047b1555879c928366279ee3c65dc6e4ab62440a7667a0071a5927ec553697`.
+Po opravě prošla stejná cílená sada **265 PASS / 0 SKIP**, osm případů zůstalo
+nezvolených. SHA-256 JUnit
+`0205cc1264b884948f7eb2a122defce52187fe424d1fa7e12811be8b56e5f0dd`.
+Všech 51 srovnávacích výstupů se bajtově shoduje s předchozím kandidátem.
+Úplná sada, nové ověření parseru Mermaid a hostované CI mají pro tento krok
+stav NOT_RUN. Rozsah zdrojové diagnostiky a ověření T043 zůstává PARTIAL.

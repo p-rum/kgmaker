@@ -202,3 +202,21 @@ def test_t043_overflow_cannot_hide_malformed_diagnostics(tmp_path):
     assert output.read_bytes() == b'previous report'
     assert list(tmp_path.iterdir()) == [output]
     assert digest(report) == before
+
+
+def test_t043_overflow_cannot_hide_nonfinite_legacy_coverage(tmp_path):
+    report = flow.build_report(model_graph(), 'method')
+    output = tmp_path / 'flow.json'
+    previous = flow.publish(report, 'json', output).encode()
+    report['diagnostics'] = source_diagnostics(257)
+    report['coverage']['gaps'].append({
+        'code': 'SOURCE_METRIC', 'reason': 'Invalid source metric',
+        'diagnostic': {'sample': float('nan')},
+    })
+    before = json.dumps(report, sort_keys=True)
+
+    with pytest.raises(ValueError, match='Out of range float values'):
+        flow.publish(report, 'json', output)
+    assert output.read_bytes() == previous
+    assert list(tmp_path.iterdir()) == [output]
+    assert json.dumps(report, sort_keys=True) == before

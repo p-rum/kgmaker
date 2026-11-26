@@ -59,7 +59,10 @@ def _bound_source_diagnostics(report):
         for gap in coverage.get('gaps', ()):
             if set(gap) != {'code', 'reason', 'diagnostic'}:
                 gaps.append(gap)
-            elif gap['code'] in _UNKNOWN_GAP_CODES and gap['diagnostic'] not in result['diagnostics']:
+                continue
+            # Discarded legacy rows still require the normal serialization check.
+            canonical(gap)
+            if gap['code'] in _UNKNOWN_GAP_CODES and gap['diagnostic'] not in result['diagnostics']:
                 unknown_codes.add(gap['code'])
     else:
         gaps.extend(coverage.get('gaps', ()))
