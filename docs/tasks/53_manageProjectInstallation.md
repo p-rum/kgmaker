@@ -27,12 +27,35 @@ editování instalace. Obsah distribuovaných instrukcí se nemění.
 
 ## Kroky a acceptance
 
-| Krok | Závislost | Acceptance a ověření |
-|---|---|---|
-| T053-S01 | baseline | T053-AC01: init eviduje vlastnictví, zachová cizí soubory a opakovaný běh je bez změny obsahu/mtime |
-| T053-S02 | S01 | T053-AC02: simulovaná změna distribuce upgraduje agenty, hooky, skilly, reference i templates; chybějící/retired cesty a legacy migrace |
-| T053-S03 | S01 | T053-AC03: uninstall odstraní integraci a data, zachová aplikaci, cizí instrukce/skilly/ignore; opakování je idempotentní |
-| T053-S04 | S02, S03 | T053-AC04: dry-run, konflikty, invalidní manifest, symlinky a chyba publikace mají nulovou mutaci; CLI z jiného cwd a instalovaný wheel |
+### T053-S01 — Společný inventář a vlastnictví
+
+- Závislosti: T050-S01.
+
+T053-AC01. Init eviduje vlastnictví, zachová cizí soubory a opakovaný běh
+zachová obsah i mtime.
+
+### T053-S02 — Upgrade
+
+- Závislosti: T053-S01.
+
+T053-AC02. Simulovaná změna distribuce upgraduje agenty, hooky, skilly,
+reference i templates. Kontrola zahrnuje chybějící a vysloužilé cesty i legacy migraci.
+
+### T053-S03 — Uninstall
+
+- Závislosti: T053-S01.
+
+T053-AC03. Uninstall odstraní integraci a data, zachová aplikaci, cizí
+instrukce, skilly a ignore pravidla. Opakování je idempotentní.
+
+### T053-S04 — Chybové scénáře a distribuce
+
+- Závislosti: T053-S02 a T053-S03.
+
+T053-AC04. Dry-run, konflikty, invalidní manifest, symlinky a chyba publikace
+mají nulovou mutaci. Kontrola zahrnuje CLI z jiného pracovního adresáře a instalovaný wheel.
+
+## Migrace a dokončení
 
 Migrace: staré projekty nemají manifest. Použijí se přesné známé otisky;
 neznámé/upravené integrace vyžadují ruční sloučení nebo explicitní force.

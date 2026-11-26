@@ -225,7 +225,7 @@ Příkazy a přesné revize uvádí [change151](changes/151_preserveRuntimeObser
 | Acceptance | Ověření | Důkaz a rozsah |
 |---|---|---|
 | T003-S13-W03-AC01 | PARTIAL | `test_actual_java_value_presence_affects_only_matching_live_data_check` ověřuje čerstvý `PRESENT` na skutečné Javě a schválené mapování. Pozorování doloží `PARTIAL/UNASSESSED` pro jeden běh. `ABSENT`, obyčejný call a prošlý vzorek nechají dostupnost `UNKNOWN`. |
-| T003-S13-W03-AC02, AC03 | PARTIAL | `test_actual_java_value_capture_and_import_reject_unbound_evidence` pokrývá jiný compiler binding, dvě přiřazení, cizí konfiguraci, budoucí čas, zastaralý zdroj a zakázaná pole. Pozdní změna zdroje zachová capture a graf. V1–v3 a graph/store v3 používají existující schémata. |
+| T003-S13-W03-AC02, AC03 | PARTIAL | `test_actual_java_value_capture_and_import_reject_unbound_evidence` pokrývá jiný compiler binding, dvě přiřazení, cizí konfiguraci, budoucí čas, zastaralý zdroj a zakázaná pole. Čtení z packetu ověřuje přesný hook, pořadí argumentů a omezené identifikátory běhu a služby. Pozdní změna zdroje zachová capture a graf. V1–v3 a graph/store v3 používají existující schémata. |
 | T003-S13-W03-AC04 | PARTIAL | [Změna 187](changes/187_bindRuntimeValuePresence.md) odkazuje na skutečnou fixture a výchozí revizi. Rozsah se týká živého čtení `data-check`. |
 
 ## T051 — projektové workflows, 2026-11-15
@@ -256,8 +256,10 @@ ověření uvedené níže je lokální a neprokazuje automatickou discovery hos
 | T050-AC01 | VERIFIED_IN_SCOPE | tests/test_skills.py, všechny 8 resources, parity + references; čistý wheel init mimo checkout PASS |
 | T050-AC02 | VERIFIED_IN_SCOPE | Opakovaný init bytes/mtime, úpravy skills/references/cizích instrukcí, explicitní force a cizí skill PASS |
 | T050-AC03 | VERIFIED_IN_SCOPE | 12 symlink scénářů + 4 file/directory kolize s nulovou mutací; scan neinstaluje skilly PASS |
-| T050-AC04 | PARTIAL | 5 formátových validací PASS; audit/testgen JSON ukázky prošly runtime validátory. Živý model/hostitel NOT_RUN |
-| T050-AC05 | PARTIAL | Záznam obou kroků, README, capability/CLI návod, matice a registr aktualizované; nezávislé review a GH CI NOT_RUN |
+| T050-AC04 | PARTIAL | Na schváleném headu #98 prošlo pět formátových validací a 21 lokálních CLI volání. Audit a testgen příklady mají vlastní kontroly v pytest. Od té doby se změnil kontextový skill a reference testgen. Úplné opakování příkladů a živý hostitel mají NOT_RUN. |
+| T050-AC05 | PARTIAL | Český záznam, návod, matice a registr mají dohledatelné doklady. Nezávislé T045 pro přesný sloučený head #98 po doplnění lokálních důkazů udělilo APPROVE komentářem. Formální GitHub schválení účet nemohl přidat. Hostovaný Test má FAILURE/CANCELLED, výsledky testů se z dostupných logů nepodařilo ověřit. [Přesný verdikt a kontroly](https://github.com/p-rum/kgmaker/pull/98#issuecomment-6892872266). |
+
+[Aktuální rozsah a kanonické řádky](changes/186_reconcileInstallationCompletionInventory.md).
 
 ## Aktuální audit dodání — 2026-11-14
 

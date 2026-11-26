@@ -1,5 +1,6 @@
 """Real Java evidence, narrow read-only use, and unchanged legacy data proofs."""
 from copy import deepcopy
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 import json
@@ -12,6 +13,7 @@ import pytest
 
 from kgmaker import feature
 from kgmaker.analysis_model import AnalysisError, INPUT_METADATA, digest, inventory_candidate, write_json
+from kgmaker.availability import evaluate_proof
 from kgmaker.callgraph import adjacency
 from kgmaker.cli import build_parser
 from kgmaker.data_check import data_check
@@ -53,6 +55,38 @@ def proof_input(requirement, input_id, target, evidence_id, metadata):
             'candidate_entity_ids': [target], 'availability_proof': {
                 'kind': PROOF, 'runtime_evidence_id': evidence_id, 'mapping_decision_id': 'approved-status',
             }}
+
+
+def check_projected_hook_authority(root, packet, candidate, item):
+    graph = feature.graph_for_packet(root, packet)
+    original, = [row for row in graph.evidence if row['id'] == item['availability_proof']['runtime_evidence_id']]
+    hook, = [site for site in graph.call_sites if site['id'] == original['hook_call_site']]
+    other_hook, = [site['id'] for site in graph.call_sites if site.get('declared_target') == hook['declared_target']
+                   and 'ValuePresenceApplication.reversed(' in site['caller'] and site.get('range')]
+    missing = replace(graph, call_sites=[site for site in graph.call_sites if site['id'] != hook['id']])
+    with pytest.raises(AnalysisError, match='RUNTIME_VALUE_SITE'):
+        evaluate_proof(root, packet, candidate, item, missing)
+    wrong_ordinal = replace(graph, evidence=[{**row, 'parameter_index': 1} if row.get('call_site') == hook['id']
+                                            and row.get('argument_index') == 0 else row for row in graph.evidence])
+    with pytest.raises(AnalysisError, match='RUNTIME_VALUE_ARGUMENTS'):
+        evaluate_proof(root, packet, candidate, item, wrong_ordinal)
+    for field, value, error in (
+        ('hook_call_site', other_hook, 'matching compiler hook proof'),
+        ('runtime_id', 'invalid\n' + VALUE, 'identifier: runtime_id'),
+        ('service_id', 'invalid\n' + VALUE, 'identifier: service_id'),
+        ('service_version', 'invalid\n' + VALUE, 'identifier: service_version'),
+    ):
+        modified = {key: field_value for key, field_value in original.items() if key != 'id'}
+        modified[field] = value
+        modified['id'] = 'evidence:' + digest(modified)
+        changed = replace(graph, evidence=[modified if row['id'] == original['id'] else row for row in graph.evidence],
+                          edges=[replace(edge, evidence_ids=tuple(modified['id'] if ref == original['id'] else ref
+                                                                 for ref in edge.evidence_ids)) for edge in graph.edges])
+        changed_packet = {**packet, 'graph_evidence_ids': [*packet['graph_evidence_ids'], modified['id']]}
+        input_item = {**item, 'availability_proof': {**item['availability_proof'], 'runtime_evidence_id': modified['id']}}
+        with pytest.raises(AnalysisError, match=error) as exc:
+            evaluate_proof(root, changed_packet, candidate, input_item, changed)
+        assert VALUE not in str(exc.value)
 
 
 def test_actual_java_value_presence_affects_only_matching_live_data_check(application, monkeypatch, capsys):
@@ -126,6 +160,7 @@ def test_actual_java_value_presence_affects_only_matching_live_data_check(applic
         item, = live['candidate']['input_requirements']
         assert (item['availability'], item['usability']) == ('PARTIAL', 'UNASSESSED')
         assert 'value-present' in item['verification_scope'] and assertions['present'] in item['verification_scope']
+        check_projected_hook_authority(root, packet, live['candidate'], item)
         assert not feature.apply(root, 'w03', live['candidate'])['valid']
         for evidence_id in (assertions['absent'], assertions['expired'], call_record['id'], 'evidence:arbitrary'):
             rejected = deepcopy(specification)

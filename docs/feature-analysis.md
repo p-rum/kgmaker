@@ -377,7 +377,8 @@ field needs a positive duration using hours, minutes or seconds, for example
 ```
 
 Put this object in the input's `availability_proof`. The checker resolves
-the record from the current selected graph and packet. A fresh `PRESENT`
+the record from the current selected graph and packet and revalidates the
+compiler assignment, hook and order of both argument bindings. A fresh `PRESENT`
 can yield `PARTIAL` availability and `UNASSESSED` usability. A call-only
 record, `ABSENT`, expired proof or mismatched mapping leaves availability
 `UNKNOWN`. Use the result live in `feature data-check`. `feature apply`

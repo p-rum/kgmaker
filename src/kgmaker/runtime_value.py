@@ -120,6 +120,8 @@ def resolve_capture(graph, context, fact):
 
 
 def current_record(graph, packet, identity):
+    from .runtime_evidence import _label
+
     if (type(identity) is not str or identity not in packet.get("graph_evidence_ids", ()) or packet.get("workspace")):
         raise AnalysisError("Runtime presence requires a record from the exact local analysis packet")
     records = [row for row in graph.evidence if row["id"] == identity]
@@ -138,6 +140,8 @@ def current_record(graph, packet, identity):
             or record.get("source_identity") != {"context_fingerprint": digest(context),
                "source_manifest_fingerprint": digest(context.get("source_files"))}):
         raise AnalysisError("Runtime presence record is outside the current selected context", 3)
+    for key in ("runtime_id", "context_id", "build_id", "config_fingerprint", "service_id", "service_version"):
+        _label(record[key], key)
     source, target = record.get("source"), record.get("target")
     if not any(edge.kind == RELATION and edge.evidence_kind == "RUNTIME_OBSERVED" and edge.source == source
                and edge.target == target and edge.context_ids == (context["id"],) and identity in edge.evidence_ids
@@ -148,7 +152,15 @@ def current_record(graph, packet, identity):
     if (len(bindings) != 1 or not _direct_mapping(bindings[0], context, symbols)
             or (bindings[0]["source"], bindings[0]["target"]) != (source, target)):
         raise AnalysisError("Runtime presence has no current matching compiler field proof", 3)
-    locations = {symbols[source]["path"], symbols[target]["path"], bindings[0]["source_file"]}
+    binding, = bindings
+    owner = symbols[binding["owner_method"]]
+    frame = {key: value for key, value in zip(_FRAME_FIELDS, _signature(owner))}
+    resolved = resolve_capture(graph, context, {**frame, "kind": FACT, "presence": record["presence"],
+                                               "source_line": (binding.get("source_range") or {}).get("start_line")})
+    if (resolved["field_mapping_evidence_id"], resolved["hook_call_site"]) != (
+            record["field_mapping_evidence_id"], record["hook_call_site"]):
+        raise AnalysisError("Runtime presence has no current matching compiler hook proof", 3)
+    locations = {symbols[source]["path"], symbols[target]["path"], binding["source_file"]}
     if any(packet["source_manifest"].get(path, {}).get("sha256") != context["source_files"][path] for path in locations):
         raise AnalysisError("Runtime presence source differs from the analysis packet", 3)
     return record

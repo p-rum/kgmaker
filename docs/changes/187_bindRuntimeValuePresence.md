@@ -74,3 +74,38 @@ uvádějí dílčí rozsah. Stav je `PARTIAL` pro jeden vybraný compiler kontex
 jeden skutečně pozorovaný běh. Měření kvality, klíče, zpracování dalších Java
 typů a jazyků, workspace, sestavené hodnotové cesty a trvalé použití v
 aplikovaném reportu mají vlastní acceptance.
+
+## Přenos po #170 a kontrola uloženého hooku
+
+T003-S13-W03-AC01 a AC03. První rodič je
+`3a72078b5f9fbb48986e219ea19e0381b56f6f34` a aktuální `main` je
+`18ce70a077f603f1800036dc97c38553f91a506a`. [Change186](186_reconcileInstallationCompletionInventory.md)
+rozšířil inventář o šest instalačních a skill kroků. Přenesený plán má 135
+položek. 134 položek je shodných s `main`, mění se jen W03 na `IN_PROGRESS/PARTIAL`.
+Pořadí dispatch je shodné.
+
+V původním čtení skutečného projektovaného W03 grafu prošel doklad i po
+odebrání hooku, nahrazení ID hookem z jiné metody a změně označení služby
+na hodnotu s neplatným znakem. Tyto sondy měnily graf pouze v paměti a
+potvrdily dřívější chování. SHA-256 sondy
+`9d93543915cc65b3bace2f23fb1163c855acc330e8228b615e085f83af7e16b0`.
+
+Čtení nyní znovu vyhledá přesné compiler přiřazení, hook a pořadí argumentů
+stejným ověřením jako při capture. Uložené označení běhu a služby podléhá
+stejnému omezení jako při importu. Sonda na skutečném vybraném grafu zachovala
+kladný rozsah `PARTIAL/UNASSESSED` a odmítla chybějící i jiný hook, chybné
+pořadí a neplatná označení. SHA-256 sondy
+`94c60ca3f7f45d04ed895d151b59a080389b65278af0ba0b8bfec0840d636a2e`.
+
+Opravený přenos prošel s reálným JDK 21 a povinným JVM workerem. Výběr má
+5 PASS, 0 FAIL, 0 SKIP, 7 mimo výběr, raw exit 0 a 136,19 s. Zahrnuje tři
+nativní W03 případy a dva původní testy schváleného mapování. JUnit SHA-256
+`52ca10c3a9b54317cba43f3e536b93a8eb3a4d1cc2e8d9836e0ccf5e6989aaa9`.
+Shodné manifesty vstupů před a po mají SHA-256
+`74a7cf7b706015b9fab9d4f940c5af2640b562a3fefe2e01360297ce47178e8b`.
+
+```sh
+python -m pytest -q -p no:cacheprovider --tb=short \
+  tests/test_runtime_value_presence.py tests/test_availability.py \
+  -k 'test_runtime_value_presence or observed_approved_input or unapproved_or_different_business_mapping'
+```
