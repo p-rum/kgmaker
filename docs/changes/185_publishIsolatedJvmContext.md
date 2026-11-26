@@ -144,3 +144,43 @@ KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfDat
 
 Úplná standardní sada společného stromu, skutečný běh mimo Linux a GitHub
 Actions mají při lokálním předání stav `NOT_RUN`.
+
+## Přenos po sloučení #168 — kroky 4 a 5
+
+První rodič je `f19934cc63050280c4f5cd02f2363aff3a4fc503` se stromem
+`e74a76cfab72092160e68e036f7970b12ce1dea8`. Druhý je skutečný `main`
+`4dc8f657b891f1716f7d134f97c1e6098cbb50b5` se stromem
+`aac868f1e0a5176b813f5be15a73d7d05f6dda9f`. Oba zdroje a testy W02 mají
+bajty prvního rodiče. Soubory Excel implementace, testy a dokumentace
+z #168 mají bajty druhého rodiče. Runtime kód a testy #166 i registry #167
+jsou shodné v obou rodičích. Společné README, acceptance a stavová matice
+odpovídají nezávislému třícestnému sloučení. Graf zachoval 452 předchozích
+historických epizod. [Change184](184_preserveScopedExcelBehavior.md).
+
+Všech pět zdrojových otisků předchozí nativní zkoušky `--manifest`
+(publikace se `STALE` a následnou obnovou po `scan`) se v tomto stromu
+shoduje. Plán má 129 položek, 100 `MERGED` a 29 `PLANNED`. T056-S01 až
+S03, S10-W02 a S13-W02 mají `MERGED/PARTIAL`. S10-W03 vyžaduje ověřený
+W02. Výřez plánu má SHA-256
+`95bcf540303cd798c566d0373f57ff63a01530e2b129363876afd80bc6b14cb1`.
+
+Čerstvá cílená sada má **24 PASS / 0 SKIP** za 125,90 s s JDK 21.0.6+7,
+K1 a K2. Pokryla publikaci, rollback pozdní změny raw zdroje, čtyři
+nepřípustné tvary nebo vazby vlastníka, zachování nezávislého dokladu,
+plánovač a platné i odmítnuté vazby VBA v inventáři T056. Pytest,
+sestavení manifestu a jeho porovnání mají exit 0. SHA-256 JUnit je
+`c5e7d20fadaf10ae4ed8b7ccf2edec7e682da1d4f8e683cf122cf27adc442289`.
+Shodné 579řádkové manifesty mají SHA-256
+`35c3aa38c30d7775a4908559025fc0d88a87061f4d443ea91b60a79ef45710a7`.
+
+```bash
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData \
+  python -m pytest -n 2 --dist load --maxschedchunk=1 -q --tb=short -ra \
+    -p no:cacheprovider -o tmp_path_retention_policy=failed \
+    tests/test_reverse_dependency_index.py tests/test_completion.py \
+    tests/test_excel_migration.py \
+    -k 'test_completion or test_actual_jvm_isolated_stale_peer or test_actual_jvm_stale_peer_requires_unambiguous_runtime_proof_owner or test_behavior_sheet_scope_includes_the_guard_and_its_local_definition or test_behavior_rejects_unbound_vba_context_in_loaded_inventory'
+```
+
+Úplná standardní sada nového společného stromu, nativní Excel worker,
+skutečný běh mimo Linux a GitHub Actions mají při tomto předání stav `NOT_RUN`.

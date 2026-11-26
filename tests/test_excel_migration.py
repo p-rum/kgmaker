@@ -493,6 +493,292 @@ def _register_source(builder, book, *, source, formulas=(), names=(), builtins=(
     }, [])
 
 
+def test_behavior_distinguishes_unused_aliases_from_formula_consumers(tmp_path):
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    _register_source(
+        builder, selection.books[0], source="",
+        formulas=('WEBSERVICE("https://terminal.example.invalid/")',
+                  'WEBSERVICE("https://consumed.example.invalid/")', "UsedAlias"),
+        names=[{"name": name, "formula": formula} for name, formula in [
+            ("TerminalValue", "Sheet1!$B$1"), ("UnusedAlias", "TerminalValue"),
+            ("ConsumedValue", "Sheet1!$B$2"), ("UsedAlias", "ConsumedValue"),
+            ("CycleFirst", "CycleSecond"), ("CycleSecond", "CycleFirst"),
+        ]],
+        builtins=["WEBSERVICE"],
+    )
+    value = builder.document()
+    result = cli(tmp_path, "behavior", "--inventory", write_json(tmp_path / "inventory.json", value))
+    assert result.returncode == 0, result.stderr
+    output = result.stdout
+    candidates = [line for line in output.splitlines() if "Visible output candidate" in line]
+    paths = [line for line in output.splitlines() if "Possible source-to-output path" in line]
+    assert len(candidates) == 2, candidates
+    assert any("Sheet1 / B1" in line for line in candidates)
+    assert any("Sheet1 / B3" in line for line in candidates)
+    assert all("Sheet1 / B2" not in line for line in candidates)
+    assert len(paths) == 2, paths
+    assert any("Sheet1 / B1" in line for line in paths)
+    assert any("Sheet1 / B2" in line and "Sheet1 / B3" in line and "UsedAlias" in line for line in paths)
+    assert "example.invalid" not in output
+
+
+def test_behavior_sheet_scope_includes_the_guard_and_its_local_definition(tmp_path):
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    source = """Private Sub Worksheet_Change(ByVal Target As Range)
+    permitted = Amount > 0
+    If permitted Then
+        If specificRule Then
+            Me.Range("C1").Value = 3
+        End If
+    ElseIf alternateRule Then
+        Me.Range("D1").Value = 4
+    End If
+    If unrelatedRule Then
+        unrelatedValue = 1
+    End If
+    Me.Range("E1").Value = 5
+End Sub"""
+    builder.register(selection.books[0], "test-sha", 0, {
+        "links": {}, "builtin_functions": [], "cells": [], "names": [], "tables": [],
+        "sheets": [{"name": "Sheet1", "visibility": "VISIBLE", "code_name": "SheetCode"}],
+        "modules": [{"name": "SheetCode", "type": "Document", "source": source}],
+    }, [])
+    value = builder.document()
+    path = write_json(tmp_path / "inventory.json", value)
+    args = ("behavior", "--inventory", path, "--book", "invoice", "--sheet", "Sheet1")
+    redacted = cli(tmp_path, *args)
+    full = cli(tmp_path, *args, "--include-source")
+    assert redacted.returncode == full.returncode == 0, (redacted.stderr, full.stderr)
+
+    def operation(line):
+        return evidence_at(value, "vba-operation", module="SheetCode", line=line)["id"]
+
+    for line in (2, 3, 4, 5, 7, 8, 13):
+        assert operation(line) in redacted.stdout
+    assert operation(10) not in redacted.stdout
+    for guard in ("permitted = Amount > 0", "If permitted Then", "If specificRule Then", "ElseIf alternateRule Then"):
+        assert guard in full.stdout
+        assert guard not in redacted.stdout
+    assert "If unrelatedRule Then" not in full.stdout
+    guards = {(edge["source"], edge["target"]) for edge in value["relations"] if edge["kind"] == "guarded-by"}
+    assert {(operation(5), operation(4)), (operation(4), operation(3)),
+            (operation(8), operation(7)), (operation(7), operation(3))} <= guards
+    assert all(source != operation(13) for source, _ in guards)
+    assert any("Control-flow context" in line and operation(4) in line for line in redacted.stdout.splitlines())
+    packet = plan.packet(value, entity=operation(5))
+    packet_edges = {(edge["source"], edge["kind"], edge["target"]) for edge in packet["relations"]}
+    assert {(operation(5), "guarded-by", operation(4)), (operation(4), "guarded-by", operation(3)),
+            (operation(3), "depends-on", operation(2))} <= packet_edges
+    assert "specificRule" not in canonical(packet)
+
+
+@pytest.mark.parametrize(("opener", "closer"), [
+    ("If innerRule Then", "End    If"),
+    ("If innerRule Then", "End\tIf"),
+    ("Select Case innerRule\n        Case 1", "End\t Select"),
+    ("For outerIndex = 1 To 3\n        For innerRule = 1 To 3", "Next innerRule, outerIndex"),
+])
+def test_behavior_closes_nested_vba_blocks_with_whitespace(tmp_path, opener, closer):
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    source = f"""Private Sub Worksheet_Change(ByVal Target As Range)
+    If outerRule Then
+        {opener}
+            hiddenValue = 1
+        {closer}
+        Me.Range("E1").Value = 5
+    End If
+End Sub"""
+    builder.register(selection.books[0], "test-sha", 0, {
+        "links": {}, "builtin_functions": [], "cells": [], "names": [], "tables": [],
+        "sheets": [{"name": "Sheet1", "visibility": "VISIBLE", "code_name": "SheetCode"}],
+        "modules": [{"name": "SheetCode", "type": "Document", "source": source}],
+    }, [])
+    value = builder.document()
+    path = write_json(tmp_path / "inventory.json", value)
+    result = cli(tmp_path, "behavior", "--inventory", path, "--sheet", "Sheet1", "--include-source")
+    assert result.returncode == 0, result.stderr
+    assert 'Me.Range("E1").Value = 5' in result.stdout and "If outerRule Then" in result.stdout
+    assert "innerRule" not in result.stdout
+    write = next(row for row in value["evidence"] if row.get("source") == 'Me.Range("E1").Value = 5')
+    targets = [edge["target"] for edge in value["relations"]
+               if edge["source"] == write["id"] and edge["kind"] == "guarded-by"]
+    assert targets == [evidence_at(value, "vba-operation", line=2)["id"]]
+
+
+@pytest.mark.parametrize("invalid", ["foreign-guard", "foreign-definition", "later", "wrong-kind",
+                                      "ambiguous-owner", "wrong-locator", "wrong-evidence"])
+def test_behavior_rejects_unbound_vba_context_in_loaded_inventory(tmp_path, invalid):
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config()))
+    builder = inventory.Inventory(selection)
+    selected = """Private Sub OtherProcedure()
+    If disconnectedRule Then
+        unseenValue = 2
+    End If
+End Sub
+Private Sub Worksheet_Change(ByVal Target As Range)
+    If unusedRule Then
+        unseenValue = 2
+    End If
+    allowed = 1
+    If allowed Then
+        Me.Range("E1").Value = 5
+    End If
+    If futureRule Then
+        unseenValue = 2
+    End If
+End Sub"""
+    foreign = """Private Sub Worksheet_Change(ByVal Target As Range)
+    foreignDefinition = 99
+    If foreignRule Then
+        unseenValue = 2
+    End If
+End Sub"""
+    for book, sheet, source in zip(selection.books, ("Sheet1", "Other"), (selected, foreign)):
+        builder.register(book, "test-sha", 0, {
+            "links": {}, "builtin_functions": [], "cells": [], "names": [], "tables": [],
+            "sheets": [{"name": sheet, "visibility": "VISIBLE", "code_name": "SheetCode"}],
+            "modules": [{"name": "SheetCode", "type": "Document", "source": source}],
+        }, [])
+    value = builder.document()
+
+    def operation(book, line):
+        return evidence_at(value, "vba-operation", workbook=book, line=line)
+
+    def relation(source, target, kind, evidence=None):
+        value["relations"].append({"source": source, "target": target, "kind": kind,
+                                   "evidence": [source if evidence is None else evidence]})
+
+    write = operation("invoice", 12)["id"]
+    guard = operation("invoice", 11)
+    definition = operation("invoice", 10)
+    other_owner = evidence_at(value, "vba-procedure", workbook="invoice", procedure="OtherProcedure")["id"]
+    current_owner = evidence_at(value, "vba-procedure", workbook="invoice", procedure="Worksheet_Change")["id"]
+    if invalid == "foreign-definition":
+        invalid_target = operation("rates", 2)
+        relation(guard["id"], invalid_target["id"], "depends-on")
+        guard["alternatives"] = {"allowed": [definition["id"], invalid_target["id"]]}
+    else:
+        by_case = {"foreign-guard": ("rates", 3), "later": ("invoice", 14), "wrong-kind": ("invoice", 10),
+                   "ambiguous-owner": ("invoice", 7), "wrong-locator": ("invoice", 2),
+                   "wrong-evidence": ("invoice", 7)}
+        invalid_target = operation(*by_case[invalid])
+        if invalid == "ambiguous-owner":
+            relation(other_owner, invalid_target["id"], "contains")
+        elif invalid == "wrong-locator":
+            value["relations"] = [edge for edge in value["relations"]
+                                  if (edge["source"], edge["target"], edge["kind"]) !=
+                                  (other_owner, invalid_target["id"], "contains")]
+            relation(current_owner, invalid_target["id"], "contains")
+        evidence = invalid_target["id"] if invalid == "wrong-evidence" else None
+        relation(write, invalid_target["id"], "guarded-by", evidence)
+
+    value["inventory_id"] = digest({key: row for key, row in value.items() if key != "inventory_id"})
+    path = write_json(tmp_path / "inventory.json", value)
+    args = ("behavior", "--inventory", path, "--book", "invoice", "--sheet", "Sheet1")
+    redacted = cli(tmp_path, *args)
+    full = cli(tmp_path, *args, "--include-source")
+    assert redacted.returncode == full.returncode == 0, (redacted.stderr, full.stderr)
+    assert guard["id"] in redacted.stdout and definition["id"] in redacted.stdout
+    assert guard["source"] in full.stdout and guard["source"] not in redacted.stdout
+    if invalid == "wrong-kind":
+        guard_citations = [line for line in full.stdout.splitlines() if "Control-flow context" in line]
+        assert all(invalid_target["id"] not in line for line in guard_citations)
+    else:
+        assert invalid_target["id"] not in redacted.stdout
+        assert invalid_target["source"] not in full.stdout
+
+    rejected_link = ("depends-on", guard["id"]) if invalid == "foreign-definition" else ("guarded-by", write)
+    for entity in (write, guard["id"]):
+        for mode in ((), ("--include-source",)):
+            packet = cli(tmp_path, "packet", "--inventory", path, "--book", "invoice", "--entity", entity, *mode)
+            assert packet.returncode == 0, packet.stderr
+            payload = json.loads(packet.stdout)
+            relations = {(edge["kind"], edge["source"], edge["target"]) for edge in payload["relations"]}
+            assert (*rejected_link, invalid_target["id"]) not in relations
+            if invalid != "wrong-kind":
+                assert invalid_target["id"] not in packet.stdout
+                assert invalid_target["source"] not in packet.stdout
+            assert ("guarded-by", write, guard["id"]) in relations
+            assert ("depends-on", guard["id"], definition["id"]) in relations
+            steps = {row["id"]: row for row in payload["evidence"]}
+            for step in (guard, definition):
+                assert steps[step["id"]].get("source") == (step["source"] if mode else None)
+
+
+def test_behavior_only_declares_selected_and_linked_upstream_sources(tmp_path):
+    from kgmaker.excel.source import manifest
+
+    config_value = config()
+    config_value["workbooks"].append({"id": "unrelated", "path": "Unrelated.xlsx"})
+    selection = manifest(write_json(tmp_path / "app.json", config_value))
+    builder = inventory.Inventory(selection)
+    for book, sheet, formulas, links in (
+        ("invoice", "Selected", ('WEBSERVICE("https://selected.example.invalid/")', "'[1]Upstream'!A1"),
+         {"1": "Rates.xlsx"}),
+        ("rates", "Upstream", ('WEBSERVICE("https://upstream.example.invalid/")',), {}),
+        ("unrelated", "Unrelated", ('WEBSERVICE("https://unrelated.example.invalid/")',), {}),
+    ):
+        entry = next(row for row in selection.books if row.id == book)
+        builder.register(entry, "test-sha", 0, {
+            "links": links, "builtin_functions": ["WEBSERVICE"],
+            "sheets": [{"name": sheet, "visibility": "VISIBLE"}],
+            "cells": [{"sheet": sheet, "cell": f"A{n}", "type": "FORMULA", "formula": formula}
+                      for n, formula in enumerate(formulas, 1)],
+            "names": [], "tables": [], "modules": [],
+            "connections": [{"part": "xl/connections.xml", "id": "1", "index": 1, "mechanism": "Web query",
+                             "reference": f"https://query-{book}.example.invalid/"}],
+            "query_tables": [{"part": "xl/queryTables/queryTable1.xml", "id": "1",
+                              "sheet": sheet, "range": "B1:B2"}],
+        }, [])
+    value = builder.document()
+    path = write_json(tmp_path / "inventory.json", value)
+    args = ("behavior", "--inventory", path, "--book", "invoice", "--sheet", "Selected")
+    redacted = cli(tmp_path, *args)
+    full = cli(tmp_path, *args, "--include-source")
+    unscoped = cli(tmp_path, "behavior", "--inventory", path, "--include-source")
+    assert redacted.returncode == full.returncode == unscoped.returncode == 0
+    assert "unrelated.example.invalid" in unscoped.stdout
+    assert "example.invalid" not in redacted.stdout
+    declarations = [line for line in full.stdout.splitlines() if "Declared in source" in line]
+    assert any("selected.example.invalid" in line for line in declarations)
+    assert any("upstream.example.invalid" in line for line in declarations)
+    assert any("rates / Upstream / A1" in line and "invoice / Selected / A2" in line
+               for line in full.stdout.splitlines() if "Possible source-to-output path" in line)
+    assert "unrelated.example.invalid" not in full.stdout
+    assert "unrelated / Unrelated" not in redacted.stdout
+    assert "query-invoice.example.invalid" in full.stdout
+    assert "query-unrelated.example.invalid" not in full.stdout
+    assert "query-rates.example.invalid" not in full.stdout
+    assert full.stdout.count("Declared query-table binding") == 1
+
+    for selector in (("--book", "invoice"), ("--sheet", "Selected")):
+        scoped = cli(tmp_path, "behavior", "--inventory", path, *selector, "--include-source")
+        assert scoped.returncode == 0, scoped.stderr
+        assert "upstream.example.invalid" in scoped.stdout
+        assert "unrelated.example.invalid" not in scoped.stdout
+
+    selected_rule = evidence_at(value, "cell", workbook="invoice", sheet="Selected", cell="A2")
+    upstream_rule = evidence_at(value, "cell", workbook="rates", sheet="Upstream", cell="A1")
+    packet = cli(tmp_path, "packet", "--inventory", path, "--book", "invoice",
+                 "--entity", selected_rule["id"], "--include-source")
+    assert packet.returncode == 0, packet.stderr
+    payload = json.loads(packet.stdout)
+    assert edge_sources(payload, selected_rule, "reads", upstream_rule)
+    assert any(row["id"] == upstream_rule["id"] and "upstream.example.invalid" in row["formula"]
+               for row in payload["evidence"])
+
+
 def test_vba_behavior_tracks_http_response_calculation_and_alternative_assignments(tmp_path):
     from kgmaker.excel import behavior
     from kgmaker.excel.source import manifest
