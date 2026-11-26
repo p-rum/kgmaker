@@ -72,7 +72,7 @@ public final class RuntimeTrace {
             + ",\"target_descriptor\":" + quote(target.getDescriptor()) + "}");
     }
 
-    /** Place on the same source line immediately after the direct assignment. */
+    /** Place immediately after the direct assignment on the same or next source line. */
     public void observeValuePresence(String source, String target) {
         if (!enabled) return;
         var caller = StackWalker.getInstance(Set.of(StackWalker.Option.RETAIN_CLASS_REFERENCE,

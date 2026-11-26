@@ -93,7 +93,11 @@ Aktualizované jsou README, [CLI](../architecture-json-cli.md#architecture-topol
 [architektura](../architecture.md), [topologie](../service-topology.md#markdown-report-t022),
 [stav](../production-analysis-progress.md) a [acceptance](../acceptance-inventory.md).
 První nezávislé review referenční dvojice požádalo o sjednocení inventáře
-s ověřenými výsledky. Stav zůstává `PR_OPEN / PARTIAL`. Přesné aktuální
-revize, výsledky jejich kontrol a závěry review vede [PR #179](https://github.com/p-rum/kgmaker/pull/179).
+s ověřenými výsledky. Nad dokumentační revizí
+`5ca837ef7589400e8356fc07c0f178d792e423c6` a bází
+`c4a1edb59f140faeafba0d5e979023bba185f3f1` vydaly nezávislé kontroly
+správnosti i rozsahu T052 `APPROVE`. Stav dodání zůstává `PR_OPEN / PARTIAL`.
+Přesné aktuální revize, výsledky jejich kontrol a závěry review vede
+[PR #179](https://github.com/p-rum/kgmaker/pull/179).
 Jde o statický report nad existujícím podkladem. Běh cílové aplikace ani
 dostupnost dat tento výstup nedokládá.

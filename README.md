@@ -591,6 +591,7 @@ na obou koncích. U ověřeného v3 dispatch zobrazí navigace také `call_site`
 
 Pro přímočaré přiřazení mezi dvěma statickými `String` poli v Javě lze po ověření
 instrukcí ve zvoleném bytecode uložit stav `PRESENT` nebo `ABSENT`.
+Volání SDK může být bezprostředně za přiřazením na stejném nebo následujícím řádku.
 `feature data-check` může z čerstvého pozorování
 a schváleného mapování doložit dostupnost `PARTIAL` v rozsahu daného běhu.
 [Runtime capture](docs/runtime-trace.md#přítomnost-hodnoty-po-přímém-přiřazení-v-javě)
