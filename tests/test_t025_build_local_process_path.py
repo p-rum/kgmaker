@@ -349,11 +349,9 @@ private fun cleanup() {}
     assert any(site['id'] in n.original_ids and n.attributes.get('boundary_reason') for n in guarded.steps)
 
 
-def test_actual_local_process_carries_only_its_selected_context_to_label_packet(tmp_path):
-    from kgmaker.analysis_model import file_hash, write_json
+def capture_two_java_services(tmp_path):
+    from kgmaker.analysis_model import write_json
     from kgmaker.inspection import inspect_jvm
-    from kgmaker.process_semantics import ProcessLabelPacketError, prepare_process_label_packet
-    from kgmaker.workspace import load_workspace, snapshot_workspace
     from test_t024_discover_process_triggers import actual_prerequisites
 
     jars = actual_prerequisites('k1')
@@ -382,6 +380,15 @@ import org.springframework.web.bind.annotation.GetMapping;
         'service_ownership': {'schema_version': 1, 'services': [
             {'id': name, 'roots': [{'repo_id': name, 'path': 'src'}],
              'modules': [{'repo_id': name, 'id': 'app'}], 'external_systems': []} for name in services]}})
+    return manifest
+
+
+def test_actual_local_process_carries_only_its_selected_context_to_label_packet(tmp_path):
+    from kgmaker.analysis_model import file_hash
+    from kgmaker.process_semantics import ProcessLabelPacketError, prepare_process_label_packet
+    from kgmaker.workspace import load_workspace, snapshot_workspace
+
+    manifest = capture_two_java_services(tmp_path)
 
     def files():
         return {path.relative_to(tmp_path): file_hash(path) for path in tmp_path.rglob('*') if path.is_file()}
