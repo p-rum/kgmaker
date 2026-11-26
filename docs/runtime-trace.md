@@ -191,16 +191,18 @@ Děděné a výchozí metody, proxy, reflexe, async a dostupnost dat mají vlast
 ## Přítomnost hodnoty po přímém přiřazení v Javě
 
 V explicitně instrumentovaném běhu zavolejte SDK na stejném řádku hned po
-přímém přiřazení mezi dvěma poli `String`.
+přímém přiřazení mezi dvěma statickými poli `String` v Javě.
 
 ```java
-target.status = source.status; trace.observeValuePresence(source.status, target.status);
+Target.status = Source.status; trace.observeValuePresence(Source.status, Target.status);
 ```
 
-Vybraný `EXECUTION_BOUND` kontext musí obsahovat jednu přímou vazbu přiřazení,
-jediné fyzické volání SDK na tomto řádku a compiler důkazy o čtení obou polí
-ve správném pořadí. SDK zaznamená jen `PRESENT` pro shodný nenulový odkaz a
-`ABSENT` pro dvě hodnoty `null`. Při nesouhlasu je výsledek neúplný. Samotnou
+Vybraný `EXECUTION_BOUND` kontext musí doložit deklarace obou statických polí,
+jednu přímou vazbu přiřazení, jediné fyzické volání SDK na tomto řádku a compiler
+důkazy o čtení obou polí ve správném pořadí. Instanční pole jsou mimo rozsah,
+protože stejná deklarace může patřit k různým objektům. Pozorování platí pro
+hodnoty načtené v hooku daného běhu. SDK zaznamená jen `PRESENT` pro shodný
+nenulový odkaz a `ABSENT` pro dvě hodnoty `null`. Při nesouhlasu je výsledek neúplný. Samotnou
 hodnotu, argument ani její otisk SDK neukládá. Při spuštění předávejte data
 aplikaci jejím běžným vstupem a vynechte je z argumentů příkazu capture.
 

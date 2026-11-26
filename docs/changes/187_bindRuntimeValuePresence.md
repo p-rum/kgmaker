@@ -109,3 +109,44 @@ python -m pytest -q -p no:cacheprovider --tb=short \
   tests/test_runtime_value_presence.py tests/test_availability.py \
   -k 'test_runtime_value_presence or observed_approved_input or unapproved_or_different_business_mapping'
 ```
+
+## Krok 6 — dvě deklarace statických polí
+
+T003-S13-W03-AC01 a AC03. Obě revize nad #171 ověřily, že existující vazby
+rozlišují deklarace polí, ale ne jejich příjemce. Nad publikovaným HEAD
+`b407b6be741124342d50779164c64bf0642d724c`, stromem
+`fee2ba2e2dc8d4d12ffb0fc15622dea47a388fc6`, původní přiřazení skutečně
+zkopírovalo `null`. Hook na stejném řádku načetl shodný nenulový odkaz ze
+dvou jiných objektů a veřejný `data-check` chybně vrátil `PARTIAL/UNASSESSED`.
+Reprodukce se skutečným Javac, JVM workerem a veřejným CLI má SHA-256
+`238f5222bba738ce89635cea7bc2a6ecd8f370491bca5e84ac4e44ba333164a1` a raw exit 0.
+Přidaná regrese očekávala odmítnutí a na původní implementaci skutečně
+selhala v capture i offline importu. JUnit má 0 PASS, 2 FAIL, 0 SKIP,
+3 mimo výběr, raw exit 1 a SHA-256
+`00b299823eee2807308b163993fe15320b3be0416992f49d7630fdd753c954de`.
+
+V4 vyžaduje dvě skutečné statické deklarace Java `String` z aktuálně
+vybraných a obsahově ověřených zdrojů. Každá deklarace označuje jedno sdílené
+pole v kontextu zvolených tříd. `runtime produce`, `runtime import` i živé
+čtení znovu ověřují společnou vazbu. U instančního pole odmítnou důkaz jako
+`RUNTIME_VALUE_BINDING`. `PRESENT` zůstává vzorkem čtení v hooku po přiřazení
+v kooperačním lokálním běhu. Rovnost hodnot mimo vzorek a souběžné zápisy
+vyžadují vlastní důkaz. Formáty v1–v3, statické cesty a pravidla schváleného
+mapování používají původní kontrakty.
+[Validator](../../src/kgmaker/runtime_value.py) ·
+[Fixture a regresní test](../../tests/test_runtime_value_presence.py).
+
+Cílený výběr z kroku 4 s novou regresí prošel na Temurin JDK 21.0.6+7,
+povinném JVM workeru a offline Mavenu 3.9.9. Výsledek je 19 PASS, 0 FAIL,
+0 SKIP, 92 mimo výběr, raw exit 0 a 228,48 s. Obě odmítnuté cesty porovnaly
+capture, graf a oba pohledy po bajtech. Kladný `PRESENT`, `ABSENT`, prošlý
+doklad, cizí hook, chybějící statická deklarace a starší runtime vstupy jsou
+součástí stejného výběru. JUnit SHA-256
+`42c4ac20a5a39900e463c20594f375ea77976c61fe4ba038986750e70982ea7d`.
+Ověřený manifest vstupů má SHA-256
+`4b6910b8a255a045c58a4d3ad8959445b8ab01c434a542bcb54e9f01654d54f9`.
+Výpis Javap dokládá `getstatic`/`putstatic` v kladné fixture a odlišné
+parametry příjemce u `getfield`/`putfield` v záporné fixture. SHA-256
+`f84a5c67fbac24bd11639027b13f5404d4a198f0feeb4fc9a10f11ed8a330320`.
+Úplná sada, Windows a GitHub Actions jsou pro tuto opravu v tomto kroku
+`NOT_RUN`. W03 zůstává `IN_PROGRESS / PARTIAL`.

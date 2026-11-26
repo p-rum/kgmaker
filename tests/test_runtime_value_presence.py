@@ -70,6 +70,11 @@ def check_projected_hook_authority(root, packet, candidate, item):
                                             and row.get('argument_index') == 0 else row for row in graph.evidence])
     with pytest.raises(AnalysisError, match='RUNTIME_VALUE_ARGUMENTS'):
         evaluate_proof(root, packet, candidate, item, wrong_ordinal)
+    for endpoint in ('source', 'target'):
+        missing_static = replace(graph, symbols=[{**symbol, 'modifiers': []} if symbol['id'] == original[endpoint]
+                                                else symbol for symbol in graph.symbols])
+        with pytest.raises(AnalysisError, match='no current matching compiler field proof'):
+            evaluate_proof(root, packet, candidate, item, missing_static)
     for field, value, error in (
         ('hook_call_site', other_hook, 'matching compiler hook proof'),
         ('runtime_id', 'invalid\n' + VALUE, 'identifier: runtime_id'),
@@ -212,6 +217,30 @@ def test_actual_java_value_capture_and_import_reject_unbound_evidence(applicatio
                 produce(application, 'present')
         finally:
             java.write_bytes(original)
+    assert outputs(root) == before
+
+
+@pytest.mark.parametrize('entrypoint', ['produce', 'offline-import'])
+def test_actual_java_value_rejects_reads_on_other_receiver_instances(application, monkeypatch, entrypoint):
+    root, argv, _ = application
+    monkeypatch.setenv('FIXTURE_ONLY_VALUE', VALUE)
+    valid = produce(application, 'present')
+    before = outputs(root)
+    mode = 'different-receivers'
+    raw = subprocess.run([*argv, mode], cwd=root, check=True, capture_output=True,
+                         env={**os.environ, 'KGMAKER_RUNTIME_TRACE': '1'}).stdout
+    assert VALUE.encode() not in raw
+    exported = json.loads(raw)
+    fact, = exported['facts']
+    assert fact['presence'] == 'PRESENT' and fact['caller_name'] == 'misleading'
+
+    with pytest.raises(AnalysisError, match='RUNTIME_VALUE_BINDING'):
+        if entrypoint == 'produce':
+            produce(application, mode)
+        else:
+            manifest = {**valid, 'runtime_id': 'other-receivers', 'facts': [fact]}
+            with patch('subprocess.Popen', side_effect=AssertionError('Offline import spawned a process')):
+                import_manifest(root, manifest)
     assert outputs(root) == before
 
 

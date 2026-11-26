@@ -224,8 +224,8 @@ Příkazy a přesné revize uvádí [change151](changes/151_preserveRuntimeObser
 
 | Acceptance | Ověření | Důkaz a rozsah |
 |---|---|---|
-| T003-S13-W03-AC01 | PARTIAL | `test_actual_java_value_presence_affects_only_matching_live_data_check` ověřuje čerstvý `PRESENT` na skutečné Javě a schválené mapování. Pozorování doloží `PARTIAL/UNASSESSED` pro jeden běh. `ABSENT`, obyčejný call a prošlý vzorek nechají dostupnost `UNKNOWN`. |
-| T003-S13-W03-AC02, AC03 | PARTIAL | `test_actual_java_value_capture_and_import_reject_unbound_evidence` pokrývá jiný compiler binding, dvě přiřazení, cizí konfiguraci, budoucí čas, zastaralý zdroj a zakázaná pole. Čtení z packetu ověřuje přesný hook, pořadí argumentů a omezené identifikátory běhu a služby. Pozdní změna zdroje zachová capture a graf. V1–v3 a graph/store v3 používají existující schémata. |
+| T003-S13-W03-AC01 | PARTIAL | `test_actual_java_value_presence_affects_only_matching_live_data_check` ověřuje čerstvý `PRESENT` mezi dvěma statickými Java `String` poli a schválené mapování. Pozorování doloží `PARTIAL/UNASSESSED` pro jeden běh. `ABSENT`, obyčejný call a prošlý vzorek nechají dostupnost `UNKNOWN`. |
+| T003-S13-W03-AC02, AC03 | PARTIAL | `test_actual_java_value_rejects_reads_on_other_receiver_instances` ověřuje odmítnutí skutečného čtení z jiných instancí při capture i offline importu se zachováním artefaktu, grafu i pohledů. `test_actual_java_value_capture_and_import_reject_unbound_evidence` pokrývá jiný binding, dvě přiřazení, cizí konfiguraci, budoucí čas, zastaralý zdroj a zakázaná pole. Čtení z packetu znovu ověřuje obě statické deklarace, přesný hook, pořadí argumentů a omezené identifikátory běhu a služby. V1–v3 a graph/store v3 používají existující schémata. |
 | T003-S13-W03-AC04 | PARTIAL | [Změna 187](changes/187_bindRuntimeValuePresence.md) odkazuje na skutečnou fixture a výchozí revizi. Rozsah se týká živého čtení `data-check`. |
 
 ## T051 — projektové workflows, 2026-11-15

@@ -42,6 +42,16 @@ def _on_line(location, line):
     return isinstance(location, dict) and location.get("start_line") == location.get("end_line") == line
 
 
+def _selected_static_string_field(field, source_files):
+    # The compiler models field declarations, which identify one shared slot only for static fields.
+    path = field.get("path")
+    modifiers = field.get("modifiers")
+    return (field.get("kind") == "field" and field.get("descriptor") == _STRING
+            and type(modifiers) is list and "static" in modifiers
+            and isinstance(path, str) and path.endswith(".java") and path in source_files
+            and field.get("sha256") == source_files[path])
+
+
 def _direct_mapping(binding, context, symbols):
     fields = [symbols.get(binding.get(key), {}) for key in ("source", "target")]
     source = binding.get("source_file")
@@ -52,8 +62,7 @@ def _direct_mapping(binding, context, symbols):
             and binding["source"] != binding["target"] and isinstance(source, str) and source.endswith(".java")
             and owner.get("kind") == "method" and owner.get("path") == source and source in context["source_files"]
             and binding.get("sha256") == context["source_files"][source]
-            and all(field.get("kind") == "field" and field.get("descriptor") == _STRING
-                    and field.get("path") in context["source_files"] for field in fields))
+            and all(_selected_static_string_field(field, context["source_files"]) for field in fields))
 
 
 def resolve_capture(graph, context, fact):
@@ -76,7 +85,7 @@ def resolve_capture(graph, context, fact):
                  and _signature(symbols.get(row.get("owner_method"), {})) == signature
                  and _on_line(row.get("source_range"), line)]
     if len(transfers) != 1 or not _direct_mapping(transfers[0], context, symbols):
-        raise AnalysisError("RUNTIME_VALUE_BINDING: expected one selected direct String assignment on the frame line", 3)
+        raise AnalysisError("RUNTIME_VALUE_BINDING: expected one selected direct static String assignment on the frame line", 3)
     transfer, = transfers
     owner = transfer["owner_method"]
     writes = [row for row in bindings if row.get("relation") == "writes_value" and row.get("owner_method") == owner

@@ -361,8 +361,8 @@ validation to the normal feature validator.
 
 ### Runtime presence in data-check
 
-For a local Java `String` field transfer, import the v4 runtime observation,
-then prepare a packet with the exact compiler `--context` and its `--scope`.
+For a local transfer between static Java `String` fields, import the v4 runtime
+observation, then prepare a packet with the exact compiler `--context` and its `--scope`.
 Use an explicit target field ID in `candidate_entity_ids` and an effective
 approved mapping for that input, field and exact metadata. The `freshness`
 field needs a positive duration using hours, minutes or seconds, for example
@@ -378,8 +378,9 @@ field needs a positive duration using hours, minutes or seconds, for example
 
 Put this object in the input's `availability_proof`. The checker resolves
 the record from the current selected graph and packet and revalidates the
-compiler assignment, hook and order of both argument bindings. A fresh `PRESENT`
-can yield `PARTIAL` availability and `UNASSESSED` usability. A call-only
+compiler assignment, both static field declarations, hook and order of both
+argument bindings. A fresh `PRESENT` can yield `PARTIAL` availability and
+`UNASSESSED` usability. A call-only
 record, `ABSENT`, expired proof or mismatched mapping leaves availability
 `UNKNOWN`. Use the result live in `feature data-check`. `feature apply`
 rejects candidates carrying a runtime-presence proof before
