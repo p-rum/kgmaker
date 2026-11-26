@@ -1578,6 +1578,10 @@ Otisk spuštění Java zahrnuje `lib/ct.sym`, který Javac používá pro starš
 `--java-release`, a na POSIX přesné hodnoty `LANG`, `LC_ALL` a `LC_CTYPE`.
 Na Linuxu zachytí také obsah `lib/libjli.so` a `lib/server/libjvm.so`
 ve standardním rozložení JDK. [Ověření nativních vstupů](changes/180_bindLinuxJdkNativeInputs.md).
+Pro JVM i TypeScript se na Linuxu do existujícího SHA-256 prostředí zahrnuje
+zděděná hodnota `LD_LIBRARY_PATH` v původních bajtech. Kontrola ji porovnává
+od zachycení po publikaci a odlišuje chybějící proměnnou od prázdné.
+[Ověření a hranice kontroly](changes/198_bindLinuxLauncherEnvironment.md).
 Při výběru přes `bin/java` jako symbolický odkaz vychází otisk z cílové
 binárky a platformních souborů jejího JDK.
 Relativní položku `PATH` ukotví KGMAKER při výběru `java` nebo `node`.

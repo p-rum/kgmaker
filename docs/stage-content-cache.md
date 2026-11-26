@@ -52,6 +52,12 @@ a `LC_CTYPE` včetně hodnot mimo UTF-8 a rozdílu mezi nepřítomnou a prázdno
 klíči je jen SHA-256 prostředí. Na Linuxu se do otisku přidává obsah
 `lib/libjli.so` a `lib/server/libjvm.so` ve standardním rozložení JDK.
 [Ověření nativních vstupů](changes/180_bindLinuxJdkNativeInputs.md).
+Otisk prostředí JVM i TypeScriptu na Linuxu zahrnuje přesné zděděné bajty
+`LD_LIBRARY_PATH`, včetně rozdílu mezi chybějící a prázdnou proměnnou.
+Uložený klíč obsahuje jen souhrnný SHA-256 prostředí. Tato kontrola sleduje
+hodnotu proměnné od zachycení po publikaci. Doklad skutečného výběru knihoven
+a uzavření běhových vstupů vyžaduje samostatné ověření.
+[Ověření změny prostředí](changes/198_bindLinuxLauncherEnvironment.md).
 Chybějící nebo nečitelný vstup otisku
 znamená `INCOMPLETE_INPUT_CLOSURE`, pokud živá inspekce proběhne úspěšně.
 Při výběru přes symbolický odkaz `java` tvoří otisk bajty cílové binárky

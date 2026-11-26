@@ -117,6 +117,14 @@ pokrývá absolutní kontrolu, relativní výběr a bajty publikovaných výstup
 Živá inspekce hlásí `BYPASS/UNVERIFIED_REPLAY`. W01-AC01 zůstává `PARTIAL`.
 [Doklad a prostředí](changes/188_anchorTypeScriptNodeLauncher.md).
 
+Další dílčí kontrola W01-AC01 a AC03 na Linuxu váže zděděné bajty
+`LD_LIBRARY_PATH` pro JVM a TypeScript pouze do otisku prostředí.
+`test_linux_launch_capture_binds_exact_library_search_path` rozlišuje
+nepřítomnou, prázdnou a dvě ne-UTF-8 hodnoty. Capture-only regresní test
+`test_linux_library_search_path_drift_preserves_generation` vyžaduje `STALE`
+se stejným store při změně po analýze i během publikace. W01-AC01 zůstává
+`PARTIAL`. [Kontroly a omezení](changes/198_bindLinuxLauncherEnvironment.md).
+
 ## T003-S10-W02 — reverse dependency indexy
 
 Čtecí report z [#130](https://github.com/p-rum/kgmaker/pull/130) je MERGED
