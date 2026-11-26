@@ -1657,6 +1657,38 @@ input list. Kotlin files excluded from that list can remain in the source-set
 inventory for freshness checks.
 [Exact verification and scope](changes/160_bindJvmSourceBytes.md).
 
+### Obnova izolovaného JVM kontextu
+
+Python API `inspect_jvm` s explicitním `project_model` může publikovat nový
+vybraný modul i tehdy, když jinému modulu už při začátku inspekce nesedí
+bajty zachyceného `.java` nebo `.kt` souboru. Model musí doložit výhradní
+vlastnictví všech zachycených souborů bez překryvu. Počet a cesty zachycených
+souborů zastaralého kontextu musí souhlasit. Podporovaný případ používá
+stejnou distribuci workeru a classpath omezený na její obsahově ověřené
+knihovny. Stará compiler evidence dotčeného modulu se vyřadí a v grafu
+zůstane záznam `STALE_COMPILER_CONTEXT` s důvodem. Vybraný a ostatní platné
+kontexty se ověří před atomickou publikací. Opětovná kontrola bajtů navíc
+pokrývá vstupy kontextu označeného v této publikaci jako `STALE`. Pozdní
+změna těchto bajtů, nejasné vlastnictví nebo propletené důkazy zachovají
+předchozí generaci a vrátí `STALE`.
+
+```python
+from pathlib import Path
+from kgmaker.inspection import inspect_jvm
+
+project_model = {"source_sets": [
+    {"module": "orders", "id": "main", "scope": "production",
+     "files": ["orders/src/main/java/Orders.java"]},
+    {"module": "shipping", "id": "main", "scope": "production",
+     "files": ["shipping/src/main/java/Shipping.java"]},
+]}
+inspect_jvm(Path("./service"), module="shipping", project_model=project_model)
+```
+
+Tento rozsah platí pro publikující volání bez `build_context`, explicitního
+výběru `sources` a bytecode výstupů. CLI s manifestem, frontend a sdílené
+moduly mají vlastní omezení. [Ověření a hranice W02](changes/185_publishIsolatedJvmContext.md).
+
 ## Pozorované hrany a statické cesty
 
 `callgraph callers` a `callees` zobrazí doložené importované hrany jako

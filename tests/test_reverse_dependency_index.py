@@ -1,13 +1,14 @@
 import hashlib
 import json
 import os
+from pathlib import Path
 import subprocess
 import sys
 from unittest.mock import patch
 
 import pytest
 
-from kgmaker import feature, workspace
+from kgmaker import feature, inspection, store, workspace
 from kgmaker.analysis_model import AnalysisError, inventory_candidate, read_json, write_json
 from kgmaker.cli import main, scan
 from kgmaker.graph_provider import dependency_impact, validate_context_snapshot
@@ -36,6 +37,170 @@ def _require_javac_worker():
         if os.environ.get("KGMAKER_REQUIRE_WORKERS") == "1":
             raise
         pytest.skip(str(error))
+
+
+def _native_jvm_peer_fixture(root, backend, *, overlap=False, edit_peer=True):
+    try:
+        argv = command('jvm', kotlin_backend=backend)
+        stdlib = Path(argv[-1]).parent / 'lib' / 'kotlin-stdlib.jar'
+        if not stdlib.is_file():
+            raise WorkerError('Matching Kotlin stdlib unavailable', 'TOOLCHAIN_UNAVAILABLE')
+    except WorkerError as error:
+        if os.environ.get('KGMAKER_REQUIRE_WORKERS') == '1' or (
+                backend == 'k2' and os.environ.get('KGMAKER_REQUIRE_K2') == '1'):
+            raise
+        pytest.skip(str(error))
+    peers = {}
+    for module in ('edited', 'selected', 'control'):
+        peers[module] = _write(root, f'{module}/src/main/kotlin/Example.kt',
+                                f'package {module}\nfun target(value: Int): Int = value\n'
+                                'fun run(value: Int): Int = target(value)\n')
+    java = _write(root, 'edited/src/main/java/Witness.java', 'package edited;\nclass Witness {}\n')
+    model = {'source_sets': [
+        {'module': module, 'id': 'main', 'scope': 'production',
+         'files': [file.relative_to(root).as_posix(), *(
+             [java.relative_to(root).as_posix()] if module == 'edited' or (overlap and module == 'selected') else [])]}
+        for module, file in peers.items()]}
+    options = {'repo_id': 'peers', 'project_model': model, 'kotlin_backend': backend,
+               'classpath': [str(stdlib)]}
+    for module in peers:
+        assert inspect_jvm(root, module=module, **options)['exit_code'] == 0
+    initial = store.load_graph(root)
+    if edit_peer:
+        _write(root, peers['edited'], 'package edited\nfun target(value: Boolean): Int = if (value) 1 else 0\n'
+               'fun run(value: Int): Int = target(value)\n')
+    _write(root, peers['selected'], 'package selected\nfun replacement(value: Int): Int = value\n'
+           'fun run(value: Int): Int = replacement(value)\n')
+    return options, peers, java, initial
+
+
+def _compiler_layer(graph, context_id):
+    def in_scope(items):
+        return [item for item in items if item.get('context_id') == context_id]
+
+    return ([context for context in graph.contexts if context.get('id') == context_id],
+            in_scope(graph.symbols), in_scope(graph.call_sites), in_scope(graph.cfgs),
+            [edge for edge in graph.edges if context_id in edge.context_ids],
+            [item for item in graph.evidence if context_id in item.get('context_ids', [])])
+
+
+@pytest.mark.parametrize('backend', ['k1', 'k2'])
+def test_actual_jvm_isolated_stale_peer_publication_and_guards(tmp_path, backend):
+    options, peers, java, initial = _native_jvm_peer_fixture(tmp_path, backend)
+    ids = {context['module']: context['id'] for context in initial.contexts
+           if context.get('analyzer_version')}
+    edited, selected, control = (ids[key] for key in ('edited', 'selected', 'control'))
+    diagram = tmp_path / store.MERMAID_FILE
+    diagram.write_bytes(diagram.read_bytes() + b'%% previous output rollback witness\n')
+    previous = _store_bytes(tmp_path)
+    request = inspection.request_worker
+
+    def selected_drifts(*args, **kwargs):
+        response = request(*args, **kwargs)
+        assert response['coverage']['calls_resolved'] == 1
+        peers['selected'].write_bytes(peers['selected'].read_bytes() + b'// changed after analyze\n')
+        return response
+
+    selected_bytes = peers['selected'].read_bytes()
+    with patch.object(inspection, 'request_worker', selected_drifts), \
+            pytest.raises(WorkerError, match='snapshot changed') as error:
+        inspect_jvm(tmp_path, module='selected', **options)
+    assert error.value.status == 'STALE' and _store_bytes(tmp_path) == previous
+    peers['selected'].write_bytes(selected_bytes)
+
+    changed_classpath = next(context for context in initial.contexts if context.get('id') == edited)
+    dependency = changed_classpath['classpath'][0]
+    unbound = tmp_path / 'unbound-library.jar'
+    unbound.write_bytes(Path(dependency['path']).read_bytes())
+    for key, value in [('sha256', '0' * 64), ('path', str(unbound))]:
+        original = dependency[key]
+        dependency[key] = value
+        store.save_graph(initial, tmp_path)
+        tampered = _store_bytes(tmp_path)
+        with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+            inspect_jvm(tmp_path, module='selected', **options)
+        assert error.value.status == 'STALE' and _store_bytes(tmp_path) == tampered
+        dependency[key] = original
+
+    old_site = next(site for site in initial.call_sites if site['context_id'] == edited)
+    target = next(node.id for node in initial.nodes if node.kind == 'file' and node.path == old_site['path'])
+    initial.analysis_annotations.append({'id': 'annotation:shared', 'origin': 'LLM_ANNOTATION',
+                                         'target_ids': [target], 'evidence_ids': old_site['evidence_ids']})
+    store.save_graph(initial, tmp_path)
+    with_annotation = _store_bytes(tmp_path)
+    with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+        inspect_jvm(tmp_path, module='selected', **options)
+    assert error.value.status == 'STALE' and _store_bytes(tmp_path) == with_annotation
+    initial.analysis_annotations.clear()
+    for path, data in previous.items():
+        (tmp_path / path).write_bytes(data)
+
+    replace = store.os.replace
+    java_bytes = java.read_bytes()
+    replaced = []
+
+    def peer_drifts_after_first_replace(source, destination):
+        replace(source, destination)
+        if destination == tmp_path / store.MERMAID_FILE and not replaced:
+            replaced.append(destination)
+            assert destination.read_bytes() != previous[store.MERMAID_FILE]
+            java.write_bytes(java_bytes.replace(b'\n', b'\r\n'))
+
+    with patch.object(store.os, 'replace', peer_drifts_after_first_replace), \
+            pytest.raises(WorkerError, match='source-stage inputs changed before commit') as error:
+        inspect_jvm(tmp_path, module='selected', **options)
+    assert error.value.status == 'STALE' and len(replaced) == 1
+    assert _store_bytes(tmp_path) == previous
+    java.write_bytes(java_bytes)
+
+    result = inspect_jvm(tmp_path, module='selected', **options)
+    graph = store.load_graph(tmp_path)
+    stale, symbols, calls, cfgs, edges, evidence = _compiler_layer(graph, edited)
+    assert stale[0]['freshness'] == 'STALE' and 'source/config inputs changed' in stale[0]['stale_reason']
+    assert not any((symbols, calls, cfgs, edges, evidence))
+    assert not _compiler_layer(graph, selected)[0]
+    assert _compiler_layer(graph, control) == _compiler_layer(initial, control)
+    assert graph.to_dict() == result['graph']
+    new_id = result['context']['id']
+    new_site, = [site for site in graph.call_sites if site['context_id'] == new_id]
+    new_target = next(symbol for symbol in graph.symbols if symbol['id'] == new_site['declared_target'])
+    assert new_target['name'] == 'replacement' and new_target.get('logical_key')
+    assert new_site['sha256'] == hashlib.sha256(selected_bytes).hexdigest()
+    assert not any(entry['key']['context']['id'] == edited
+                   for entry in graph.extraction_cache.get('entries', []))
+
+
+def test_actual_jvm_overlapping_stale_peer_still_aborts(tmp_path):
+    options, _, _, _ = _native_jvm_peer_fixture(tmp_path, 'k1', overlap=True)
+    previous = _store_bytes(tmp_path)
+    with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+        inspect_jvm(tmp_path, module='selected', **options)
+    assert error.value.status == 'STALE' and _store_bytes(tmp_path) == previous
+
+
+@pytest.mark.parametrize('retire_peer', [False, True], ids=['no-retirement', 'isolated-retirement'])
+def test_actual_jvm_uncaptured_eol_drift_during_peer_publication(tmp_path, retire_peer):
+    options, _, _, _ = _native_jvm_peer_fixture(tmp_path, 'k1', edit_peer=retire_peer)
+    path = 'outside/src/main/java/Uncaptured.java'
+    outside = _write(tmp_path, path, 'class Uncaptured { }\n')
+    before = _store_bytes(tmp_path)
+    replace = store.os.replace
+    edited = []
+
+    def outside_drifts_after_first_replace(source, destination):
+        replace(source, destination)
+        if destination == tmp_path / store.MERMAID_FILE and not edited:
+            outside.write_bytes(b'class Uncaptured { }\r\n')
+            edited.append(destination)
+
+    with patch.object(store.os, 'replace', outside_drifts_after_first_replace):
+        result = inspect_jvm(tmp_path, module='selected', **options)
+    assert result['exit_code'] == 0 and len(edited) == 1
+    assert _store_bytes(tmp_path)[GRAPH_FILE] != before[GRAPH_FILE]
+    captures = [context for context in result['graph']['contexts'] if context.get('analyzer_version')]
+    assert all(path not in context['source_files'] for context in captures)
+    peer = next(context for context in captures if context['module'] == 'edited')
+    assert peer['freshness'] == ('STALE' if retire_peer else 'CONTENT_VERIFIED')
 
 
 def test_actual_javac_signature_change_reaches_transitive_callers_without_workers(tmp_path):

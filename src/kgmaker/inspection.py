@@ -755,6 +755,8 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
                 raise AnalysisError("Unsupported K2 captured option: " + name + "; supported value: " + supported)
         if any(kotlin_options.get(name) for name in ("free_args", "plugins", "plugin_options", "plugin_artifacts", "opt_in", "progressive")):
             raise AnalysisError("Unsupported K2 compiler flags/plugins; this backend does not silently ignore captured options")
+    allow_stale_peer = (publish and project_model and project_model.get('source_sets')
+                        and build_context is None and sources is None and not bytecode_roots)
     argv = command("jvm", home, kotlin_backend=kotlin_backend)
     meta = handshake(argv, cwd=root)
     expected_backend = "k2-analysis-api-2.1.10-v1" if kotlin_backend == "k2" else "k1-compat-1"
@@ -854,20 +856,31 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
         raise WorkerError("Source/config/classpath snapshot changed before publishing", "STALE")
     if any(file_hash(Path(item["path"])) != item["sha256"] for item in meta["distribution"]):
         raise WorkerError("Worker distribution changed before publishing", "STALE")
+    retired_paths = set()
+
     def final_guard():
         stages.guard()
         from .graph_provider import validate_context_snapshot
         validate_context_snapshot(root, selected)
+        current = scan_repository(root, project_model=project_model, strict=strict)
+        raw_before, raw_now = base.raw_file_hashes, current.raw_file_hashes
+        retired_changed = retired_paths and (raw_before is None or raw_now is None or any(
+            raw_before.get(path) != raw_now.get(path) for path in retired_paths))
         if (distribution('jvm', home, kotlin_backend=kotlin_backend) != meta['distribution']
-                or graph_payload(scan_repository(root, project_model=project_model, strict=strict)) != graph_payload(base)):
+                or graph_payload(current) != graph_payload(base)
+                or retired_changed):
             raise WorkerError('Worker distribution or source-stage inputs changed before commit', 'STALE')
         for captured in graph.contexts:
             if captured.get('analyzer_version') and captured.get('freshness') != 'STALE':
                 validate_context_snapshot(root, captured)
     final_guard()
     if publish:
-        from .graph_provider import merge_compiler_context
+        from .graph_provider import _prepare_compiler_context, merge_compiler_context
         previous = graph_revision(root)
-        graph = merge_compiler_context(root, stages.attach(graph), selected)
+        graph = stages.attach(graph)
+        if allow_stale_peer:
+            graph, retired_paths = _prepare_compiler_context(root, graph, selected, initial_scan=base)
+        else:
+            graph = merge_compiler_context(root, graph, selected)
         save_graph(graph, root, before_replace=final_guard, expected_revision=previous)
     return {**result, "graph": graph.to_dict(), "cache": stages.report(), "exit_code": 0}
