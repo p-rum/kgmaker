@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 600
+- Scope: production; omitted files: 601
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `1978f5a4fd32f6b568e9105e84f8a07c5cc2385d14a8017dace33128f2480d5d`; content: `8d4196c92a24e8f7ed25550bb49ad0236718718222d9a209e28d1f7aa81dff3e`; freshness: CONTENT_VERIFIED
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 443
+- Implementation episodes: 444
 - Inferred/ambiguous relationships: 9068/0
 
 ## Architecture diagram
@@ -2715,7 +2715,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — removed; files: .github/workflows/pr-review.yml, README.md, docs/acceptance-inventory.md, docs/changes/154_fixPrReviewPythonAndCoverage.md, docs/production-analysis-progress.md; validation: immutable-git-evidence=passed, coverage-smoke=passed, scoped-64=passed, hosted-review=unknown
 - **fix(data-resources): validate actual framework query provenance** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/68_projectDataResources.md; validation: actual_focused=passed, strict_full=passed, toolchain_gates=skipped
 - **merge: integrate current Criteria main into complete report** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/131_completeAnalysisReport.md, docs/complete-analysis-report.md, docs/feature-analysis.md; validation: scoped-report-integration=passed, actual-javac-typescript=passed, full-suite=unknown
-- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/176_readVmlLineBreaks.md, docs/changes/177_extractExcelBehavior.md, docs/changes/178_fixExcelBehaviorLineage.md; validation: after159-native-planner-and-excel-35=passed, exact-excel-kafka-w01-source-and-ledger=passed, full-composed-standard=unknown
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/176_readVmlLineBreaks.md, docs/changes/177_extractExcelBehavior.md, docs/changes/178_fixExcelBehaviorLineage.md; validation: after159-native-planner-and-excel-35=passed, exact-excel-kafka-w01-source-and-ledger=passed, full-composed-standard=unknown
 - **Implement next steps from implementation plan** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker-implementation.agent.md; validation: pytest197=passed, focused53=passed, jpa-embedded-id=passed, jpa-association-roles=passed, jpa-property-access=passed
 - **test(T003-S06-W04): include real realm acceptance in compiler validation** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/74_isolatePersistenceRealms.md, docs/compiler-inspection.md; validation: strict_full_1348_pass_10_skip=passed, frozen_623_inputs=passed, actual_current_closure_13=passed
 - **Record merged role packet freshness in the delivery inventory** — changed; files: docs/acceptance-inventory.md, docs/changes/174_reconcileMergedDelivery.md, docs/production-analysis-progress.md, docs/production-scope.md; validation: established-inventory=passed, t055-merge-receipt=passed, readme-reanchor=passed
@@ -2737,6 +2737,7 @@ flowchart LR
 - **fix(T003-S06-W02): require proven query return owner** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/changes/49_projectJpaInheritedAttributes.md, docs/compiler-inspection.md; validation: jpa-focused=passed, t009-parent=passed, semantic=passed, source-identities=passed
 - **Verify reverse dependency reports after workbook freshness integration** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/145_buildReverseDependencyIndexes.md, docs/production-analysis-progress.md, docs/stage-content-cache.md; validation: actual_combined_124=passed, standard_python313_full=passed, excel_worker_setup=skipped, semantic_reconcile=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/9_bindMethodologyApproval.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: pytest203=passed, methodology27=passed, semantic=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: docs/acceptance-inventory.md, docs/changes/183_reconcileExcelCompletionInventory.md, docs/production-analysis-progress.md, docs/tasks/54_addExcelMigration.md, docs/tasks/55_automateExcelMigration.md; validation: planner_red_green=passed, completion_focused=passed, semantic=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-07, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/59_verifySyntheticTestData.md, docs/production-analysis-progress.md, tests/test_delivery.py, tests/test_synthetic_data.py; validation: targeted-tests=passed, full-tests=passed, csv-acceptance=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/49_projectJpaInheritedAttributes.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: focused=passed, full=passed, semantic=passed, toolchain=passed
 - **Change Acceptance a ověření, Doplnění T003-S11-W01 (2026-10-26), Inventář acceptance T001 a T002** — changed; files: docs/acceptance-inventory.md, docs/changes/64_propagateViewEvidence.md, src/kgmaker/architecture_model.py, tests/test_t009_propagate_view_evidence.py; validation: focused=passed, full_suite=passed, compiler_prerequisites=skipped, semantic_validate=passed
