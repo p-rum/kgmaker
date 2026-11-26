@@ -174,18 +174,21 @@ def resolve_capture(graph, context, fact):
     signature = tuple(fact[field] for field in _FRAME_FIELDS)
     line = fact["source_line"]
     bindings = field_mapping_bindings(graph)
-    transfers = [row for row in bindings if row.get("relation") == "maps_to"
-                 and _signature(symbols.get(row.get("owner_method"), {})) == signature
-                 and _on_line(row.get("source_range"), line)]
+    frame_transfers = [row for row in bindings if row.get("relation") == "maps_to"
+                       and _signature(symbols.get(row.get("owner_method"), {})) == signature]
+    transfers = [row for row in frame_transfers if _on_line(row.get("source_range"), line)]
+    if not transfers and line > 1:
+        transfers = [row for row in frame_transfers if _on_line(row.get("source_range"), line - 1)]
     if len(transfers) != 1 or not _direct_mapping(transfers[0], context, symbols):
-        raise AnalysisError("RUNTIME_VALUE_BINDING: expected one selected direct static String assignment on the frame line", 3)
+        raise AnalysisError("RUNTIME_VALUE_BINDING: expected one selected direct static String assignment on or immediately before the hook line", 3)
     transfer, = transfers
     owner = transfer["owner_method"]
+    transfer_line = transfer["source_range"]["start_line"]
     writes = [row for row in bindings if row.get("relation") == "writes_value" and row.get("owner_method") == owner
-              and row.get("context_ids") == [context["id"]] and _on_line(row.get("source_range"), line)]
+              and row.get("context_ids") == [context["id"]] and _on_line(row.get("source_range"), transfer_line)]
     if (len(writes) != 1 or writes[0]["target"] != transfer["target"]
             or writes[0]["source_range"] != transfer["source_range"]):
-        raise AnalysisError("RUNTIME_VALUE_BINDING: expected exactly one field write on the frame line", 3)
+        raise AnalysisError("RUNTIME_VALUE_BINDING: expected exactly one field write on the assignment line", 3)
     physical_callers = {item["id"] for item in symbols.values() if item.get("kind") == "bytecode_method"
                         and _signature(item) == signature}
     bytecode = [site for site in graph.call_sites if site.get("context_id") == context["id"]
@@ -257,9 +260,15 @@ def current_record(graph, packet, identity):
         raise AnalysisError("Runtime presence has no current matching compiler field proof", 3)
     binding, = bindings
     owner = symbols[binding["owner_method"]]
+    hooks = [site for site in graph.call_sites if site.get("id") == record.get("hook_call_site")
+             and site.get("context_id") == context["id"] and site.get("caller") == owner["id"]]
+    location = hooks[0].get("range") if len(hooks) == 1 else None
+    line = location.get("start_line") if isinstance(location, dict) else None
+    if type(line) is not int or line <= 0 or not _on_line(location, line):
+        raise AnalysisError("RUNTIME_VALUE_SITE: no current matching compiler hook proof", 3)
     frame = {key: value for key, value in zip(_FRAME_FIELDS, _signature(owner))}
     resolved = resolve_capture(graph, context, {**frame, "kind": FACT, "presence": record["presence"],
-                                               "source_line": (binding.get("source_range") or {}).get("start_line")})
+                                               "source_line": line})
     if (resolved["field_mapping_evidence_id"], resolved["hook_call_site"]) != (
             record["field_mapping_evidence_id"], record["hook_call_site"]):
         raise AnalysisError("Runtime presence has no current matching compiler hook proof", 3)
