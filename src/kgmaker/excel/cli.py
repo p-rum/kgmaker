@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from ..analysis_model import AnalysisError, atomic_write, canonical
-from . import inventory, jira, migration, plan
+from . import behavior, inventory, jira, migration, plan
 from .source import MAX_ARTIFACT_BYTES, bounded_json, manifest
 
 
@@ -24,6 +24,11 @@ def register(subparsers):
     packet.add_argument("--entity")
     packet.add_argument("--include-source", action="store_true")
     packet.add_argument("--budget", type=int, default=32_000)
+    report = actions.add_parser("behavior", help="describe workbook rules and data flow from an inventory")
+    report.add_argument("--inventory", type=Path, required=True)
+    report.add_argument("--book", help="show rules and outputs of this workbook ID")
+    report.add_argument("--sheet", help="show rules and outputs of this exact sheet name")
+    report.add_argument("--include-source", action="store_true")
     migration.register(actions)
     actions.add_parser("jira-template", help="print the default Jira Cloud template")
     planning = actions.add_parser("plan", help="validate and export a migration plan")
@@ -77,6 +82,10 @@ def run(args: argparse.Namespace) -> int:
                     "output": str(args.out), "workbooks": len(value["workbooks"])})
             return 0
         value = plan.load_inventory(args.inventory)
+        if args.excel_action == "behavior":
+            report = behavior.markdown(value, include_source=args.include_source, book=args.book, sheet=args.sheet)
+            sys.stdout.buffer.write(report.encode("utf-8"))
+            return 0
         if args.excel_action == "packet":
             packet = plan.packet(value, book=args.book, entity=args.entity,
                                  include_source=args.include_source, budget=args.budget)

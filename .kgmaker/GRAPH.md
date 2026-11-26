@@ -3,14 +3,14 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 596
+- Scope: production; omitted files: 600
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `729dbbb7bd43b08490ddedab2f1e640b6e663413176918165fd2c8a533570381`; content: `302de15ab55c80618c21e3ceb4cc53120c704909feb7b0e819e7d8a6a988a6f0`; freshness: CONTENT_VERIFIED
-- Files indexed: 121
-- Symbols and sections: 1654
-- Internal imports: 516
-- Heuristic cross-file calls: 8955
+- Context: `1978f5a4fd32f6b568e9105e84f8a07c5cc2385d14a8017dace33128f2480d5d`; content: `8d4196c92a24e8f7ed25550bb49ad0236718718222d9a209e28d1f7aa81dff3e`; freshness: CONTENT_VERIFIED
+- Files indexed: 123
+- Symbols and sections: 1696
+- Internal imports: 519
+- Heuristic cross-file calls: 9068
 - PostgreSQL tables/columns: 0/0
 - Kafka topics: 0
 - API endpoints: 0
@@ -18,8 +18,8 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 442
-- Inferred/ambiguous relationships: 8955/0
+- Implementation episodes: 443
+- Inferred/ambiguous relationships: 9068/0
 
 ## Architecture diagram
 
@@ -67,137 +67,139 @@ flowchart LR
   n37["src/kgmaker/delivery_cli.py"]
   n38["src/kgmaker/delivery_instructions.py"]
   n39["src/kgmaker/domain.py"]
-  n40["src/kgmaker/excel/cli.py"]
-  n41["src/kgmaker/excel/inventory.py"]
-  n42["src/kgmaker/excel/jira.py"]
-  n43["src/kgmaker/excel/migration.py"]
-  n44["src/kgmaker/excel/plan.py"]
-  n45["src/kgmaker/excel/source.py"]
-  n46["src/kgmaker/extraction_cache.py"]
-  n47["src/kgmaker/feature.py"]
-  n48["src/kgmaker/feature_cli.py"]
-  n49["src/kgmaker/field_flow.py"]
-  n50["src/kgmaker/flow.py"]
-  n51["src/kgmaker/flow_report.py"]
-  n52["src/kgmaker/flyway.py"]
-  n53["src/kgmaker/framework.py"]
-  n54["src/kgmaker/frontend_flow.py"]
-  n55["src/kgmaker/graph_provider.py"]
-  n56["src/kgmaker/http_execution.py"]
-  n57["src/kgmaker/inspection.py"]
-  n58["src/kgmaker/inspection_cli.py"]
-  n59["src/kgmaker/installation.py"]
-  n60["src/kgmaker/installation_history.py"]
-  n61["src/kgmaker/interfaces.py"]
-  n62["src/kgmaker/kafka_bindings.py"]
-  n63["src/kgmaker/kafka_code.py"]
-  n64["src/kgmaker/kafka_retry.py"]
-  n65["src/kgmaker/local_operations.py"]
-  n66["src/kgmaker/memory.py"]
-  n67["src/kgmaker/model.py"]
-  n68["src/kgmaker/named_queries.py"]
-  n69["src/kgmaker/process_catalog.py"]
-  n70["src/kgmaker/process_model.py"]
-  n71["src/kgmaker/process_paths.py"]
-  n72["src/kgmaker/process_semantics.py"]
-  n73["src/kgmaker/process_store.py"]
-  n74["src/kgmaker/process_triggers.py"]
-  n75["src/kgmaker/project_cli.py"]
-  n76["src/kgmaker/provenance.py"]
-  n77["src/kgmaker/remote_interfaces.py"]
-  n78["src/kgmaker/remote_mapping.py"]
-  n79["src/kgmaker/report_projection.py"]
-  n80["src/kgmaker/report_publication.py"]
-  n81["src/kgmaker/return_flow.py"]
-  n82["src/kgmaker/runtime_evidence.py"]
-  n83["src/kgmaker/scanner.py"]
-  n84["src/kgmaker/schema_replay.py"]
-  n85["src/kgmaker/semantic.py"]
-  n86["src/kgmaker/service_topology.py"]
-  n87["src/kgmaker/skills.py"]
-  n88["src/kgmaker/spring_beans.py"]
-  n89["src/kgmaker/spring_conditions.py"]
-  n90["src/kgmaker/spring_imports.py"]
-  n91["src/kgmaker/store.py"]
-  n92["src/kgmaker/symbol_identity.py"]
-  n93["src/kgmaker/templates.py"]
-  n94["src/kgmaker/testgen.py"]
-  n95["src/kgmaker/topology_filter.py"]
-  n96["src/kgmaker/typescript_snapshot.py"]
-  n97["src/kgmaker/verification.py"]
-  n98["src/kgmaker/view_cache.py"]
-  n99["src/kgmaker/view_explanation.py"]
-  n100["src/kgmaker/views.py"]
-  n101["src/kgmaker/workbooks.py"]
-  n102["src/kgmaker/worker_protocol.py"]
-  n103["src/kgmaker/workflow.py"]
-  n104["src/kgmaker/workflow_profiles.py"]
-  n105["src/kgmaker/workspace.py"]
-  n106["src/kgmaker/workspace_cli.py"]
-  n107{"technology: Kafka"}
-  n108{"technology: PostgreSQL"}
+  n40["src/kgmaker/excel/behavior.py"]
+  n41["src/kgmaker/excel/cli.py"]
+  n42["src/kgmaker/excel/extraction.py"]
+  n43["src/kgmaker/excel/inventory.py"]
+  n44["src/kgmaker/excel/jira.py"]
+  n45["src/kgmaker/excel/migration.py"]
+  n46["src/kgmaker/excel/plan.py"]
+  n47["src/kgmaker/excel/source.py"]
+  n48["src/kgmaker/extraction_cache.py"]
+  n49["src/kgmaker/feature.py"]
+  n50["src/kgmaker/feature_cli.py"]
+  n51["src/kgmaker/field_flow.py"]
+  n52["src/kgmaker/flow.py"]
+  n53["src/kgmaker/flow_report.py"]
+  n54["src/kgmaker/flyway.py"]
+  n55["src/kgmaker/framework.py"]
+  n56["src/kgmaker/frontend_flow.py"]
+  n57["src/kgmaker/graph_provider.py"]
+  n58["src/kgmaker/http_execution.py"]
+  n59["src/kgmaker/inspection.py"]
+  n60["src/kgmaker/inspection_cli.py"]
+  n61["src/kgmaker/installation.py"]
+  n62["src/kgmaker/installation_history.py"]
+  n63["src/kgmaker/interfaces.py"]
+  n64["src/kgmaker/kafka_bindings.py"]
+  n65["src/kgmaker/kafka_code.py"]
+  n66["src/kgmaker/kafka_retry.py"]
+  n67["src/kgmaker/local_operations.py"]
+  n68["src/kgmaker/memory.py"]
+  n69["src/kgmaker/model.py"]
+  n70["src/kgmaker/named_queries.py"]
+  n71["src/kgmaker/process_catalog.py"]
+  n72["src/kgmaker/process_model.py"]
+  n73["src/kgmaker/process_paths.py"]
+  n74["src/kgmaker/process_semantics.py"]
+  n75["src/kgmaker/process_store.py"]
+  n76["src/kgmaker/process_triggers.py"]
+  n77["src/kgmaker/project_cli.py"]
+  n78["src/kgmaker/provenance.py"]
+  n79["src/kgmaker/remote_interfaces.py"]
+  n80["src/kgmaker/remote_mapping.py"]
+  n81["src/kgmaker/report_projection.py"]
+  n82["src/kgmaker/report_publication.py"]
+  n83["src/kgmaker/return_flow.py"]
+  n84["src/kgmaker/runtime_evidence.py"]
+  n85["src/kgmaker/scanner.py"]
+  n86["src/kgmaker/schema_replay.py"]
+  n87["src/kgmaker/semantic.py"]
+  n88["src/kgmaker/service_topology.py"]
+  n89["src/kgmaker/skills.py"]
+  n90["src/kgmaker/spring_beans.py"]
+  n91["src/kgmaker/spring_conditions.py"]
+  n92["src/kgmaker/spring_imports.py"]
+  n93["src/kgmaker/store.py"]
+  n94["src/kgmaker/symbol_identity.py"]
+  n95["src/kgmaker/templates.py"]
+  n96["src/kgmaker/testgen.py"]
+  n97["src/kgmaker/topology_filter.py"]
+  n98["src/kgmaker/typescript_snapshot.py"]
+  n99["src/kgmaker/verification.py"]
+  n100["src/kgmaker/view_cache.py"]
+  n101["src/kgmaker/view_explanation.py"]
+  n102["src/kgmaker/views.py"]
+  n103["src/kgmaker/workbooks.py"]
+  n104["src/kgmaker/worker_protocol.py"]
+  n105["src/kgmaker/workflow.py"]
+  n106["src/kgmaker/workflow_profiles.py"]
+  n107["src/kgmaker/workspace.py"]
+  n108["src/kgmaker/workspace_cli.py"]
+  n109{"technology: Kafka"}
+  n110{"technology: PostgreSQL"}
   n0 -->|imports| n20
   n3 -->|imports| n38
   n4 -->|imports| n2
   n4 -->|imports| n38
-  n6 -->|imports| n47
-  n6 -->|imports| n79
-  n6 -->|uses| n79
+  n6 -->|imports| n49
+  n6 -->|imports| n81
+  n6 -->|uses| n81
   n7 -->|imports| n5
   n7 -->|imports| n13
   n7 -->|imports| n36
-  n7 -->|imports| n47
-  n7 -->|imports| n83
+  n7 -->|imports| n49
   n7 -->|imports| n85
-  n7 -->|imports| n101
-  n7 -->|imports| n105
+  n7 -->|imports| n87
+  n7 -->|imports| n103
+  n7 -->|imports| n107
   n8 -->|imports| n5
   n8 -->|imports| n9
   n8 -->|imports| n10
   n8 -->|uses| n10
-  n8 -->|imports| n57
-  n8 -->|imports| n67
-  n8 -->|imports| n78
-  n8 -->|imports| n86
-  n8 -->|imports| n91
-  n8 -->|imports| n95
-  n8 -->|imports| n98
-  n8 -->|imports| n99
-  n8 -->|imports| n105
+  n8 -->|imports| n59
+  n8 -->|imports| n69
+  n8 -->|imports| n80
+  n8 -->|imports| n88
+  n8 -->|imports| n93
+  n8 -->|imports| n97
+  n8 -->|imports| n100
+  n8 -->|imports| n101
+  n8 -->|imports| n107
   n10 -->|imports| n5
   n10 -->|imports| n8
   n10 -->|imports| n9
   n10 -->|imports| n11
-  n10 -->|imports| n77
-  n10 -->|imports| n95
-  n10 -->|imports| n99
+  n10 -->|imports| n79
+  n10 -->|imports| n97
+  n10 -->|imports| n101
   n11 -->|imports| n9
-  n11 -->|imports| n99
+  n11 -->|imports| n101
   n12 -->|imports| n5
   n13 -->|imports| n5
   n13 -->|imports| n36
-  n13 -->|imports| n47
+  n13 -->|imports| n49
   n14 -->|imports| n5
   n15 -->|imports| n5
   n15 -->|imports| n16
   n15 -->|imports| n19
-  n15 -->|imports| n57
-  n15 -->|imports| n84
+  n15 -->|imports| n59
+  n15 -->|imports| n86
   n16 -->|imports| n5
-  n16 -->|imports| n57
-  n16 -->|imports| n103
+  n16 -->|imports| n59
+  n16 -->|imports| n105
   n17 -->|imports| n5
   n17 -->|imports| n9
-  n17 -->|imports| n64
-  n17 -->|imports| n65
+  n17 -->|imports| n66
   n17 -->|imports| n67
-  n17 -->|imports| n70
-  n17 -->|imports| n71
-  n17 -->|imports| n77
-  n17 -->|imports| n100
+  n17 -->|imports| n69
+  n17 -->|imports| n72
+  n17 -->|imports| n73
+  n17 -->|imports| n79
+  n17 -->|imports| n102
   n18 -->|imports| n5
-  n18 -->|imports| n67
-  n18 -->|imports| n100
+  n18 -->|imports| n69
+  n18 -->|imports| n102
   n19 -->|imports| n5
   n20 -->|imports| n2
   n20 -->|imports| n3
@@ -211,469 +213,472 @@ flowchart LR
   n20 -->|imports| n33
   n20 -->|imports| n37
   n20 -->|imports| n38
-  n20 -->|imports| n40
-  n20 -->|imports| n47
-  n20 -->|imports| n55
-  n20 -->|imports| n58
-  n20 -->|imports| n59
-  n20 -->|imports| n66
-  n20 -->|imports| n67
-  n20 -->|imports| n75
-  n20 -->|imports| n83
+  n20 -->|imports| n41
+  n20 -->|imports| n49
+  n20 -->|imports| n57
+  n20 -->|imports| n60
+  n20 -->|imports| n61
+  n20 -->|imports| n68
+  n20 -->|imports| n69
+  n20 -->|imports| n77
   n20 -->|imports| n85
   n20 -->|imports| n87
-  n20 -->|imports| n91
-  n20 -->|imports| n100
-  n20 -->|imports| n103
-  n20 -->|imports| n104
+  n20 -->|imports| n89
+  n20 -->|imports| n93
+  n20 -->|imports| n102
+  n20 -->|imports| n105
   n20 -->|imports| n106
+  n20 -->|imports| n108
   n21 -->|imports| n5
-  n21 -->|imports| n105
+  n21 -->|imports| n107
   n22 -->|imports| n23
   n22 -->|imports| n24
   n23 -->|imports| n5
   n23 -->|imports| n24
   n23 -->|imports| n28
-  n23 -->|imports| n76
-  n23 -->|imports| n103
-  n23 -->|uses| n103
-  n23 -->|imports| n104
+  n23 -->|imports| n78
+  n23 -->|imports| n105
+  n23 -->|uses| n105
+  n23 -->|imports| n106
   n24 -->|imports| n5
-  n24 -->|uses| n76
-  n24 -->|imports| n103
+  n24 -->|uses| n78
+  n24 -->|imports| n105
   n25 -->|imports| n5
-  n25 -->|imports| n67
+  n25 -->|imports| n69
   n26 -->|imports| n5
   n27 -->|imports| n5
   n28 -->|imports| n5
-  n28 -->|imports| n66
-  n28 -->|imports| n67
-  n28 -->|imports| n76
-  n28 -->|imports| n83
+  n28 -->|imports| n68
+  n28 -->|imports| n69
+  n28 -->|imports| n78
   n28 -->|imports| n85
-  n28 -->|imports| n91
-  n28 -->|imports| n97
-  n28 -->|imports| n101
+  n28 -->|imports| n87
+  n28 -->|imports| n93
+  n28 -->|imports| n99
   n28 -->|imports| n103
+  n28 -->|imports| n105
   n29 -->|imports| n5
-  n29 -->|imports| n62
-  n29 -->|imports| n105
+  n29 -->|imports| n64
+  n29 -->|imports| n107
   n30 -->|imports| n5
-  n30 -->|imports| n83
+  n30 -->|imports| n85
   n31 -->|imports| n5
   n32 -->|imports| n5
   n32 -->|imports| n21
-  n32 -->|imports| n81
+  n32 -->|imports| n83
   n33 -->|imports| n2
   n34 -->|imports| n5
   n34 -->|imports| n6
   n34 -->|imports| n13
   n34 -->|imports| n36
-  n34 -->|imports| n91
-  n34 -->|imports| n105
+  n34 -->|imports| n93
+  n34 -->|imports| n107
   n35 -->|imports| n5
   n35 -->|imports| n9
-  n35 -->|imports| n53
-  n35 -->|imports| n67
-  n35 -->|imports| n84
-  n35 -->|imports| n100
-  n35 -->|imports| n105
-  n36 -->|imports| n49
-  n36 -->|imports| n67
-  n36 -->|imports| n78
-  n36 -->|imports| n81
+  n35 -->|imports| n55
+  n35 -->|imports| n69
+  n35 -->|imports| n86
+  n35 -->|imports| n102
+  n35 -->|imports| n107
+  n36 -->|imports| n51
+  n36 -->|imports| n69
+  n36 -->|imports| n80
+  n36 -->|imports| n83
   n37 -->|imports| n5
-  n37 -->|imports| n103
-  n39 -->|imports| n56
-  n39 -->|imports| n67
-  n39 -->|uses_messaging| n107
-  n39 -->|connects_to| n108
+  n37 -->|imports| n105
+  n39 -->|imports| n58
+  n39 -->|imports| n69
+  n39 -->|uses_messaging| n109
+  n39 -->|connects_to| n110
   n40 -->|imports| n5
-  n40 -->|imports| n45
+  n40 -->|imports| n103
   n41 -->|imports| n5
-  n41 -->|imports| n45
-  n41 -->|imports| n101
-  n42 -->|imports| n5
-  n42 -->|imports| n44
+  n41 -->|imports| n47
+  n42 -->|imports| n103
   n43 -->|imports| n5
-  n43 -->|imports| n45
+  n43 -->|imports| n47
+  n43 -->|imports| n103
   n44 -->|imports| n5
-  n44 -->|imports| n45
+  n44 -->|imports| n46
   n45 -->|imports| n5
-  n45 -->|imports| n57
-  n45 -->|imports| n101
-  n45 -->|imports| n102
+  n45 -->|imports| n47
   n46 -->|imports| n5
-  n46 -->|imports| n21
-  n46 -->|imports| n102
+  n46 -->|imports| n47
   n47 -->|imports| n5
-  n47 -->|imports| n7
-  n47 -->|imports| n13
-  n47 -->|imports| n25
-  n47 -->|imports| n36
-  n47 -->|imports| n52
-  n47 -->|imports| n55
-  n47 -->|imports| n67
-  n47 -->|imports| n83
-  n47 -->|imports| n84
-  n47 -->|imports| n85
-  n47 -->|imports| n93
-  n47 -->|imports| n100
-  n47 -->|imports| n101
-  n47 -->|imports| n105
+  n47 -->|imports| n59
+  n47 -->|imports| n103
+  n47 -->|imports| n104
   n48 -->|imports| n5
-  n48 -->|imports| n6
-  n48 -->|imports| n7
-  n48 -->|imports| n13
-  n48 -->|imports| n34
-  n48 -->|imports| n36
-  n48 -->|imports| n80
-  n48 -->|imports| n83
-  n48 -->|imports| n85
-  n48 -->|imports| n100
+  n48 -->|imports| n21
+  n48 -->|imports| n104
   n49 -->|imports| n5
-  n49 -->|imports| n67
-  n49 -->|imports| n81
+  n49 -->|imports| n7
+  n49 -->|imports| n13
+  n49 -->|imports| n25
+  n49 -->|imports| n36
+  n49 -->|imports| n54
+  n49 -->|imports| n57
+  n49 -->|imports| n69
+  n49 -->|imports| n85
+  n49 -->|imports| n86
+  n49 -->|imports| n87
+  n49 -->|imports| n95
+  n49 -->|imports| n102
+  n49 -->|imports| n103
+  n49 -->|imports| n107
   n50 -->|imports| n5
-  n50 -->|imports| n18
-  n50 -->|imports| n21
+  n50 -->|imports| n6
+  n50 -->|imports| n7
+  n50 -->|imports| n13
+  n50 -->|imports| n34
   n50 -->|imports| n36
-  n50 -->|imports| n51
-  n50 -->|imports| n64
-  n50 -->|imports| n67
-  n50 -->|imports| n81
-  n50 -->|imports| n100
+  n50 -->|imports| n82
+  n50 -->|imports| n85
+  n50 -->|imports| n87
+  n50 -->|imports| n102
   n51 -->|imports| n5
-  n51 -->|imports| n19
-  n51 -->|imports| n55
+  n51 -->|imports| n69
   n51 -->|imports| n83
-  n51 -->|imports| n91
-  n51 -->|imports| n98
-  n51 -->|imports| n100
-  n51 -->|imports| n101
-  n51 -->|imports| n102
   n52 -->|imports| n5
+  n52 -->|imports| n18
+  n52 -->|imports| n21
+  n52 -->|imports| n36
+  n52 -->|imports| n53
+  n52 -->|imports| n66
+  n52 -->|imports| n69
+  n52 -->|imports| n83
+  n52 -->|imports| n102
   n53 -->|imports| n5
-  n53 -->|imports| n21
-  n53 -->|uses| n21
-  n53 -->|imports| n32
-  n53 -->|imports| n67
-  n53 -->|imports| n68
-  n53 -->|imports| n84
-  n53 -->|imports| n88
-  n53 -->|imports| n89
-  n53 -->|imports| n90
-  n53 -->|uses_messaging| n107
+  n53 -->|imports| n19
+  n53 -->|imports| n57
+  n53 -->|imports| n85
+  n53 -->|imports| n93
+  n53 -->|imports| n100
+  n53 -->|imports| n102
+  n53 -->|imports| n103
+  n53 -->|imports| n104
   n54 -->|imports| n5
-  n54 -->|imports| n30
-  n54 -->|imports| n55
-  n54 -->|imports| n65
-  n54 -->|imports| n67
-  n54 -->|imports| n102
-  n54 -->|imports| n105
   n55 -->|imports| n5
-  n55 -->|imports| n15
-  n55 -->|imports| n19
   n55 -->|imports| n21
   n55 -->|uses| n21
-  n55 -->|imports| n46
-  n55 -->|imports| n47
-  n55 -->|uses| n47
-  n55 -->|imports| n49
-  n55 -->|imports| n53
-  n55 -->|imports| n56
-  n55 -->|imports| n57
-  n55 -->|imports| n63
-  n55 -->|imports| n64
-  n55 -->|imports| n65
-  n55 -->|imports| n67
-  n55 -->|imports| n81
-  n55 -->|imports| n83
-  n55 -->|imports| n84
-  n55 -->|imports| n89
+  n55 -->|imports| n32
+  n55 -->|imports| n69
+  n55 -->|imports| n70
+  n55 -->|imports| n86
+  n55 -->|imports| n90
   n55 -->|imports| n91
-  n55 -->|uses| n91
   n55 -->|imports| n92
-  n55 -->|imports| n96
-  n55 -->|imports| n102
-  n55 -->|imports| n105
+  n55 -->|uses_messaging| n109
   n56 -->|imports| n5
+  n56 -->|imports| n30
+  n56 -->|imports| n57
   n56 -->|imports| n67
+  n56 -->|imports| n69
+  n56 -->|imports| n104
+  n56 -->|imports| n107
   n57 -->|imports| n5
+  n57 -->|imports| n15
   n57 -->|imports| n19
   n57 -->|imports| n21
-  n57 -->|imports| n31
-  n57 -->|imports| n32
-  n57 -->|imports| n36
-  n57 -->|imports| n46
+  n57 -->|uses| n21
+  n57 -->|imports| n48
   n57 -->|imports| n49
-  n57 -->|imports| n53
-  n57 -->|imports| n54
+  n57 -->|uses| n49
+  n57 -->|imports| n51
   n57 -->|imports| n55
-  n57 -->|imports| n56
-  n57 -->|imports| n63
-  n57 -->|imports| n64
+  n57 -->|imports| n58
+  n57 -->|imports| n59
   n57 -->|imports| n65
+  n57 -->|imports| n66
   n57 -->|imports| n67
-  n57 -->|imports| n81
+  n57 -->|imports| n69
   n57 -->|imports| n83
-  n57 -->|imports| n84
-  n57 -->|imports| n89
+  n57 -->|imports| n85
+  n57 -->|imports| n86
   n57 -->|imports| n91
-  n57 -->|imports| n92
-  n57 -->|imports| n96
-  n57 -->|imports| n102
-  n57 -->|uses_messaging| n107
+  n57 -->|imports| n93
+  n57 -->|uses| n93
+  n57 -->|imports| n94
+  n57 -->|imports| n98
+  n57 -->|imports| n104
+  n57 -->|imports| n107
   n58 -->|imports| n5
-  n58 -->|imports| n15
-  n58 -->|imports| n51
-  n58 -->|imports| n55
-  n58 -->|imports| n57
-  n58 -->|imports| n67
-  n58 -->|imports| n82
-  n58 -->|imports| n91
-  n58 -->|imports| n100
-  n58 -->|imports| n102
-  n58 -->|uses_messaging| n107
+  n58 -->|imports| n69
   n59 -->|imports| n5
-  n59 -->|imports| n12
-  n59 -->|imports| n20
-  n59 -->|imports| n60
+  n59 -->|imports| n19
+  n59 -->|imports| n21
+  n59 -->|imports| n31
+  n59 -->|imports| n32
+  n59 -->|imports| n36
+  n59 -->|imports| n48
+  n59 -->|imports| n51
+  n59 -->|imports| n55
+  n59 -->|imports| n56
+  n59 -->|imports| n57
+  n59 -->|imports| n58
+  n59 -->|imports| n65
+  n59 -->|imports| n66
+  n59 -->|imports| n67
+  n59 -->|imports| n69
+  n59 -->|imports| n83
+  n59 -->|imports| n85
+  n59 -->|imports| n86
+  n59 -->|imports| n91
+  n59 -->|imports| n93
+  n59 -->|imports| n94
+  n59 -->|imports| n98
+  n59 -->|imports| n104
+  n59 -->|uses_messaging| n109
+  n60 -->|imports| n5
+  n60 -->|imports| n15
+  n60 -->|imports| n53
+  n60 -->|imports| n57
+  n60 -->|imports| n59
+  n60 -->|imports| n69
+  n60 -->|imports| n84
+  n60 -->|imports| n93
+  n60 -->|imports| n102
+  n60 -->|imports| n104
+  n60 -->|uses_messaging| n109
   n61 -->|imports| n5
-  n61 -->|imports| n9
-  n61 -->|imports| n19
-  n61 -->|imports| n21
-  n61 -->|uses| n21
-  n61 -->|imports| n29
-  n61 -->|imports| n30
-  n61 -->|imports| n39
-  n61 -->|imports| n53
-  n61 -->|imports| n56
+  n61 -->|imports| n12
+  n61 -->|imports| n20
   n61 -->|imports| n62
-  n61 -->|imports| n63
-  n61 -->|imports| n67
-  n61 -->|imports| n83
-  n61 -->|imports| n91
-  n61 -->|imports| n92
-  n61 -->|imports| n100
-  n61 -->|imports| n105
-  n62 -->|imports| n5
-  n62 -->|imports| n19
-  n62 -->|imports| n55
-  n62 -->|imports| n57
-  n62 -->|imports| n63
-  n62 -->|imports| n67
-  n62 -->|imports| n83
-  n62 -->|imports| n89
-  n62 -->|imports| n102
-  n62 -->|imports| n105
   n63 -->|imports| n5
+  n63 -->|imports| n9
+  n63 -->|imports| n19
   n63 -->|imports| n21
+  n63 -->|uses| n21
+  n63 -->|imports| n29
+  n63 -->|imports| n30
+  n63 -->|imports| n39
   n63 -->|imports| n55
-  n63 -->|imports| n62
-  n63 -->|imports| n67
-  n63 -->|imports| n83
+  n63 -->|imports| n58
+  n63 -->|imports| n64
+  n63 -->|imports| n65
+  n63 -->|imports| n69
+  n63 -->|imports| n85
+  n63 -->|imports| n93
+  n63 -->|imports| n94
   n63 -->|imports| n102
-  n63 -->|uses_messaging| n107
+  n63 -->|imports| n107
   n64 -->|imports| n5
-  n64 -->|imports| n21
-  n64 -->|imports| n63
-  n64 -->|imports| n67
-  n64 -->|imports| n102
-  n64 -->|imports| n105
-  n64 -->|uses_messaging| n107
+  n64 -->|imports| n19
+  n64 -->|imports| n57
+  n64 -->|imports| n59
+  n64 -->|imports| n65
+  n64 -->|imports| n69
+  n64 -->|imports| n85
+  n64 -->|imports| n91
+  n64 -->|imports| n104
+  n64 -->|imports| n107
   n65 -->|imports| n5
   n65 -->|imports| n21
-  n65 -->|imports| n71
-  n65 -->|imports| n74
-  n65 -->|imports| n105
-  n66 -->|imports| n67
-  n67 -->|imports| n19
-  n67 -->|imports| n46
-  n67 -->|imports| n92
-  n69 -->|imports| n5
-  n69 -->|imports| n9
-  n69 -->|imports| n70
-  n69 -->|imports| n72
-  n69 -->|imports| n73
-  n69 -->|imports| n74
-  n70 -->|imports| n9
+  n65 -->|imports| n57
+  n65 -->|imports| n64
+  n65 -->|imports| n69
+  n65 -->|imports| n85
+  n65 -->|imports| n104
+  n65 -->|uses_messaging| n109
+  n66 -->|imports| n5
+  n66 -->|imports| n21
+  n66 -->|imports| n65
+  n66 -->|imports| n69
+  n66 -->|imports| n104
+  n66 -->|imports| n107
+  n66 -->|uses_messaging| n109
+  n67 -->|imports| n5
+  n67 -->|imports| n21
+  n67 -->|imports| n73
+  n67 -->|imports| n76
+  n67 -->|imports| n107
+  n68 -->|imports| n69
+  n69 -->|imports| n19
+  n69 -->|imports| n48
+  n69 -->|imports| n94
   n71 -->|imports| n5
   n71 -->|imports| n9
-  n71 -->|imports| n21
-  n71 -->|uses| n21
-  n71 -->|imports| n31
-  n71 -->|imports| n50
-  n71 -->|imports| n65
-  n71 -->|imports| n67
-  n71 -->|imports| n70
+  n71 -->|imports| n72
   n71 -->|imports| n74
-  n71 -->|imports| n100
-  n71 -->|imports| n105
-  n72 -->|imports| n5
+  n71 -->|imports| n75
+  n71 -->|imports| n76
   n72 -->|imports| n9
-  n72 -->|imports| n70
   n73 -->|imports| n5
+  n73 -->|imports| n9
+  n73 -->|imports| n21
+  n73 -->|uses| n21
+  n73 -->|imports| n31
+  n73 -->|imports| n52
+  n73 -->|imports| n67
+  n73 -->|imports| n69
   n73 -->|imports| n72
-  n73 -->|uses| n72
+  n73 -->|imports| n76
+  n73 -->|imports| n102
+  n73 -->|imports| n107
   n74 -->|imports| n5
   n74 -->|imports| n9
-  n74 -->|imports| n31
-  n74 -->|imports| n100
-  n74 -->|imports| n105
-  n74 -->|uses_messaging| n107
+  n74 -->|imports| n72
   n75 -->|imports| n5
-  n75 -->|imports| n6
-  n75 -->|imports| n14
-  n75 -->|imports| n15
-  n75 -->|imports| n16
-  n75 -->|imports| n19
-  n75 -->|imports| n58
-  n75 -->|imports| n83
-  n75 -->|imports| n91
-  n75 -->|imports| n100
-  n75 -->|imports| n105
+  n75 -->|imports| n74
+  n75 -->|uses| n74
   n76 -->|imports| n5
-  n76 -->|imports| n47
-  n76 -->|imports| n66
-  n76 -->|imports| n97
-  n76 -->|uses| n97
-  n76 -->|imports| n103
+  n76 -->|imports| n9
+  n76 -->|imports| n31
+  n76 -->|imports| n102
+  n76 -->|imports| n107
+  n76 -->|uses_messaging| n109
   n77 -->|imports| n5
-  n77 -->|imports| n9
-  n77 -->|imports| n78
+  n77 -->|imports| n6
+  n77 -->|imports| n14
+  n77 -->|imports| n15
+  n77 -->|imports| n16
+  n77 -->|imports| n19
+  n77 -->|imports| n60
+  n77 -->|imports| n85
+  n77 -->|imports| n93
+  n77 -->|imports| n102
+  n77 -->|imports| n107
   n78 -->|imports| n5
-  n78 -->|imports| n9
-  n78 -->|imports| n30
-  n78 -->|imports| n61
-  n78 -->|imports| n67
+  n78 -->|imports| n49
+  n78 -->|imports| n68
+  n78 -->|imports| n99
+  n78 -->|uses| n99
+  n78 -->|imports| n105
+  n79 -->|imports| n5
+  n79 -->|imports| n9
+  n79 -->|imports| n80
   n80 -->|imports| n5
-  n80 -->|imports| n98
-  n81 -->|imports| n5
-  n81 -->|imports| n18
-  n81 -->|imports| n67
+  n80 -->|imports| n9
+  n80 -->|imports| n30
+  n80 -->|imports| n63
+  n80 -->|imports| n69
   n82 -->|imports| n5
-  n82 -->|imports| n55
-  n82 -->|imports| n67
-  n82 -->|imports| n91
-  n82 -->|imports| n102
+  n82 -->|imports| n100
   n83 -->|imports| n5
-  n83 -->|imports| n19
-  n83 -->|imports| n36
-  n83 -->|imports| n39
-  n83 -->|imports| n56
-  n83 -->|imports| n67
+  n83 -->|imports| n18
+  n83 -->|imports| n69
   n84 -->|imports| n5
-  n84 -->|imports| n21
-  n84 -->|uses| n21
-  n84 -->|imports| n52
-  n84 -->|imports| n53
-  n84 -->|imports| n67
-  n84 -->|imports| n74
-  n84 -->|imports| n105
-  n85 -->|imports| n66
-  n85 -->|imports| n67
-  n86 -->|imports| n9
-  n86 -->|imports| n35
-  n86 -->|imports| n77
-  n86 -->|imports| n78
-  n86 -->|imports| n98
-  n86 -->|imports| n105
-  n87 -->|imports| n5
-  n88 -->|imports| n5
+  n84 -->|imports| n57
+  n84 -->|imports| n69
+  n84 -->|imports| n93
+  n84 -->|imports| n104
+  n85 -->|imports| n5
+  n85 -->|imports| n19
+  n85 -->|imports| n36
+  n85 -->|imports| n39
+  n85 -->|imports| n58
+  n85 -->|imports| n69
+  n86 -->|imports| n5
+  n86 -->|imports| n21
+  n86 -->|uses| n21
+  n86 -->|imports| n54
+  n86 -->|imports| n55
+  n86 -->|imports| n69
+  n86 -->|imports| n76
+  n86 -->|imports| n107
+  n87 -->|imports| n68
+  n87 -->|imports| n69
+  n88 -->|imports| n9
+  n88 -->|imports| n35
+  n88 -->|imports| n79
+  n88 -->|imports| n80
+  n88 -->|imports| n100
+  n88 -->|imports| n107
+  n89 -->|imports| n5
   n90 -->|imports| n5
-  n90 -->|imports| n88
-  n91 -->|imports| n5
-  n91 -->|imports| n67
-  n91 -->|imports| n100
   n92 -->|imports| n5
-  n92 -->|imports| n19
-  n92 -->|imports| n105
+  n92 -->|imports| n90
   n93 -->|imports| n5
-  n93 -->|imports| n67
+  n93 -->|imports| n69
+  n93 -->|imports| n102
   n94 -->|imports| n5
-  n94 -->|imports| n12
-  n94 -->|imports| n66
-  n94 -->|imports| n76
-  n94 -->|imports| n91
-  n94 -->|imports| n100
-  n94 -->|imports| n105
+  n94 -->|imports| n19
+  n94 -->|imports| n107
   n95 -->|imports| n5
-  n95 -->|imports| n9
-  n95 -->|imports| n77
-  n95 -->|imports| n78
-  n95 -->|imports| n86
+  n95 -->|imports| n69
   n96 -->|imports| n5
+  n96 -->|imports| n12
+  n96 -->|imports| n68
+  n96 -->|imports| n78
+  n96 -->|imports| n93
   n96 -->|imports| n102
+  n96 -->|imports| n107
   n97 -->|imports| n5
-  n97 -->|imports| n16
-  n97 -->|imports| n66
-  n97 -->|imports| n76
-  n97 -->|imports| n103
+  n97 -->|imports| n9
+  n97 -->|imports| n79
+  n97 -->|imports| n80
+  n97 -->|imports| n88
   n98 -->|imports| n5
-  n98 -->|imports| n9
-  n98 -->|imports| n55
-  n98 -->|imports| n67
-  n98 -->|imports| n78
+  n98 -->|imports| n104
   n99 -->|imports| n5
-  n99 -->|imports| n9
-  n99 -->|imports| n67
-  n99 -->|imports| n74
-  n99 -->|imports| n77
+  n99 -->|imports| n16
+  n99 -->|imports| n68
   n99 -->|imports| n78
-  n99 -->|imports| n86
-  n99 -->|imports| n95
   n99 -->|imports| n105
   n100 -->|imports| n5
   n100 -->|imports| n9
-  n100 -->|imports| n15
-  n100 -->|imports| n21
-  n100 -->|imports| n29
-  n100 -->|imports| n36
-  n100 -->|imports| n55
   n100 -->|imports| n57
-  n100 -->|imports| n67
-  n100 -->|imports| n105
+  n100 -->|imports| n69
+  n100 -->|imports| n80
   n101 -->|imports| n5
-  n101 -->|imports| n19
-  n101 -->|imports| n67
-  n102 -->|imports| n1
+  n101 -->|imports| n9
+  n101 -->|imports| n69
+  n101 -->|imports| n76
+  n101 -->|imports| n79
+  n101 -->|imports| n80
+  n101 -->|imports| n88
+  n101 -->|imports| n97
+  n101 -->|imports| n107
   n102 -->|imports| n5
+  n102 -->|imports| n9
+  n102 -->|imports| n15
+  n102 -->|imports| n21
+  n102 -->|imports| n29
+  n102 -->|imports| n36
+  n102 -->|imports| n57
+  n102 -->|imports| n59
+  n102 -->|imports| n69
+  n102 -->|imports| n107
   n103 -->|imports| n5
-  n103 -->|imports| n47
-  n103 -->|imports| n66
-  n103 -->|imports| n76
-  n103 -->|imports| n97
-  n103 -->|uses| n97
-  n103 -->|imports| n104
+  n103 -->|imports| n19
+  n103 -->|imports| n69
+  n104 -->|imports| n1
   n104 -->|imports| n5
-  n104 -->|imports| n47
-  n104 -->|imports| n103
   n105 -->|imports| n5
-  n105 -->|imports| n15
-  n105 -->|imports| n19
-  n105 -->|imports| n21
-  n105 -->|imports| n39
-  n105 -->|imports| n52
-  n105 -->|imports| n53
-  n105 -->|imports| n54
-  n105 -->|imports| n55
-  n105 -->|imports| n62
-  n105 -->|imports| n64
-  n105 -->|imports| n67
+  n105 -->|imports| n49
+  n105 -->|imports| n68
   n105 -->|imports| n78
-  n105 -->|imports| n84
-  n105 -->|imports| n91
-  n105 -->|imports| n92
-  n105 -->|imports| n102
+  n105 -->|imports| n99
+  n105 -->|uses| n99
+  n105 -->|imports| n106
   n106 -->|imports| n5
-  n106 -->|imports| n36
-  n106 -->|imports| n47
-  n106 -->|imports| n53
-  n106 -->|imports| n84
-  n106 -->|imports| n91
-  n106 -->|imports| n100
+  n106 -->|imports| n49
   n106 -->|imports| n105
+  n107 -->|imports| n5
+  n107 -->|imports| n15
+  n107 -->|imports| n19
+  n107 -->|imports| n21
+  n107 -->|imports| n39
+  n107 -->|imports| n54
+  n107 -->|imports| n55
+  n107 -->|imports| n56
+  n107 -->|imports| n57
+  n107 -->|imports| n64
+  n107 -->|imports| n66
+  n107 -->|imports| n69
+  n107 -->|imports| n80
+  n107 -->|imports| n86
+  n107 -->|imports| n93
+  n107 -->|imports| n94
+  n107 -->|imports| n104
+  n108 -->|imports| n5
+  n108 -->|imports| n36
+  n108 -->|imports| n49
+  n108 -->|imports| n55
+  n108 -->|imports| n86
+  n108 -->|imports| n93
+  n108 -->|imports| n102
+  n108 -->|imports| n107
 ```
 
 ## Files and symbols
@@ -1201,36 +1206,71 @@ flowchart LR
 ### `src/kgmaker/excel/__init__.py`
 - No declarations extracted.
 
+### `src/kgmaker/excel/behavior.py`
+- **function** `_code` line 26 — `_code(value)`
+- **function** `_location` line 33 — `_location(row)`
+- **function** `_sort` line 44 — `_sort(row)`
+- **function** `_anchor` line 50 — `_anchor(row)`
+- **function** `_site` line 54 — `_site(row)`
+- **class** `WorkbookBehavior` line 59 — `WorkbookBehavior`
+- **function** `__init__` line 62 — `__init__(self, inventory, include_source, book, sheet)`
+- **function** `in_scope` line 123 — `in_scope(self, row)`
+- **function** `relevant` line 128 — `relevant(self, row)`
+- **function** `range_addresses` line 131 — `range_addresses(self, row, maximum)`
+- **function** `members` line 136 — `members(self, row, maximum)`
+- **function** `refs` line 142 — `refs(self, keys)`
+- **function** `connections` line 145 — `connections(self, row, *kinds)`
+- **function** `prerequisites` line 148 — `prerequisites(self, row)`
+- **function** `lineage` line 162 — `lineage(self, root)`
+- **function** `declared_sources` line 193 — `declared_sources(self, lines)`
+- **function** `action` line 221 — `action(self, row, lines)`
+- **function** `calculations` line 240 — `calculations(self, lines)`
+- **function** `displays` line 273 — `displays(self, lines)`
+- **function** `report` line 308 — `report(self)`
+- **function** `markdown` line 343 — `markdown(inventory, *, include_source=False, book=None, sheet=None)`
+
 ### `src/kgmaker/excel/cli.py`
 - **function** `register` line 13 — `register(subparsers)`
-- **function** `_publish` line 40 — `_publish(path, content, inputs, check)`
-- **function** `verify` line 44 — `verify`
-- **function** `_print` line 56 — `_print(value)`
-- **function** `run` line 60 — `run(args: argparse.Namespace)`
+- **function** `_publish` line 45 — `_publish(path, content, inputs, check)`
+- **function** `verify` line 49 — `verify`
+- **function** `_print` line 61 — `_print(value)`
+- **function** `run` line 65 — `run(args: argparse.Namespace)`
+
+### `src/kgmaker/excel/extraction.py`
+- **function** `operators` line 47 — `operators(masked, *, excel=False)`
+- **function** `add_source` line 52 — `add_source(inventory, owner, locator, mechanism, reference=None, **details)`
+- **function** `formula_observations` line 60 — `formula_observations(inventory, key, expression)`
+- **function** `_assignment` line 75 — `_assignment(text, statement)`
+- **function** `_literal` line 89 — `_literal(expression)`
+- **function** `_forget_opaque_writes` line 94 — `_forget_opaque_writes(tokens, variables, clients, requests)`
+- **function** `_non_mutating_calls` line 101 — `_non_mutating_calls(expression, inventory, owner, proc)`
+- **function** `_block_start` line 112 — `_block_start(text, inline)`
+- **function** `_close_block` line 128 — `_close_block(blocks, text)`
+- **function** `vba_observations` line 142 — `vba_observations(inventory, owner, proc)`
 
 ### `src/kgmaker/excel/inventory.py`
-- **class** `Inventory` line 47 — `Inventory`
-- **function** `__init__` line 50 — `__init__(self, selection)`
-- **function** `add` line 66 — `add(self, kind, locator, **data)`
-- **function** `require` line 71 — `require(self, key, label)`
-- **function** `link` line 74 — `link(self, source, target, kind, *, location=None)`
-- **function** `gap` line 78 — `gap(self, code, locator, reason, *, identity=None)`
-- **function** `register` line 89 — `register(self, book, sha, size, facts, problems)`
-- **function** `destination` line 138 — `destination(self, source, identity)`
-- **function** `sheet_for_code` line 143 — `sheet_for_code(sheet_codes, name)`
-- **function** `address` line 146 — `address(self, book, sheet, first, last=None)`
-- **function** `formula_edges` line 168 — `formula_edges(self)`
-- **function** `formula_call` line 238 — `formula_call(self, key, locator, symbol, named)`
-- **function** `register_procedures` line 256 — `register_procedures(self)`
-- **function** `lookup` line 299 — `lookup(self, book, module, reference, *, kinds=None, public=False)`
-- **function** `call` line 315 — `call(self, key, locator, module, reference, *, target_book=None, public=False)`
-- **function** `run_target` line 322 — `run_target(self, key, location, reference, *, local=False)`
-- **function** `vba_edges` line 339 — `vba_edges(self, bodies)`
-- **function** `document` line 420 — `document(self)`
-- **function** `analyze` line 437 — `analyze(manifest_path: Path, *, selection=None)`
-- **function** `analyze_selection` line 441 — `analyze_selection(selection)`
-- **function** `assert_fresh` line 464 — `assert_fresh(manifest_path: Path, inventory: dict)`
-- **function** `assert_selection_fresh` line 470 — `assert_selection_fresh(selection, inventory: dict)`
+- **class** `Inventory` line 48 — `Inventory`
+- **function** `__init__` line 51 — `__init__(self, selection)`
+- **function** `add` line 67 — `add(self, kind, locator, **data)`
+- **function** `require` line 72 — `require(self, key, label)`
+- **function** `link` line 75 — `link(self, source, target, kind, *, location=None)`
+- **function** `gap` line 79 — `gap(self, code, locator, reason, *, identity=None)`
+- **function** `register` line 90 — `register(self, book, sha, size, facts, problems)`
+- **function** `destination` line 156 — `destination(self, source, identity)`
+- **function** `sheet_for_code` line 161 — `sheet_for_code(sheet_codes, name)`
+- **function** `address` line 164 — `address(self, book, sheet, first, last=None)`
+- **function** `formula_edges` line 186 — `formula_edges(self)`
+- **function** `formula_call` line 260 — `formula_call(self, key, locator, symbol, named)`
+- **function** `register_procedures` line 278 — `register_procedures(self)`
+- **function** `lookup` line 321 — `lookup(self, book, module, reference, *, kinds=None, public=False)`
+- **function** `call` line 337 — `call(self, key, locator, module, reference, *, target_book=None, public=False)`
+- **function** `run_target` line 344 — `run_target(self, key, location, reference, *, local=False)`
+- **function** `vba_edges` line 361 — `vba_edges(self, bodies)`
+- **function** `document` line 449 — `document(self)`
+- **function** `analyze` line 466 — `analyze(manifest_path: Path, *, selection=None)`
+- **function** `analyze_selection` line 470 — `analyze_selection(selection)`
+- **function** `assert_fresh` line 493 — `assert_fresh(manifest_path: Path, inventory: dict)`
+- **function** `assert_selection_fresh` line 499 — `assert_selection_fresh(selection, inventory: dict)`
 
 ### `src/kgmaker/excel/jira.py`
 - **function** `_single_line` line 36 — `_single_line(value, field, limit=255)`
@@ -1249,32 +1289,33 @@ flowchart LR
 - **function** `run` line 93 — `run(args)`
 
 ### `src/kgmaker/excel/plan.py`
-- **function** `text` line 28 — `text(value, field, limit=4_000)`
-- **function** `array` line 35 — `array(value, field, maximum, *, nonempty=False)`
-- **function** `identity` line 41 — `identity(value, field)`
-- **function** `object_fields` line 47 — `object_fields(value, required, optional, field)`
-- **function** `load_inventory` line 53 — `load_inventory(path: Path)`
-- **function** `candidate_template` line 88 — `candidate_template(inventory: dict)`
-- **function** `packet` line 112 — `packet(inventory, *, book=None, entity=None, include_source=False, budget=32_000)`
-- **function** `_ids` line 194 — `_ids(value, field, *, maximum=1_000, nonempty=False)`
-- **function** `validate` line 201 — `validate(inventory: dict, candidate: dict)`
-- **function** `_jira_values` line 261 — `_jira_values(values, field)`
-- **function** `location` line 277 — `location(item)`
-- **function** `task_description` line 294 — `task_description(task, evidence)`
-- **function** `markdown` line 306 — `markdown(inventory, plan)`
+- **function** `text` line 29 — `text(value, field, limit=4_000)`
+- **function** `array` line 36 — `array(value, field, maximum, *, nonempty=False)`
+- **function** `identity` line 42 — `identity(value, field)`
+- **function** `object_fields` line 48 — `object_fields(value, required, optional, field)`
+- **function** `load_inventory` line 54 — `load_inventory(path: Path)`
+- **function** `candidate_template` line 89 — `candidate_template(inventory: dict)`
+- **function** `packet` line 113 — `packet(inventory, *, book=None, entity=None, include_source=False, budget=32_000)`
+- **function** `priority` line 161 — `priority(key)`
+- **function** `_ids` line 201 — `_ids(value, field, *, maximum=1_000, nonempty=False)`
+- **function** `validate` line 208 — `validate(inventory: dict, candidate: dict)`
+- **function** `_jira_values` line 268 — `_jira_values(values, field)`
+- **function** `location` line 284 — `location(item)`
+- **function** `task_description` line 301 — `task_description(task, evidence)`
+- **function** `markdown` line 313 — `markdown(inventory, plan)`
 
 ### `src/kgmaker/excel/source.py`
-- **class** `Book` line 29 — `Book`
-- **class** `Manifest` line 36 — `Manifest`
-- **function** `_regular` line 42 — `_regular(path: Path)`
-- **function** `bounded_json` line 47 — `bounded_json(path: Path, maximum: int = MAX_ARTIFACT_BYTES)`
-- **function** `manifest` line 56 — `manifest(path: Path)`
-- **function** `workbook_selection` line 65 — `workbook_selection(main: Path, dependencies: list[Path])`
-- **function** `_manifest_data` line 92 — `_manifest_data(raw: bytes, base: Path, *, path: Path | None = None)`
-- **function** `capture` line 134 — `capture(book: Book, destination: Path | None = None)`
-- **function** `preflight` line 153 — `preflight(path: Path, format: str)`
-- **function** `worker_command` line 197 — `worker_command`
-- **function** `extract` line 224 — `extract(command: list[str], book: Book)`
+- **class** `Book` line 30 — `Book`
+- **class** `Manifest` line 37 — `Manifest`
+- **function** `_regular` line 43 — `_regular(path: Path)`
+- **function** `bounded_json` line 48 — `bounded_json(path: Path, maximum: int = MAX_ARTIFACT_BYTES)`
+- **function** `manifest` line 57 — `manifest(path: Path)`
+- **function** `workbook_selection` line 66 — `workbook_selection(main: Path, dependencies: list[Path])`
+- **function** `_manifest_data` line 93 — `_manifest_data(raw: bytes, base: Path, *, path: Path | None = None)`
+- **function** `capture` line 135 — `capture(book: Book, destination: Path | None = None)`
+- **function** `preflight` line 154 — `preflight(path: Path, format: str)`
+- **function** `worker_command` line 198 — `worker_command`
+- **function** `extract` line 225 — `extract(command: list[str], book: Book)`
 
 ### `src/kgmaker/excel/vba.py`
 - **class** `Procedure` line 62 — `Procedure`
@@ -2041,7 +2082,7 @@ flowchart LR
 
 ### `src/kgmaker/skills.py`
 - **function** `_skill` line 24 — `_skill(name: str, description: str, body: str)`
-- **function** `planned_skill_files` line 407 — `planned_skill_files(root: Path)`
+- **function** `planned_skill_files` line 413 — `planned_skill_files(root: Path)`
 
 ### `src/kgmaker/spring_beans.py`
 - **function** `_schema` line 6 — `_schema(value, fields, label)`
@@ -2258,7 +2299,7 @@ flowchart LR
 - **function** `_cell_value` line 119 — `_cell_value(cell: ET.Element, shared: list[str])`
 - **function** `_column_number` line 133 — `_column_number(value: str)`
 - **function** `_column_name` line 140 — `_column_name(value: int)`
-- **function** `_range_cells` line 148 — `_range_cells(start: str, end: str | None)`
+- **function** `_range_cells` line 148 — `_range_cells(start: str, end: str | None, *, maximum: int = 10_000)`
 - **function** `_formula_syntax` line 161 — `_formula_syntax(expression: str)`
 - **function** `_formula_calls` line 167 — `_formula_calls(syntax: str)`
 - **function** `_reference_matches` line 172 — `_reference_matches(syntax: str)`
@@ -2355,25 +2396,36 @@ flowchart LR
 - **function** `workspace_command` line 74 — `workspace_command(args)`
 
 ### `workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java`
-- **data_field** `ExcelWorker.JSON` line 43 — `ObjectMapper`
-- **data_field** `ExcelWorker.VBA_REL` line 44 — `String`
-- **data_field** `ExcelWorker.MAX_CELLS` line 46 — `int`
-- **data_field** `ExcelWorker.MAX_VBA` line 47 — `int`
-- **function** `ExcelWorker` line 49 — `ExcelWorker`
-- **function** `main` line 51 — `main(String[] args)`
-- **function** `reject` line 79 — `reject(ObjectNode response, String code)`
-- **function** `diagnostic` line 85 — `diagnostic(ArrayNode out, String code, String sheet, String cell)`
-- **function** `readWorkbook` line 91 — `readWorkbook(Path path, String format, ObjectNode response, ArrayNode problems)`
-- **function** `readExternalLinks` line 193 — `readExternalLinks(XSSFWorkbook book, ObjectNode links, ArrayNode problems)`
-- **function** `biffCodeName` line 213 — `biffCodeName(Record record)`
-- **function** `readControls` line 224 — `readControls(XSSFSheet sheet, ArrayNode triggers, ArrayNode problems)`
-- **function** `addCell` line 262 — `addCell(ArrayNode cells, ArrayNode problems, Cell cell)`
-- **function** `cellValue` line 288 — `cellValue(ObjectNode object, String name, Cell cell, CellType type)`
-- **function** `inspectBiff` line 301 — `inspectBiff(Path path, ArrayNode problems)`
-- **function** `unsignedShort` line 326 — `unsignedShort(byte[] bytes, int offset)`
-- **function** `readVba` line 330 — `readVba(Path path, Workbook book, String format, ArrayNode out, ArrayNode problems)`
-- **function** `readModules` line 362 — `readModules(VBAMacroReader reader, ArrayNode out, ArrayNode problems)`
-- **function** `put` line 379 — `put(ObjectNode object, String field, String value)`
+- **data_field** `ExcelWorker.JSON` line 57 — `ObjectMapper`
+- **data_field** `ExcelWorker.VBA_REL` line 58 — `String`
+- **data_field** `ExcelWorker.MAX_CELLS` line 60 — `int`
+- **data_field** `ExcelWorker.MAX_VBA` line 61 — `int`
+- **data_field** `ExcelWorker.MAX_XML_PART` line 62 — `int`
+- **data_field** `ExcelWorker.PAIRED_BREAK` line 63 — `String`
+- **data_field** `ExcelWorker.VML_BREAK_MARKUP` line 64 — `Pattern`
+- **data_field** `ExcelWorker.CONNECTION_REL` line 67 — `String`
+- **data_field** `ExcelWorker.QUERY_TABLE_REL` line 69 — `String`
+- **data_field** `ExcelWorker.SPREADSHEET` line 71 — `String`
+- **function** `ExcelWorker` line 73 — `ExcelWorker`
+- **function** `main` line 75 — `main(String[] args)`
+- **function** `reject` line 103 — `reject(ObjectNode response, String code)`
+- **function** `diagnostic` line 109 — `diagnostic(ArrayNode out, String code, String sheet, String cell)`
+- **function** `getInputStream` line 124 — `getInputStream(ZipArchiveEntry entry)`
+- **function** `openWorkbook` line 140 — `openWorkbook(Path path, String format)`
+- **function** `readWorkbook` line 160 — `readWorkbook(Path path, String format, ObjectNode response, ArrayNode problems)`
+- **function** `readExternalLinks` line 276 — `readExternalLinks(XSSFWorkbook book, ObjectNode links, ArrayNode problems)`
+- **function** `readConnections` line 296 — `readConnections(XSSFWorkbook book, ArrayNode sources, ArrayNode problems)`
+- **function** `readQueryTables` line 329 — `readQueryTables(PackagePart owner, String sheet, String range,
+                                        ArrayNode bindings, ArrayNode problems)`
+- **function** `biffCodeName` line 351 — `biffCodeName(Record record)`
+- **function** `readControls` line 362 — `readControls(XSSFSheet sheet, ArrayNode triggers, ArrayNode problems)`
+- **function** `addCell` line 400 — `addCell(ArrayNode cells, ArrayNode problems, Cell cell)`
+- **function** `cellValue` line 430 — `cellValue(ObjectNode object, String name, Cell cell, CellType type)`
+- **function** `inspectBiff` line 443 — `inspectBiff(Path path, ArrayNode problems)`
+- **function** `unsignedShort` line 468 — `unsignedShort(byte[] bytes, int offset)`
+- **function** `readVba` line 472 — `readVba(Path path, Workbook book, String format, ArrayNode out, ArrayNode problems)`
+- **function** `readModules` line 504 — `readModules(VBAMacroReader reader, ArrayNode out, ArrayNode problems)`
+- **function** `put` line 521 — `put(ObjectNode object, String field, String value)`
 
 ### `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`
 - **data_field** `Bytecode.state` line 14 — `State`
@@ -2663,6 +2715,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — removed; files: .github/workflows/pr-review.yml, README.md, docs/acceptance-inventory.md, docs/changes/154_fixPrReviewPythonAndCoverage.md, docs/production-analysis-progress.md; validation: immutable-git-evidence=passed, coverage-smoke=passed, scoped-64=passed, hosted-review=unknown
 - **fix(data-resources): validate actual framework query provenance** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/68_projectDataResources.md; validation: actual_focused=passed, strict_full=passed, toolchain_gates=skipped
 - **merge: integrate current Criteria main into complete report** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/131_completeAnalysisReport.md, docs/complete-analysis-report.md, docs/feature-analysis.md; validation: scoped-report-integration=passed, actual-javac-typescript=passed, full-suite=unknown
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/176_readVmlLineBreaks.md, docs/changes/177_extractExcelBehavior.md, docs/changes/178_fixExcelBehaviorLineage.md; validation: after159-native-planner-and-excel-35=passed, exact-excel-kafka-w01-source-and-ledger=passed, full-composed-standard=unknown
 - **Implement next steps from implementation plan** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker-implementation.agent.md; validation: pytest197=passed, focused53=passed, jpa-embedded-id=passed, jpa-association-roles=passed, jpa-property-access=passed
 - **test(T003-S06-W04): include real realm acceptance in compiler validation** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/74_isolatePersistenceRealms.md, docs/compiler-inspection.md; validation: strict_full_1348_pass_10_skip=passed, frozen_623_inputs=passed, actual_current_closure_13=passed
 - **Record merged role packet freshness in the delivery inventory** — changed; files: docs/acceptance-inventory.md, docs/changes/174_reconcileMergedDelivery.md, docs/production-analysis-progress.md, docs/production-scope.md; validation: established-inventory=passed, t055-merge-receipt=passed, readme-reanchor=passed
@@ -2861,7 +2914,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/163_revalidateRuntimeImportPublication.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: baseline-repeated-payload=passed, actual-jdk21-runtime-w06-t032=passed, standard-python-313=passed, steelman-probe-8500=passed, v1-v2-compatibility=passed
 - **Change Acceptance a ověření, Aktualizace stavu, Aktuální stav a zbývající práce** — changed; files: docs/acceptance-inventory.md, docs/changes/58_propagateViewEvidence.md, docs/changes/64_propagateViewEvidence.md, docs/production-analysis-progress.md, src/kgmaker/architecture_model.py; validation: focused=passed, full_suite=passed, compiler_prerequisites=skipped, semantic_validate=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — changed; files: docs/acceptance-inventory.md, docs/changes/62_verifyJvmGoldenCorpus.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: prepared_full646_pass10_skip=passed, corpus21=passed, remote_ci=unknown
-- **Change 179 — Ověření zdrojových uzlů Kafka katalogu s modelem buildu, Aktualizace stavu, Aktuální audit dodání — 2026-11-14** — current; files: README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/changes/179_validateKafkaProjectModelFiles.md, docs/changes/180_bindLinuxJdkNativeInputs.md; validation: after163-native-planner-and-kafka-29=passed, exact-parent-product-documents=passed, full-composed-standard=unknown
+- **Change 179 — Ověření zdrojových uzlů Kafka katalogu s modelem buildu, Aktualizace stavu, Aktuální audit dodání — 2026-11-14** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/changes/179_validateKafkaProjectModelFiles.md, docs/changes/180_bindLinuxJdkNativeInputs.md; validation: after163-native-planner-and-kafka-29=passed, exact-parent-product-documents=passed, full-composed-standard=unknown
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — removed; files: .codex/agents/README.md, .codex/agents/code-review.toml, docs/acceptance-inventory.md, docs/changes/116_parseExtendedJpqlHql.md, docs/changes/119_reconcileJpqlDelivery.md; validation: base2b_full2318_481=passed, runtime_inputs_unchanged=passed, review_profile_toml_prompt_registry=passed, docs_links_atomic119=passed, gh_ci=unknown
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/160_bindJvmSourceBytes.md, docs/changes/163_revalidateRuntimeImportPublication.md, docs/compiler-inspection.md; validation: combined-javac-jpa-t025-runtime-forward=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-07, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/56_addDeliveryReferences.md, docs/changes/57_addArtifactTemplates.md, docs/changes/58_addExistingFunctionTests.md; validation: targeted-tests=passed, full-tests=passed
@@ -3178,8 +3231,11 @@ flowchart LR
 - `src/kgmaker/delivery_cli.py` imports `src/kgmaker/workflow.py` (.workflow)
 - `src/kgmaker/domain.py` imports `src/kgmaker/http_execution.py` (.http_execution)
 - `src/kgmaker/domain.py` imports `src/kgmaker/model.py` (.model)
+- `src/kgmaker/excel/behavior.py` imports `src/kgmaker/analysis_model.py` (..analysis_model)
+- `src/kgmaker/excel/behavior.py` imports `src/kgmaker/workbooks.py` (..workbooks)
 - `src/kgmaker/excel/cli.py` imports `src/kgmaker/analysis_model.py` (..analysis_model)
 - `src/kgmaker/excel/cli.py` imports `src/kgmaker/excel/source.py` (.source)
+- `src/kgmaker/excel/extraction.py` imports `src/kgmaker/workbooks.py` (..workbooks)
 - `src/kgmaker/excel/inventory.py` imports `src/kgmaker/analysis_model.py` (..analysis_model)
 - `src/kgmaker/excel/inventory.py` imports `src/kgmaker/excel/source.py` (.source)
 - `src/kgmaker/excel/inventory.py` imports `src/kgmaker/workbooks.py` (..workbooks)
@@ -5165,7 +5221,7 @@ flowchart LR
 - `src/kgmaker/confluence_sync_config.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 88; src/kgmaker/confluence_sync_config.py:88; INFERRED 0.85)
 - `src/kgmaker/confluence_sync_config.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 55; src/kgmaker/confluence_sync_config.py:55; INFERRED 0.85)
 - `src/kgmaker/context.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 299; src/kgmaker/context.py:299; INFERRED 0.85)
-- `src/kgmaker/context.py` may call `112 in `src/kgmaker/excel/plan.py`` (name match at line 476; src/kgmaker/context.py:476; INFERRED 0.85)
+- `src/kgmaker/context.py` may call `113 in `src/kgmaker/excel/plan.py`` (name match at line 476; src/kgmaker/context.py:476; INFERRED 0.85)
 - `src/kgmaker/context.py` may call `285 in `src/kgmaker/memory.py`` (name match at line 128; src/kgmaker/context.py:128; INFERRED 0.85)
 - `src/kgmaker/context.py` may call `285 in `src/kgmaker/memory.py`` (name match at line 140; src/kgmaker/context.py:140; INFERRED 0.85)
 - `src/kgmaker/context.py` may call `285 in `src/kgmaker/memory.py`` (name match at line 206; src/kgmaker/context.py:206; INFERRED 0.85)
@@ -5871,76 +5927,184 @@ flowchart LR
 - `src/kgmaker/domain.py` may call `59 in `src/kgmaker/spring_conditions.py`` (name match at line 544; src/kgmaker/domain.py:544; INFERRED 0.85)
 - `src/kgmaker/domain.py` may call `59 in `src/kgmaker/spring_conditions.py`` (name match at line 625; src/kgmaker/domain.py:625; INFERRED 0.85)
 - `src/kgmaker/domain.py` may call `59 in `src/kgmaker/spring_conditions.py`` (name match at line 629; src/kgmaker/domain.py:629; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 47; src/kgmaker/excel/cli.py:47; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 49; src/kgmaker/excel/cli.py:49; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 53; src/kgmaker/excel/cli.py:53; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 95; src/kgmaker/excel/cli.py:95; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `109 in `src/kgmaker/analysis_model.py`` (name match at line 55; src/kgmaker/excel/cli.py:55; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `297 in `src/kgmaker/build_model.py`` (name match at line 43; src/kgmaker/excel/cli.py:43; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 48; src/kgmaker/excel/cli.py:48; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `464 in `src/kgmaker/excel/inventory.py`` (name match at line 107; src/kgmaker/excel/cli.py:107; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `464 in `src/kgmaker/excel/inventory.py`` (name match at line 75; src/kgmaker/excel/cli.py:75; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `464 in `src/kgmaker/excel/inventory.py`` (name match at line 86; src/kgmaker/excel/cli.py:86; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `53 in `src/kgmaker/excel/plan.py`` (name match at line 79; src/kgmaker/excel/cli.py:79; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `112 in `src/kgmaker/excel/plan.py`` (name match at line 81; src/kgmaker/excel/cli.py:81; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `47 in `src/kgmaker/excel/source.py`` (name match at line 100; src/kgmaker/excel/cli.py:100; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `47 in `src/kgmaker/excel/source.py`` (name match at line 87; src/kgmaker/excel/cli.py:87; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `56 in `src/kgmaker/excel/source.py`` (name match at line 71; src/kgmaker/excel/cli.py:71; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 99; src/kgmaker/excel/cli.py:99; INFERRED 0.85)
-- `src/kgmaker/excel/cli.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 84; src/kgmaker/excel/cli.py:84; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 460; src/kgmaker/excel/inventory.py:460; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 474; src/kgmaker/excel/inventory.py:474; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 479; src/kgmaker/excel/inventory.py:479; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `134 in `src/kgmaker/excel/source.py`` (name match at line 452; src/kgmaker/excel/inventory.py:452; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `134 in `src/kgmaker/excel/source.py`` (name match at line 477; src/kgmaker/excel/inventory.py:477; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `56 in `src/kgmaker/excel/source.py`` (name match at line 440; src/kgmaker/excel/inventory.py:440; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `56 in `src/kgmaker/excel/source.py`` (name match at line 467; src/kgmaker/excel/inventory.py:467; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `197 in `src/kgmaker/excel/source.py`` (name match at line 455; src/kgmaker/excel/inventory.py:455; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `162 in `src/kgmaker/excel/vba.py`` (name match at line 357; src/kgmaker/excel/inventory.py:357; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `86 in `src/kgmaker/excel/vba.py`` (name match at line 356; src/kgmaker/excel/inventory.py:356; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `125 in `src/kgmaker/excel/vba.py`` (name match at line 270; src/kgmaker/excel/inventory.py:270; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `149 in `src/kgmaker/excel/vba.py`` (name match at line 389; src/kgmaker/excel/inventory.py:389; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `71 in `src/kgmaker/excel/vba.py`` (name match at line 346; src/kgmaker/excel/inventory.py:346; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 101; src/kgmaker/excel/inventory.py:101; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 108; src/kgmaker/excel/inventory.py:108; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 110; src/kgmaker/excel/inventory.py:110; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 121; src/kgmaker/excel/inventory.py:121; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 127; src/kgmaker/excel/inventory.py:127; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 120; src/kgmaker/excel/behavior.py:120; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 122; src/kgmaker/excel/behavior.py:122; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 109; src/kgmaker/excel/behavior.py:109; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 112; src/kgmaker/excel/behavior.py:112; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 117; src/kgmaker/excel/behavior.py:117; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 118; src/kgmaker/excel/behavior.py:118; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 126; src/kgmaker/excel/behavior.py:126; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 127; src/kgmaker/excel/behavior.py:127; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 141; src/kgmaker/excel/behavior.py:141; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 147; src/kgmaker/excel/behavior.py:147; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 156; src/kgmaker/excel/behavior.py:156; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 157; src/kgmaker/excel/behavior.py:157; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 179; src/kgmaker/excel/behavior.py:179; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 201; src/kgmaker/excel/behavior.py:201; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 203; src/kgmaker/excel/behavior.py:203; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 208; src/kgmaker/excel/behavior.py:208; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 223; src/kgmaker/excel/behavior.py:223; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 225; src/kgmaker/excel/behavior.py:225; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 227; src/kgmaker/excel/behavior.py:227; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 233; src/kgmaker/excel/behavior.py:233; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 237; src/kgmaker/excel/behavior.py:237; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 246; src/kgmaker/excel/behavior.py:246; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 250; src/kgmaker/excel/behavior.py:250; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 255; src/kgmaker/excel/behavior.py:255; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 282; src/kgmaker/excel/behavior.py:282; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 291; src/kgmaker/excel/behavior.py:291; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 318; src/kgmaker/excel/behavior.py:318; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 325; src/kgmaker/excel/behavior.py:325; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 330; src/kgmaker/excel/behavior.py:330; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 340; src/kgmaker/excel/behavior.py:340; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 36; src/kgmaker/excel/behavior.py:36; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 48; src/kgmaker/excel/behavior.py:48; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 49; src/kgmaker/excel/behavior.py:49; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 58; src/kgmaker/excel/behavior.py:58; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 82; src/kgmaker/excel/behavior.py:82; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 173; src/kgmaker/excel/behavior.py:173; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 189; src/kgmaker/excel/behavior.py:189; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 191; src/kgmaker/excel/behavior.py:191; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 198; src/kgmaker/excel/behavior.py:198; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 210; src/kgmaker/excel/behavior.py:210; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 212; src/kgmaker/excel/behavior.py:212; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 216; src/kgmaker/excel/behavior.py:216; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 218; src/kgmaker/excel/behavior.py:218; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 219; src/kgmaker/excel/behavior.py:219; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 224; src/kgmaker/excel/behavior.py:224; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 226; src/kgmaker/excel/behavior.py:226; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 228; src/kgmaker/excel/behavior.py:228; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 232; src/kgmaker/excel/behavior.py:232; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 234; src/kgmaker/excel/behavior.py:234; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 239; src/kgmaker/excel/behavior.py:239; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 249; src/kgmaker/excel/behavior.py:249; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 251; src/kgmaker/excel/behavior.py:251; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 253; src/kgmaker/excel/behavior.py:253; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 257; src/kgmaker/excel/behavior.py:257; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 264; src/kgmaker/excel/behavior.py:264; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 266; src/kgmaker/excel/behavior.py:266; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 269; src/kgmaker/excel/behavior.py:269; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 283; src/kgmaker/excel/behavior.py:283; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 288; src/kgmaker/excel/behavior.py:288; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 290; src/kgmaker/excel/behavior.py:290; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 292; src/kgmaker/excel/behavior.py:292; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 299; src/kgmaker/excel/behavior.py:299; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 302; src/kgmaker/excel/behavior.py:302; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 304; src/kgmaker/excel/behavior.py:304; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 306; src/kgmaker/excel/behavior.py:306; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 319; src/kgmaker/excel/behavior.py:319; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 321; src/kgmaker/excel/behavior.py:321; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 333; src/kgmaker/excel/behavior.py:333; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 40; src/kgmaker/excel/behavior.py:40; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 42; src/kgmaker/excel/behavior.py:42; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 78; src/kgmaker/excel/behavior.py:78; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 85; src/kgmaker/excel/behavior.py:85; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 88; src/kgmaker/excel/behavior.py:88; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 92; src/kgmaker/excel/behavior.py:92; INFERRED 0.85)
+- `src/kgmaker/excel/behavior.py` may call `148 in `src/kgmaker/workbooks.py`` (name match at line 135; src/kgmaker/excel/behavior.py:135; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 104; src/kgmaker/excel/cli.py:104; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 52; src/kgmaker/excel/cli.py:52; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 54; src/kgmaker/excel/cli.py:54; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 58; src/kgmaker/excel/cli.py:58; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `109 in `src/kgmaker/analysis_model.py`` (name match at line 60; src/kgmaker/excel/cli.py:60; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `297 in `src/kgmaker/build_model.py`` (name match at line 48; src/kgmaker/excel/cli.py:48; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 53; src/kgmaker/excel/cli.py:53; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `493 in `src/kgmaker/excel/inventory.py`` (name match at line 116; src/kgmaker/excel/cli.py:116; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `493 in `src/kgmaker/excel/inventory.py`` (name match at line 80; src/kgmaker/excel/cli.py:80; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `493 in `src/kgmaker/excel/inventory.py`` (name match at line 95; src/kgmaker/excel/cli.py:95; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `54 in `src/kgmaker/excel/plan.py`` (name match at line 84; src/kgmaker/excel/cli.py:84; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `113 in `src/kgmaker/excel/plan.py`` (name match at line 90; src/kgmaker/excel/cli.py:90; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `48 in `src/kgmaker/excel/source.py`` (name match at line 109; src/kgmaker/excel/cli.py:109; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `48 in `src/kgmaker/excel/source.py`` (name match at line 96; src/kgmaker/excel/cli.py:96; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `57 in `src/kgmaker/excel/source.py`` (name match at line 76; src/kgmaker/excel/cli.py:76; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 108; src/kgmaker/excel/cli.py:108; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 87; src/kgmaker/excel/cli.py:87; INFERRED 0.85)
+- `src/kgmaker/excel/cli.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 93; src/kgmaker/excel/cli.py:93; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `321 in `src/kgmaker/excel/inventory.py`` (name match at line 110; src/kgmaker/excel/extraction.py:110; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `162 in `src/kgmaker/excel/vba.py`` (name match at line 200; src/kgmaker/excel/extraction.py:200; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `145 in `src/kgmaker/excel/vba.py`` (name match at line 182; src/kgmaker/excel/extraction.py:182; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `145 in `src/kgmaker/excel/vba.py`` (name match at line 238; src/kgmaker/excel/extraction.py:238; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `145 in `src/kgmaker/excel/vba.py`` (name match at line 244; src/kgmaker/excel/extraction.py:244; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `145 in `src/kgmaker/excel/vba.py`` (name match at line 72; src/kgmaker/excel/extraction.py:72; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `145 in `src/kgmaker/excel/vba.py`` (name match at line 93; src/kgmaker/excel/extraction.py:93; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `86 in `src/kgmaker/excel/vba.py`` (name match at line 155; src/kgmaker/excel/extraction.py:155; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `86 in `src/kgmaker/excel/vba.py`` (name match at line 216; src/kgmaker/excel/extraction.py:216; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `86 in `src/kgmaker/excel/vba.py`` (name match at line 85; src/kgmaker/excel/extraction.py:85; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `71 in `src/kgmaker/excel/vba.py`` (name match at line 108; src/kgmaker/excel/extraction.py:108; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `71 in `src/kgmaker/excel/vba.py`` (name match at line 147; src/kgmaker/excel/extraction.py:147; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 226; src/kgmaker/excel/extraction.py:226; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 235; src/kgmaker/excel/extraction.py:235; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 256; src/kgmaker/excel/extraction.py:256; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 281; src/kgmaker/excel/extraction.py:281; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 214; src/kgmaker/excel/extraction.py:214; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 254; src/kgmaker/excel/extraction.py:254; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 266; src/kgmaker/excel/extraction.py:266; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 279; src/kgmaker/excel/extraction.py:279; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `167 in `src/kgmaker/workbooks.py`` (name match at line 63; src/kgmaker/excel/extraction.py:63; INFERRED 0.85)
+- `src/kgmaker/excel/extraction.py` may call `161 in `src/kgmaker/workbooks.py`` (name match at line 63; src/kgmaker/excel/extraction.py:63; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 489; src/kgmaker/excel/inventory.py:489; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 503; src/kgmaker/excel/inventory.py:503; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 508; src/kgmaker/excel/inventory.py:508; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `52 in `src/kgmaker/excel/extraction.py`` (name match at line 139; src/kgmaker/excel/inventory.py:139; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `52 in `src/kgmaker/excel/extraction.py`` (name match at line 237; src/kgmaker/excel/inventory.py:237; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `60 in `src/kgmaker/excel/extraction.py`` (name match at line 191; src/kgmaker/excel/inventory.py:191; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `142 in `src/kgmaker/excel/extraction.py`` (name match at line 376; src/kgmaker/excel/inventory.py:376; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `135 in `src/kgmaker/excel/source.py`` (name match at line 481; src/kgmaker/excel/inventory.py:481; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `135 in `src/kgmaker/excel/source.py`` (name match at line 506; src/kgmaker/excel/inventory.py:506; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `57 in `src/kgmaker/excel/source.py`` (name match at line 469; src/kgmaker/excel/inventory.py:469; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `57 in `src/kgmaker/excel/source.py`` (name match at line 496; src/kgmaker/excel/inventory.py:496; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `198 in `src/kgmaker/excel/source.py`` (name match at line 484; src/kgmaker/excel/inventory.py:484; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `162 in `src/kgmaker/excel/vba.py`` (name match at line 381; src/kgmaker/excel/inventory.py:381; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `86 in `src/kgmaker/excel/vba.py`` (name match at line 380; src/kgmaker/excel/inventory.py:380; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `125 in `src/kgmaker/excel/vba.py`` (name match at line 292; src/kgmaker/excel/inventory.py:292; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `149 in `src/kgmaker/excel/vba.py`` (name match at line 416; src/kgmaker/excel/inventory.py:416; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `71 in `src/kgmaker/excel/vba.py`` (name match at line 368; src/kgmaker/excel/inventory.py:368; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 102; src/kgmaker/excel/inventory.py:102; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 109; src/kgmaker/excel/inventory.py:109; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 111; src/kgmaker/excel/inventory.py:111; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 122; src/kgmaker/excel/inventory.py:122; INFERRED 0.85)
 - `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 128; src/kgmaker/excel/inventory.py:128; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 130; src/kgmaker/excel/inventory.py:130; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 136; src/kgmaker/excel/inventory.py:136; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 129; src/kgmaker/excel/inventory.py:129; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 131; src/kgmaker/excel/inventory.py:131; INFERRED 0.85)
 - `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 137; src/kgmaker/excel/inventory.py:137; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 140; src/kgmaker/excel/inventory.py:140; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 144; src/kgmaker/excel/inventory.py:144; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 150; src/kgmaker/excel/inventory.py:150; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 163; src/kgmaker/excel/inventory.py:163; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 172; src/kgmaker/excel/inventory.py:172; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 214; src/kgmaker/excel/inventory.py:214; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 216; src/kgmaker/excel/inventory.py:216; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 262; src/kgmaker/excel/inventory.py:262; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 263; src/kgmaker/excel/inventory.py:263; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 276; src/kgmaker/excel/inventory.py:276; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 280; src/kgmaker/excel/inventory.py:280; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 98; src/kgmaker/excel/inventory.py:98; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `186 in `src/kgmaker/schema_replay.py`` (name match at line 209; src/kgmaker/excel/inventory.py:209; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `186 in `src/kgmaker/schema_replay.py`` (name match at line 370; src/kgmaker/excel/inventory.py:370; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 122; src/kgmaker/excel/inventory.py:122; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 129; src/kgmaker/excel/inventory.py:129; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 131; src/kgmaker/excel/inventory.py:131; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 136; src/kgmaker/excel/inventory.py:136; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 161; src/kgmaker/excel/inventory.py:161; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 276; src/kgmaker/excel/inventory.py:276; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 277; src/kgmaker/excel/inventory.py:277; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 311; src/kgmaker/excel/inventory.py:311; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 313; src/kgmaker/excel/inventory.py:313; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `59 in `src/kgmaker/spring_conditions.py`` (name match at line 174; src/kgmaker/excel/inventory.py:174; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `59 in `src/kgmaker/spring_conditions.py`` (name match at line 374; src/kgmaker/excel/inventory.py:374; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `133 in `src/kgmaker/workbooks.py`` (name match at line 159; src/kgmaker/excel/inventory.py:159; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `167 in `src/kgmaker/workbooks.py`` (name match at line 175; src/kgmaker/excel/inventory.py:175; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `161 in `src/kgmaker/workbooks.py`` (name match at line 173; src/kgmaker/excel/inventory.py:173; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `172 in `src/kgmaker/workbooks.py`` (name match at line 197; src/kgmaker/excel/inventory.py:197; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `181 in `src/kgmaker/workbooks.py`` (name match at line 193; src/kgmaker/excel/inventory.py:193; INFERRED 0.85)
-- `src/kgmaker/excel/inventory.py` may call `43 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 370; src/kgmaker/excel/inventory.py:370; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 139; src/kgmaker/excel/inventory.py:139; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 141; src/kgmaker/excel/inventory.py:141; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 149; src/kgmaker/excel/inventory.py:149; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 154; src/kgmaker/excel/inventory.py:154; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 155; src/kgmaker/excel/inventory.py:155; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 158; src/kgmaker/excel/inventory.py:158; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 162; src/kgmaker/excel/inventory.py:162; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 168; src/kgmaker/excel/inventory.py:168; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 181; src/kgmaker/excel/inventory.py:181; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 190; src/kgmaker/excel/inventory.py:190; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 233; src/kgmaker/excel/inventory.py:233; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 235; src/kgmaker/excel/inventory.py:235; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 284; src/kgmaker/excel/inventory.py:284; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 285; src/kgmaker/excel/inventory.py:285; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 298; src/kgmaker/excel/inventory.py:298; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 302; src/kgmaker/excel/inventory.py:302; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 378; src/kgmaker/excel/inventory.py:378; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 99; src/kgmaker/excel/inventory.py:99; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `186 in `src/kgmaker/schema_replay.py`` (name match at line 228; src/kgmaker/excel/inventory.py:228; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `186 in `src/kgmaker/schema_replay.py`` (name match at line 394; src/kgmaker/excel/inventory.py:394; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 123; src/kgmaker/excel/inventory.py:123; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 130; src/kgmaker/excel/inventory.py:130; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 132; src/kgmaker/excel/inventory.py:132; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 140; src/kgmaker/excel/inventory.py:140; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 154; src/kgmaker/excel/inventory.py:154; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 179; src/kgmaker/excel/inventory.py:179; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 298; src/kgmaker/excel/inventory.py:298; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 299; src/kgmaker/excel/inventory.py:299; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 333; src/kgmaker/excel/inventory.py:333; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 335; src/kgmaker/excel/inventory.py:335; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `59 in `src/kgmaker/spring_conditions.py`` (name match at line 193; src/kgmaker/excel/inventory.py:193; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `59 in `src/kgmaker/spring_conditions.py`` (name match at line 398; src/kgmaker/excel/inventory.py:398; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `133 in `src/kgmaker/workbooks.py`` (name match at line 177; src/kgmaker/excel/inventory.py:177; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `167 in `src/kgmaker/workbooks.py`` (name match at line 194; src/kgmaker/excel/inventory.py:194; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `161 in `src/kgmaker/workbooks.py`` (name match at line 192; src/kgmaker/excel/inventory.py:192; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `172 in `src/kgmaker/workbooks.py`` (name match at line 216; src/kgmaker/excel/inventory.py:216; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `181 in `src/kgmaker/workbooks.py`` (name match at line 212; src/kgmaker/excel/inventory.py:212; INFERRED 0.85)
+- `src/kgmaker/excel/inventory.py` may call `43 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 394; src/kgmaker/excel/inventory.py:394; INFERRED 0.85)
 - `src/kgmaker/excel/jira.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 108; src/kgmaker/excel/jira.py:108; INFERRED 0.85)
 - `src/kgmaker/excel/jira.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 112; src/kgmaker/excel/jira.py:112; INFERRED 0.85)
 - `src/kgmaker/excel/jira.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 122; src/kgmaker/excel/jira.py:122; INFERRED 0.85)
@@ -5959,15 +6123,15 @@ flowchart LR
 - `src/kgmaker/excel/jira.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 86; src/kgmaker/excel/jira.py:86; INFERRED 0.85)
 - `src/kgmaker/excel/jira.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 89; src/kgmaker/excel/jira.py:89; INFERRED 0.85)
 - `src/kgmaker/excel/jira.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 93; src/kgmaker/excel/jira.py:93; INFERRED 0.85)
-- `src/kgmaker/excel/jira.py` may call `35 in `src/kgmaker/excel/plan.py`` (name match at line 115; src/kgmaker/excel/jira.py:115; INFERRED 0.85)
-- `src/kgmaker/excel/jira.py` may call `35 in `src/kgmaker/excel/plan.py`` (name match at line 61; src/kgmaker/excel/jira.py:61; INFERRED 0.85)
-- `src/kgmaker/excel/jira.py` may call `35 in `src/kgmaker/excel/plan.py`` (name match at line 91; src/kgmaker/excel/jira.py:91; INFERRED 0.85)
-- `src/kgmaker/excel/jira.py` may call `41 in `src/kgmaker/excel/plan.py`` (name match at line 84; src/kgmaker/excel/jira.py:84; INFERRED 0.85)
-- `src/kgmaker/excel/jira.py` may call `47 in `src/kgmaker/excel/plan.py`` (name match at line 47; src/kgmaker/excel/jira.py:47; INFERRED 0.85)
-- `src/kgmaker/excel/jira.py` may call `47 in `src/kgmaker/excel/plan.py`` (name match at line 50; src/kgmaker/excel/jira.py:50; INFERRED 0.85)
-- `src/kgmaker/excel/jira.py` may call `47 in `src/kgmaker/excel/plan.py`` (name match at line 54; src/kgmaker/excel/jira.py:54; INFERRED 0.85)
-- `src/kgmaker/excel/jira.py` may call `47 in `src/kgmaker/excel/plan.py`` (name match at line 64; src/kgmaker/excel/jira.py:64; INFERRED 0.85)
-- `src/kgmaker/excel/jira.py` may call `294 in `src/kgmaker/excel/plan.py`` (name match at line 161; src/kgmaker/excel/jira.py:161; INFERRED 0.85)
+- `src/kgmaker/excel/jira.py` may call `36 in `src/kgmaker/excel/plan.py`` (name match at line 115; src/kgmaker/excel/jira.py:115; INFERRED 0.85)
+- `src/kgmaker/excel/jira.py` may call `36 in `src/kgmaker/excel/plan.py`` (name match at line 61; src/kgmaker/excel/jira.py:61; INFERRED 0.85)
+- `src/kgmaker/excel/jira.py` may call `36 in `src/kgmaker/excel/plan.py`` (name match at line 91; src/kgmaker/excel/jira.py:91; INFERRED 0.85)
+- `src/kgmaker/excel/jira.py` may call `42 in `src/kgmaker/excel/plan.py`` (name match at line 84; src/kgmaker/excel/jira.py:84; INFERRED 0.85)
+- `src/kgmaker/excel/jira.py` may call `48 in `src/kgmaker/excel/plan.py`` (name match at line 47; src/kgmaker/excel/jira.py:47; INFERRED 0.85)
+- `src/kgmaker/excel/jira.py` may call `48 in `src/kgmaker/excel/plan.py`` (name match at line 50; src/kgmaker/excel/jira.py:50; INFERRED 0.85)
+- `src/kgmaker/excel/jira.py` may call `48 in `src/kgmaker/excel/plan.py`` (name match at line 54; src/kgmaker/excel/jira.py:54; INFERRED 0.85)
+- `src/kgmaker/excel/jira.py` may call `48 in `src/kgmaker/excel/plan.py`` (name match at line 64; src/kgmaker/excel/jira.py:64; INFERRED 0.85)
+- `src/kgmaker/excel/jira.py` may call `301 in `src/kgmaker/excel/plan.py`` (name match at line 161; src/kgmaker/excel/jira.py:161; INFERRED 0.85)
 - `src/kgmaker/excel/jira.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 107; src/kgmaker/excel/jira.py:107; INFERRED 0.85)
 - `src/kgmaker/excel/jira.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 139; src/kgmaker/excel/jira.py:139; INFERRED 0.85)
 - `src/kgmaker/excel/jira.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 140; src/kgmaker/excel/jira.py:140; INFERRED 0.85)
@@ -5987,106 +6151,106 @@ flowchart LR
 - `src/kgmaker/excel/migration.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 65; src/kgmaker/excel/migration.py:65; INFERRED 0.85)
 - `src/kgmaker/excel/migration.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 81; src/kgmaker/excel/migration.py:81; INFERRED 0.85)
 - `src/kgmaker/excel/migration.py` may call `297 in `src/kgmaker/build_model.py`` (name match at line 96; src/kgmaker/excel/migration.py:96; INFERRED 0.85)
-- `src/kgmaker/excel/migration.py` may call `441 in `src/kgmaker/excel/inventory.py`` (name match at line 99; src/kgmaker/excel/migration.py:99; INFERRED 0.85)
-- `src/kgmaker/excel/migration.py` may call `470 in `src/kgmaker/excel/inventory.py`` (name match at line 107; src/kgmaker/excel/migration.py:107; INFERRED 0.85)
-- `src/kgmaker/excel/migration.py` may call `470 in `src/kgmaker/excel/inventory.py`` (name match at line 118; src/kgmaker/excel/migration.py:118; INFERRED 0.85)
-- `src/kgmaker/excel/migration.py` may call `470 in `src/kgmaker/excel/inventory.py`` (name match at line 129; src/kgmaker/excel/migration.py:129; INFERRED 0.85)
-- `src/kgmaker/excel/migration.py` may call `53 in `src/kgmaker/excel/plan.py`` (name match at line 117; src/kgmaker/excel/migration.py:117; INFERRED 0.85)
-- `src/kgmaker/excel/migration.py` may call `112 in `src/kgmaker/excel/plan.py`` (name match at line 100; src/kgmaker/excel/migration.py:100; INFERRED 0.85)
-- `src/kgmaker/excel/migration.py` may call `47 in `src/kgmaker/excel/source.py`` (name match at line 119; src/kgmaker/excel/migration.py:119; INFERRED 0.85)
-- `src/kgmaker/excel/migration.py` may call `47 in `src/kgmaker/excel/source.py`` (name match at line 121; src/kgmaker/excel/migration.py:121; INFERRED 0.85)
-- `src/kgmaker/excel/migration.py` may call `56 in `src/kgmaker/excel/source.py`` (name match at line 37; src/kgmaker/excel/migration.py:37; INFERRED 0.85)
-- `src/kgmaker/excel/migration.py` may call `65 in `src/kgmaker/excel/source.py`` (name match at line 38; src/kgmaker/excel/migration.py:38; INFERRED 0.85)
+- `src/kgmaker/excel/migration.py` may call `470 in `src/kgmaker/excel/inventory.py`` (name match at line 99; src/kgmaker/excel/migration.py:99; INFERRED 0.85)
+- `src/kgmaker/excel/migration.py` may call `499 in `src/kgmaker/excel/inventory.py`` (name match at line 108; src/kgmaker/excel/migration.py:108; INFERRED 0.85)
+- `src/kgmaker/excel/migration.py` may call `499 in `src/kgmaker/excel/inventory.py`` (name match at line 120; src/kgmaker/excel/migration.py:120; INFERRED 0.85)
+- `src/kgmaker/excel/migration.py` may call `499 in `src/kgmaker/excel/inventory.py`` (name match at line 131; src/kgmaker/excel/migration.py:131; INFERRED 0.85)
+- `src/kgmaker/excel/migration.py` may call `54 in `src/kgmaker/excel/plan.py`` (name match at line 119; src/kgmaker/excel/migration.py:119; INFERRED 0.85)
+- `src/kgmaker/excel/migration.py` may call `113 in `src/kgmaker/excel/plan.py`` (name match at line 100; src/kgmaker/excel/migration.py:100; INFERRED 0.85)
+- `src/kgmaker/excel/migration.py` may call `48 in `src/kgmaker/excel/source.py`` (name match at line 121; src/kgmaker/excel/migration.py:121; INFERRED 0.85)
+- `src/kgmaker/excel/migration.py` may call `48 in `src/kgmaker/excel/source.py`` (name match at line 123; src/kgmaker/excel/migration.py:123; INFERRED 0.85)
+- `src/kgmaker/excel/migration.py` may call `57 in `src/kgmaker/excel/source.py`` (name match at line 37; src/kgmaker/excel/migration.py:37; INFERRED 0.85)
+- `src/kgmaker/excel/migration.py` may call `66 in `src/kgmaker/excel/source.py`` (name match at line 38; src/kgmaker/excel/migration.py:38; INFERRED 0.85)
 - `src/kgmaker/excel/migration.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 75; src/kgmaker/excel/migration.py:75; INFERRED 0.85)
 - `src/kgmaker/excel/migration.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 76; src/kgmaker/excel/migration.py:76; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 116; src/kgmaker/excel/plan.py:116; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 119; src/kgmaker/excel/plan.py:119; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 130; src/kgmaker/excel/plan.py:130; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 157; src/kgmaker/excel/plan.py:157; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 199; src/kgmaker/excel/plan.py:199; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 207; src/kgmaker/excel/plan.py:207; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 219; src/kgmaker/excel/plan.py:219; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 221; src/kgmaker/excel/plan.py:221; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 231; src/kgmaker/excel/plan.py:231; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 233; src/kgmaker/excel/plan.py:233; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 242; src/kgmaker/excel/plan.py:242; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 246; src/kgmaker/excel/plan.py:246; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 117; src/kgmaker/excel/plan.py:117; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 120; src/kgmaker/excel/plan.py:120; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 131; src/kgmaker/excel/plan.py:131; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 159; src/kgmaker/excel/plan.py:159; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 206; src/kgmaker/excel/plan.py:206; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 214; src/kgmaker/excel/plan.py:214; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 226; src/kgmaker/excel/plan.py:226; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 228; src/kgmaker/excel/plan.py:228; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 238; src/kgmaker/excel/plan.py:238; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 240; src/kgmaker/excel/plan.py:240; INFERRED 0.85)
 - `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 249; src/kgmaker/excel/plan.py:249; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 254; src/kgmaker/excel/plan.py:254; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 265; src/kgmaker/excel/plan.py:265; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 275; src/kgmaker/excel/plan.py:275; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 33; src/kgmaker/excel/plan.py:33; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 39; src/kgmaker/excel/plan.py:39; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 45; src/kgmaker/excel/plan.py:45; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 51; src/kgmaker/excel/plan.py:51; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 62; src/kgmaker/excel/plan.py:62; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 66; src/kgmaker/excel/plan.py:66; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 69; src/kgmaker/excel/plan.py:69; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 73; src/kgmaker/excel/plan.py:73; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 79; src/kgmaker/excel/plan.py:79; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 86; src/kgmaker/excel/plan.py:86; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `47 in `src/kgmaker/excel/source.py`` (name match at line 56; src/kgmaker/excel/plan.py:56; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 129; src/kgmaker/excel/plan.py:129; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 133; src/kgmaker/excel/plan.py:133; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 168; src/kgmaker/excel/plan.py:168; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 169; src/kgmaker/excel/plan.py:169; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 171; src/kgmaker/excel/plan.py:171; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 235; src/kgmaker/excel/plan.py:235; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 259; src/kgmaker/excel/plan.py:259; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 281; src/kgmaker/excel/plan.py:281; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 282; src/kgmaker/excel/plan.py:282; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 285; src/kgmaker/excel/plan.py:285; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 286; src/kgmaker/excel/plan.py:286; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 65; src/kgmaker/excel/plan.py:65; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 67; src/kgmaker/excel/plan.py:67; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 72; src/kgmaker/excel/plan.py:72; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 180; src/kgmaker/excel/plan.py:180; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 183; src/kgmaker/excel/plan.py:183; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 191; src/kgmaker/excel/plan.py:191; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 283; src/kgmaker/excel/plan.py:283; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 285; src/kgmaker/excel/plan.py:285; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 287; src/kgmaker/excel/plan.py:287; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 253; src/kgmaker/excel/plan.py:253; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 256; src/kgmaker/excel/plan.py:256; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 261; src/kgmaker/excel/plan.py:261; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 272; src/kgmaker/excel/plan.py:272; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 282; src/kgmaker/excel/plan.py:282; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 34; src/kgmaker/excel/plan.py:34; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 40; src/kgmaker/excel/plan.py:40; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 46; src/kgmaker/excel/plan.py:46; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 52; src/kgmaker/excel/plan.py:52; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 63; src/kgmaker/excel/plan.py:63; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 67; src/kgmaker/excel/plan.py:67; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 70; src/kgmaker/excel/plan.py:70; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 74; src/kgmaker/excel/plan.py:74; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 80; src/kgmaker/excel/plan.py:80; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 87; src/kgmaker/excel/plan.py:87; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `48 in `src/kgmaker/excel/source.py`` (name match at line 57; src/kgmaker/excel/plan.py:57; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 130; src/kgmaker/excel/plan.py:130; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 134; src/kgmaker/excel/plan.py:134; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 175; src/kgmaker/excel/plan.py:175; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 176; src/kgmaker/excel/plan.py:176; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 178; src/kgmaker/excel/plan.py:178; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 242; src/kgmaker/excel/plan.py:242; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 266; src/kgmaker/excel/plan.py:266; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 288; src/kgmaker/excel/plan.py:288; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 289; src/kgmaker/excel/plan.py:289; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 292; src/kgmaker/excel/plan.py:292; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 293; src/kgmaker/excel/plan.py:293; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 66; src/kgmaker/excel/plan.py:66; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 68; src/kgmaker/excel/plan.py:68; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 73; src/kgmaker/excel/plan.py:73; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 187; src/kgmaker/excel/plan.py:187; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 190; src/kgmaker/excel/plan.py:190; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 198; src/kgmaker/excel/plan.py:198; INFERRED 0.85)
 - `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 290; src/kgmaker/excel/plan.py:290; INFERRED 0.85)
 - `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 292; src/kgmaker/excel/plan.py:292; INFERRED 0.85)
-- `src/kgmaker/excel/plan.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 274; src/kgmaker/excel/plan.py:274; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 102; src/kgmaker/excel/source.py:102; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 109; src/kgmaker/excel/source.py:109; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 112; src/kgmaker/excel/source.py:112; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 117; src/kgmaker/excel/source.py:117; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 121; src/kgmaker/excel/source.py:121; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 127; src/kgmaker/excel/source.py:127; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 130; src/kgmaker/excel/source.py:130; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 46; src/kgmaker/excel/source.py:46; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 54; src/kgmaker/excel/source.py:54; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 63; src/kgmaker/excel/source.py:63; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 70; src/kgmaker/excel/source.py:70; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 77; src/kgmaker/excel/source.py:77; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 99; src/kgmaker/excel/source.py:99; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 207; src/kgmaker/excel/source.py:207; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 215; src/kgmaker/excel/source.py:215; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 220; src/kgmaker/excel/source.py:220; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 250; src/kgmaker/excel/source.py:250; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 254; src/kgmaker/excel/source.py:254; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 260; src/kgmaker/excel/source.py:260; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `85 in `src/kgmaker/analysis_model.py`` (name match at line 55; src/kgmaker/excel/source.py:55; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `85 in `src/kgmaker/analysis_model.py`` (name match at line 95; src/kgmaker/excel/source.py:95; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `101 in `src/kgmaker/analysis_model.py`` (name match at line 212; src/kgmaker/excel/source.py:212; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `297 in `src/kgmaker/build_model.py`` (name match at line 221; src/kgmaker/excel/source.py:221; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `297 in `src/kgmaker/build_model.py`` (name match at line 64; src/kgmaker/excel/source.py:64; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 114; src/kgmaker/excel/source.py:114; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 73; src/kgmaker/excel/source.py:73; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `81 in `src/kgmaker/extraction_cache.py`` (name match at line 55; src/kgmaker/excel/source.py:55; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `81 in `src/kgmaker/extraction_cache.py`` (name match at line 95; src/kgmaker/excel/source.py:95; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `43 in `src/kgmaker/inspection.py`` (name match at line 202; src/kgmaker/excel/source.py:202; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 119; src/kgmaker/excel/source.py:119; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 160; src/kgmaker/excel/source.py:160; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 253; src/kgmaker/excel/source.py:253; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 255; src/kgmaker/excel/source.py:255; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 294; src/kgmaker/excel/plan.py:294; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 297; src/kgmaker/excel/plan.py:297; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 299; src/kgmaker/excel/plan.py:299; INFERRED 0.85)
+- `src/kgmaker/excel/plan.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 281; src/kgmaker/excel/plan.py:281; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 100; src/kgmaker/excel/source.py:100; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 103; src/kgmaker/excel/source.py:103; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 110; src/kgmaker/excel/source.py:110; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 113; src/kgmaker/excel/source.py:113; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 118; src/kgmaker/excel/source.py:118; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 122; src/kgmaker/excel/source.py:122; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 128; src/kgmaker/excel/source.py:128; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 131; src/kgmaker/excel/source.py:131; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 47; src/kgmaker/excel/source.py:47; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 55; src/kgmaker/excel/source.py:55; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 64; src/kgmaker/excel/source.py:64; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 71; src/kgmaker/excel/source.py:71; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 78; src/kgmaker/excel/source.py:78; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 208; src/kgmaker/excel/source.py:208; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 216; src/kgmaker/excel/source.py:216; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 221; src/kgmaker/excel/source.py:221; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 251; src/kgmaker/excel/source.py:251; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 255; src/kgmaker/excel/source.py:255; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 261; src/kgmaker/excel/source.py:261; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `85 in `src/kgmaker/analysis_model.py`` (name match at line 56; src/kgmaker/excel/source.py:56; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `85 in `src/kgmaker/analysis_model.py`` (name match at line 96; src/kgmaker/excel/source.py:96; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `101 in `src/kgmaker/analysis_model.py`` (name match at line 213; src/kgmaker/excel/source.py:213; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `297 in `src/kgmaker/build_model.py`` (name match at line 222; src/kgmaker/excel/source.py:222; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `297 in `src/kgmaker/build_model.py`` (name match at line 65; src/kgmaker/excel/source.py:65; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 115; src/kgmaker/excel/source.py:115; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 74; src/kgmaker/excel/source.py:74; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `81 in `src/kgmaker/extraction_cache.py`` (name match at line 56; src/kgmaker/excel/source.py:56; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `81 in `src/kgmaker/extraction_cache.py`` (name match at line 96; src/kgmaker/excel/source.py:96; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `43 in `src/kgmaker/inspection.py`` (name match at line 203; src/kgmaker/excel/source.py:203; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 120; src/kgmaker/excel/source.py:120; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 161; src/kgmaker/excel/source.py:161; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 254; src/kgmaker/excel/source.py:254; INFERRED 0.85)
 - `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 256; src/kgmaker/excel/source.py:256; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 83; src/kgmaker/excel/source.py:83; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 96; src/kgmaker/excel/source.py:96; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `39 in `src/kgmaker/workbooks.py`` (name match at line 158; src/kgmaker/excel/source.py:158; INFERRED 0.85)
-- `src/kgmaker/excel/source.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 149; src/kgmaker/excel/source.py:149; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 257; src/kgmaker/excel/source.py:257; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 84; src/kgmaker/excel/source.py:84; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 97; src/kgmaker/excel/source.py:97; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `39 in `src/kgmaker/workbooks.py`` (name match at line 159; src/kgmaker/excel/source.py:159; INFERRED 0.85)
+- `src/kgmaker/excel/source.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 150; src/kgmaker/excel/source.py:150; INFERRED 0.85)
 - `src/kgmaker/excel/vba.py` may call `186 in `src/kgmaker/schema_replay.py`` (name match at line 133; src/kgmaker/excel/vba.py:133; INFERRED 0.85)
 - `src/kgmaker/excel/vba.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 136; src/kgmaker/excel/vba.py:136; INFERRED 0.85)
 - `src/kgmaker/excel/vba.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 143; src/kgmaker/excel/vba.py:143; INFERRED 0.85)
@@ -6665,6 +6829,7 @@ flowchart LR
 - `src/kgmaker/framework.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 1164; src/kgmaker/framework.py:1164; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 666; src/kgmaker/framework.py:666; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 668; src/kgmaker/framework.py:668; INFERRED 0.85)
+- `src/kgmaker/framework.py` may call `136 in `src/kgmaker/excel/behavior.py`` (name match at line 588; src/kgmaker/framework.py:588; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `201 in `src/kgmaker/http_execution.py`` (name match at line 2021; src/kgmaker/framework.py:2021; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `201 in `src/kgmaker/http_execution.py`` (name match at line 550; src/kgmaker/framework.py:550; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `93 in `src/kgmaker/named_queries.py`` (name match at line 4165; src/kgmaker/framework.py:4165; INFERRED 0.85)
@@ -10801,10 +10966,10 @@ flowchart LR
 - `src/kgmaker/service_topology.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 115; src/kgmaker/service_topology.py:115; INFERRED 0.85)
 - `src/kgmaker/service_topology.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 88; src/kgmaker/service_topology.py:88; INFERRED 0.85)
 - `src/kgmaker/service_topology.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 99; src/kgmaker/service_topology.py:99; INFERRED 0.85)
-- `src/kgmaker/skills.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 419; src/kgmaker/skills.py:419; INFERRED 0.85)
-- `src/kgmaker/skills.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 424; src/kgmaker/skills.py:424; INFERRED 0.85)
-- `src/kgmaker/skills.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 421; src/kgmaker/skills.py:421; INFERRED 0.85)
-- `src/kgmaker/skills.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 425; src/kgmaker/skills.py:425; INFERRED 0.85)
+- `src/kgmaker/skills.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 425; src/kgmaker/skills.py:425; INFERRED 0.85)
+- `src/kgmaker/skills.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 430; src/kgmaker/skills.py:430; INFERRED 0.85)
+- `src/kgmaker/skills.py` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 427; src/kgmaker/skills.py:427; INFERRED 0.85)
+- `src/kgmaker/skills.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 431; src/kgmaker/skills.py:431; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 107; src/kgmaker/spring_beans.py:107; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 11; src/kgmaker/spring_beans.py:11; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `32 in `src/kgmaker/analysis_model.py`` (name match at line 110; src/kgmaker/spring_beans.py:110; INFERRED 0.85)
@@ -12149,9 +12314,11 @@ flowchart LR
 - `src/kgmaker/workspace_cli.py` may call `919 in `src/kgmaker/views.py`` (name match at line 114; src/kgmaker/workspace_cli.py:114; INFERRED 0.85)
 - `src/kgmaker/workspace_cli.py` may call `293 in `src/kgmaker/workspace.py`` (name match at line 34; src/kgmaker/workspace_cli.py:34; INFERRED 0.85)
 - `src/kgmaker/workspace_cli.py` may call `646 in `src/kgmaker/workspace.py`` (name match at line 85; src/kgmaker/workspace_cli.py:85; INFERRED 0.85)
-- `workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java` may call `218 in `src/kgmaker/schema_replay.py`` (name match at line 108; workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java:108; INFERRED 0.85)
-- `workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 83; workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java:83; INFERRED 0.85)
-- `workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java` may call `51 in `workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java`` (name match at line 290; workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java:290; INFERRED 0.85)
+- `workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java` may call `89 in `src/kgmaker/_windows_job.py`` (name match at line 153; workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java:153; INFERRED 0.85)
+- `workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java` may call `218 in `src/kgmaker/schema_replay.py`` (name match at line 142; workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java:142; INFERRED 0.85)
+- `workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 107; workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java:107; INFERRED 0.85)
+- `workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java` may call `59 in `src/kgmaker/spring_conditions.py`` (name match at line 135; workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java:135; INFERRED 0.85)
+- `workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java` may call `51 in `workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java`` (name match at line 432; workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java:432; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java` may call `89 in `src/kgmaker/_windows_job.py`` (name match at line 374; workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:374; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java` may call `244 in `src/kgmaker/framework.py`` (name match at line 147; workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:147; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java` may call `244 in `src/kgmaker/framework.py`` (name match at line 41; workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:41; INFERRED 0.85)
@@ -12204,6 +12371,7 @@ flowchart LR
 - `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 45; workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:45; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 46; workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:46; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 75; workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:75; INFERRED 0.85)
+- `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java` may call `124 in `workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java`` (name match at line 130; workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:130; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java`` (name match at line 287; workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:287; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java` may call `51 in `workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java`` (name match at line 236; workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:236; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java` may call `51 in `workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java`` (name match at line 373; workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:373; INFERRED 0.85)
@@ -12242,6 +12410,7 @@ flowchart LR
 - `workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java` may call `22 in `src/kgmaker/flyway.py`` (name match at line 77; workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java:77; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java` may call `244 in `src/kgmaker/framework.py`` (name match at line 103; workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java:103; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 22; workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java:22; INFERRED 0.85)
+- `workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java` may call `124 in `workers/excel/src/main/java/org/kgmaker/excel/ExcelWorker.java`` (name match at line 57; workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java:57; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java` may call `77 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 89; workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java:89; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java` may call `280 in `src/kgmaker/cli.py`` (name match at line 325; workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:325; INFERRED 0.85)
 - `workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java` may call `280 in `src/kgmaker/cli.py`` (name match at line 328; workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:328; INFERRED 0.85)
@@ -12436,12 +12605,12 @@ flowchart LR
 - `workers/jvm/src/main/java/org/kgmaker/worker/State.java` may call `237 in `src/kgmaker/schema_replay.py`` (name match at line 99; workers/jvm/src/main/java/org/kgmaker/worker/State.java:99; INFERRED 0.85)
 - `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `209 in `src/kgmaker/dataflow.py`` (name match at line 33; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:33; INFERRED 0.85)
 - `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `372 in `src/kgmaker/domain.py`` (name match at line 64; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:64; INFERRED 0.85)
-- `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `71 in `src/kgmaker/excel/inventory.py`` (name match at line 20; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:20; INFERRED 0.85)
-- `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `71 in `src/kgmaker/excel/inventory.py`` (name match at line 23; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:23; INFERRED 0.85)
-- `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `71 in `src/kgmaker/excel/inventory.py`` (name match at line 27; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:27; INFERRED 0.85)
-- `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `71 in `src/kgmaker/excel/inventory.py`` (name match at line 29; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:29; INFERRED 0.85)
-- `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `71 in `src/kgmaker/excel/inventory.py`` (name match at line 34; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:34; INFERRED 0.85)
-- `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `71 in `src/kgmaker/excel/inventory.py`` (name match at line 60; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:60; INFERRED 0.85)
+- `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `72 in `src/kgmaker/excel/inventory.py`` (name match at line 20; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:20; INFERRED 0.85)
+- `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `72 in `src/kgmaker/excel/inventory.py`` (name match at line 23; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:23; INFERRED 0.85)
+- `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `72 in `src/kgmaker/excel/inventory.py`` (name match at line 27; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:27; INFERRED 0.85)
+- `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `72 in `src/kgmaker/excel/inventory.py`` (name match at line 29; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:29; INFERRED 0.85)
+- `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `72 in `src/kgmaker/excel/inventory.py`` (name match at line 34; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:34; INFERRED 0.85)
+- `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `72 in `src/kgmaker/excel/inventory.py`` (name match at line 60; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:60; INFERRED 0.85)
 - `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 61; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:61; INFERRED 0.85)
 - `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `31 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 39; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:39; INFERRED 0.85)
 - `workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt` may call `24 in `workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java`` (name match at line 37; workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt:37; INFERRED 0.85)

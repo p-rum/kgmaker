@@ -147,14 +147,14 @@ def _column_name(value: int) -> str:
     return result
 
 
-def _range_cells(start: str, end: str | None) -> list[str]:
+def _range_cells(start: str, end: str | None, *, maximum: int = 10_000) -> list[str]:
     start_match = _CELL.fullmatch(start.upper().replace("$", ""))
     end_match = _CELL.fullmatch((end or start).upper().replace("$", ""))
     if not start_match or not end_match:
         return []
     first_column, last_column = sorted((_column_number(start_match.group(1)), _column_number(end_match.group(1))))
     first_row, last_row = sorted((int(start_match.group(2)), int(end_match.group(2))))
-    if (last_column - first_column + 1) * (last_row - first_row + 1) > 10_000:
+    if (last_column - first_column + 1) * (last_row - first_row + 1) > maximum:
         return []
     return [f"{_column_name(column)}{row}" for column in range(first_column, last_column + 1)
             for row in range(first_row, last_row + 1)]

@@ -1,5 +1,19 @@
 # Aktuální stav a zbývající práce
 
+## T056 — Funkce a toky dat v Excelu, 2026-11-25
+
+Dodání sleduje [PR #161](https://github.com/p-rum/kgmaker/pull/161). `behavior.md` zachycuje statické doklady zdrojů, vzorců a VBA
+operací, mezilistový tok a možné výstupy. Patnáctilistý syntetický sešit ověřuje
+tři cesty ke stejnému výsledku včetně vazby query tabulky, podmínky `IFERROR` a
+odděleného zobrazení listu. V provozním sešitu a v živé relaci Copilotu má stav
+NOT_RUN. [Zadání](tasks/56_extractExcelBehavior.md) · [Návod](excel-migration.md#funkce-a-tok-dat-v-sešitu) · [Doklady](changes/177_extractExcelBehavior.md).
+
+Review follow-up `a1cb9e0` doplňuje do T056-S02 regresní případy pro překryv adres
+query tabulky a vzorce bez uloženého `cell`, zachování definice přes známý
+nepřepisující intrinsic VBA a přepis návratové hodnoty po ukončené větvi. Tři
+cílené testy prošly; v celé migrační sadě je 19 PASS a 14 SKIP (13 vyžaduje worker,
+jeden instalovaný wheel). Viz [změna 178](changes/178_fixExcelBehaviorLineage.md). Produkční sešit,
+živý Copilot, Java worker/wheel a hostovaná CI v tomto follow-upu mají NOT_RUN.
 
 ## T055 — Copilot skill pro migraci Excelu, 2026-11-25
 
@@ -28,6 +42,10 @@ Windows v [přesném jobu #136](https://github.com/p-rum/kgmaker/actions/runs/45
 s nezměněnými Excel vstupy; jde o ověření dané fixture a distribuce.
 [Cílové zadání](tasks/54_addExcelMigration.md) · [Návod](excel-migration.md) ·
 [Evidence implementace](changes/171_addExcelMigration.md) · [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
+
+Oprava čtení VML ověřuje vazbu tlačítka na VBA i s párovou značkou `<br></br>`.
+Normalizace probíhá v proudu VML a inventář dokládá SHA-256 původního XLSM.
+[Regrese a ověření](changes/176_readVmlLineBreaks.md).
 
 ## T053 — správa instalace v cílovém projektu, 2026-11-24
 
