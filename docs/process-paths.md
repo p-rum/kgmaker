@@ -30,11 +30,49 @@ print(process.technical_status, process.definition.trigger_ids)
 print([(edge.source, edge.target, edge.relation) for edge in process.transitions])
 ```
 
-Selection must handle an empty trigger inventory explicitly. This is Python API
-only; no new CLI/render/export/apply command is supplied. Existing `flow process`
-continues using its report schema and now bounds oversized root CFGs as well as
+Selection must handle an empty trigger inventory explicitly. The existing
+`flow render --view process` uses its CFG report schema and bounds oversized root CFGs as well as
 callee expansion. An oversized root becomes one explicit node-limit boundary;
 it is not copied in full or converted into a misleading linear prefix.
+
+## Read-only process render (T034)
+
+```bash
+kgmaker process render --entry "$ENTRY_ID" --workspace workspace.json \
+  --context-selection contexts.json --format json > process.json
+kgmaker process render --process "$PROCESS_ID" --process-view process.json \
+  --workspace workspace.json --context-selection contexts.json --format json
+```
+
+`ENTRY_ID` is an exact `trigger:` ID from the T024 inventory. The rendered
+revision is 1, with `process:` followed by that trigger's digest as its local ID.
+Take `PROCESS_ID` from the resulting `process_id` field. This ID follows the
+selected trigger snapshot and carries no business identity. The caller saves the
+JSON. `--process` requires `--process-view`, which supplies a single-trigger T025
+document. The same provider rebuilds the supplied ID and revision and checks
+the entire canonical content, omitting generation metadata as defined by
+`ProcessView`. Other revisions in an external store are outside this check.
+
+`--workspace` is required. `--root` resolves relative input paths and defaults
+to the current directory. `--scope` defaults to `production` and also accepts
+`test`, `test_fixture`, `development` and `unknown`. Optional `--context-selection`
+uses the [architecture selection JSON](architecture-json-cli.md) schema 1 with
+`service_id`, `repo_id`, `module`, and `context_id`. Use the same selection on
+replay. Existing original indexes are required in every workspace checkout.
+Local replay reads those files and current sources through the shared provider.
+Read-only Git may check checkout identity. Rendering issues no worker, build,
+network request or store/cache write. T025 defaults bound the traversal to depth
+3 and 500 nodes. Input files and output use the architecture limits of 32 MB
+per file and 4 million output characters respectively.
+
+The only format is `json`. Exit 0 returns a canonical `ProcessView` schema 1.
+`--strict` returns the same JSON with exit 4 for incomplete coverage. Malformed
+inputs or invalid selections return exit 2. Stale canonical content or a mismatch
+with `--expected-fingerprint` (64 lowercase hexadecimal characters) returns exit
+3. Errors 2 and 3 write a JSON diagnostic to stderr and leave stdout empty.
+The T025 result retains its technical status, selected context and provenance.
+List, packet generation, validation, apply, review and other formats remain
+outside this slice. [Evidence and remaining acceptance](changes/193_renderLocalProcess.md).
 
 ## Input and evidence boundaries
 
@@ -277,7 +315,7 @@ print([step.attributes["remote_evidence_refs"] for step in subscriptions])
 
 The example uses the same explicit `remote` snapshot creation shown in the T027
 example above. T028 adds no CLI command; existing `graph view` and `flow render`
-commands retain their contracts. Process lifecycle/export CLI belongs to T034/T038.
+commands retain their contracts. Extended process lifecycle/export CLI belongs to T034/T038.
 
 The projection matches producer `original_ids` to concrete T025 node call-site IDs,
 then matches a consumer's original listener symbol to the selected target trigger.
