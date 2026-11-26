@@ -316,7 +316,7 @@ def test_invalid_process_output_never_mutates_store_or_artifact(project, code):
     assert saved(project) == before
 
 
-def compile_runtime_fixture(tmp_path_factory, temp_name, application):
+def compile_runtime_fixture(tmp_path_factory, temp_name, application, *, source_text=None):
     root = tmp_path_factory.mktemp(temp_name)
     java_home = Path(os.environ.get("JAVA_HOME", "/usr/lib/jvm/java-21-openjdk-amd64"))
     java, javac = java_home / "bin/java", java_home / "bin/javac"
@@ -324,7 +324,10 @@ def compile_runtime_fixture(tmp_path_factory, temp_name, application):
         pytest.skip("JDK21 runtime producer fixture requires actual java and javac")
     src = root / "src/main/java"
     src.mkdir(parents=True)
-    shutil.copy(ROOT / "tests/fixtures/runtime-trace" / application, src)
+    if source_text is None:
+        shutil.copy(ROOT / "tests/fixtures/runtime-trace" / application, src)
+    else:
+        (src / application).write_text(source_text, encoding="utf-8")
     shutil.copy(ROOT / "tooling/runtime/java/org/kgmaker/runtime/RuntimeTrace.java", src)
     classes = root / "classes"
     classes.mkdir()

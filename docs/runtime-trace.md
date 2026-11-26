@@ -192,13 +192,14 @@ Děděné a výchozí metody, proxy, reflexe, async a dostupnost dat mají vlast
 
 V explicitně instrumentovaném běhu použijte přímočarou Java metodu `void` pro
 přímé přiřazení mezi dvěma statickými poli `String`. Zavolejte SDK ze statického
-pole třídy na stejném řádku hned po přiřazení.
+pole třídy hned po přiřazení, na stejném nebo bezprostředně následujícím řádku.
 
 ```java
 private static final RuntimeTrace TRACE = new RuntimeTrace();
 
 static void copyStatus() {
-    Target.status = Source.status; TRACE.observeValuePresence(Source.status, Target.status);
+    Target.status = Source.status;
+    TRACE.observeValuePresence(Source.status, Target.status);
 }
 ```
 
@@ -224,7 +225,8 @@ při opakovaném importu. Pro nový běh použijte nové ID. Důvěra vychází 
 výslovné spolupráce instrumentované aplikace a lokálního exportu.
 
 [Živá kontrola dostupnosti](feature-analysis.md#runtime-presence-in-data-check)
-· [Změna a ověření](changes/187_bindRuntimeValuePresence.md).
+· [Původní ověření](changes/187_bindRuntimeValuePresence.md)
+· [Ověření následujícího řádku](changes/197_bindAdjacentRuntimeValueHook.md).
 
 ## Opakovaný import a navigace
 
