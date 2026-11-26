@@ -704,6 +704,16 @@ def test_explicit_composite_fk_columns_join_historical_migration_operations(tmp_
         foreign_key = next(node for node in graph.nodes if node.kind == 'db_constraint' and node.path == fk_path)
         target_ids = {node.name.rsplit('.', 1)[-1]: node.id for node in graph.nodes
                       if node.kind == 'db_column' and node.name in {'public.parent.a', 'public.parent.b'}}
+        operations = {node.path: node for node in graph.nodes if node.kind == 'migration_operation'
+                      and node.path in {path for path, _, _ in changes}}
+        for path, _, column in changes[:2]:
+            operation = operations[path]
+            assert operation.metadata.get('foreign_key_operation_targets') == {
+                'operation_id': operation.id, 'source_file': path, 'source_line': 1,
+                'schema_snapshot_fingerprint': foreign_key.metadata['schema_snapshot_fingerprint'],
+                'column_ids': [target_ids[column]],
+            }
+        assert all('foreign_key_operation_targets' not in operations[path].metadata for path, _, _ in changes[2:])
         captured = _store_bytes(tmp_path)
         for path, table, column in changes:
             _write(tmp_path, path, f'ALTER TABLE {table} ALTER COLUMN {column} SET DEFAULT 2;\n')
@@ -736,6 +746,59 @@ def test_explicit_composite_fk_columns_join_historical_migration_operations(tmp_
     }
     assert {edge.target for edge in replayed.edges if edge.kind == 'foreign_key_references_column'
             and edge.source == foreign_key.id} == set(target_ids.values())
+
+
+def test_fk_operation_column_witness_requires_typed_provenance():
+    from kgmaker.graph_provider import _fk_operation_owns_column
+
+    operation = Node('operation', 'migration_operation', 'ALTER', 'V3__alter.sql', 1)
+    snapshot = 'a' * 64
+    witness = {'operation_id': operation.id, 'source_file': operation.path, 'source_line': operation.line,
+               'schema_snapshot_fingerprint': snapshot, 'column_ids': ['column']}
+
+    def owns(record):
+        metadata = {'schema_snapshot_fingerprint': snapshot, 'foreign_key_operation_targets': record}
+        return _fk_operation_owns_column(replace(operation, metadata=metadata), 'column')
+
+    assert owns(witness)
+    assert not _fk_operation_owns_column(operation, 'column')
+    assert not owns(None)
+    for field, invalid in (
+        ('operation_id', None), ('source_file', None), ('source_line', True), ('source_line', 2),
+        ('schema_snapshot_fingerprint', None), ('schema_snapshot_fingerprint', 'b' * 64),
+        ('column_ids', 'column'), ('column_ids', ['column', 'column']), ('column_ids', []),
+    ):
+        assert not owns({**witness, field: invalid}), field
+    assert not _fk_operation_owns_column(replace(operation, metadata={
+        'schema_snapshot_fingerprint': snapshot, 'foreign_key_operation_targets': witness,
+    }), 'another_column')
+
+
+def test_foreign_key_column_gate_preserves_legacy_table_and_view_reasons(tmp_path):
+    migrations = 'src/main/resources/db/migration/'
+    tables = migrations + 'V1__tables.sql'
+    _write(tmp_path, tables, 'CREATE TABLE parent (id INTEGER UNIQUE, other INTEGER);\n'
+           'CREATE TABLE child (p INTEGER, CONSTRAINT child_parent FOREIGN KEY(p) REFERENCES parent(id));\n')
+    altered = migrations + 'V2__alter.sql'
+    _write(tmp_path, altered, 'ALTER TABLE parent ALTER COLUMN id SET DEFAULT 1;\n')
+    _write(tmp_path, migrations + 'R__view.sql', 'CREATE VIEW ids AS SELECT id FROM parent;\n')
+
+    with patch('subprocess.Popen', side_effect=AssertionError('implicit process')):
+        assert scan(tmp_path, generate_docs=False) == 0
+        before = _store_bytes(tmp_path)
+        _write(tmp_path, tables, 'CREATE TABLE parent (id INTEGER UNIQUE, other BIGINT);\n'
+               'CREATE TABLE child (p INTEGER, CONSTRAINT child_parent FOREIGN KEY(p) REFERENCES parent(id));\n')
+        _write(tmp_path, altered, 'ALTER TABLE parent ALTER COLUMN id SET DEFAULT 2;\n')
+        paths = [tables, altered]
+
+        def relations():
+            report = dependency_impact(tmp_path, paths)
+            return {reason['relation'] for row in report['affected'] for reason in row['reasons']}
+
+        assert relations() == {'foreign_key_references_column', 'foreign_key_to', 'derived_from'}
+        with patch('kgmaker.graph_provider._fk_operation_owns_column', return_value=False):
+            assert relations() == {'foreign_key_to', 'derived_from'}
+        assert _store_bytes(tmp_path) == before
 
 
 def test_explicit_fk_column_rejects_unbound_stored_scope_or_operation(tmp_path):

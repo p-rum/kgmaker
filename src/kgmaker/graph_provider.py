@@ -9,7 +9,7 @@ from .compiler_sources import (
     JVM_JPA_SOURCE_SNAPSHOTS, JVM_RAW_CAPTURE_PREFIX, JVM_RAW_SOURCE_SNAPSHOT, JVM_SOURCE_SNAPSHOTS,
     compiler_source_digest, jvm_raw_capture_id, normalized_source_projection, unsupported_kotlin_source,
 )
-from .model import KnowledgeGraph
+from .model import KnowledgeGraph, Node
 from .store import load_graph, load_graph_generation
 from .worker_protocol import WorkerError
 
@@ -636,6 +636,22 @@ def retain_compiler_layer(root: Path, syntax: KnowledgeGraph) -> KnowledgeGraph:
     return _merge_contexts(syntax, stored, published, layer_context_ids=active_ids, source_omissions=omissions)
 
 
+def _fk_operation_owns_column(operation: Node, column_id: str) -> bool:
+    """Bind the named target to the operation that actually replayed it."""
+    metadata = operation.metadata
+    witness = metadata.get('foreign_key_operation_targets') if isinstance(metadata, dict) else None
+    if not isinstance(witness, dict):
+        return False
+    line = witness.get('source_line')
+    snapshot = metadata.get('schema_snapshot_fingerprint')
+    columns = witness.get('column_ids')
+    return (witness.get('operation_id') == operation.id and witness.get('source_file') == operation.path
+            and type(line) is int and line > 0 and type(operation.line) is int and line == operation.line
+            and isinstance(snapshot, str) and witness.get('schema_snapshot_fingerprint') == snapshot
+            and isinstance(columns, list) and _reference_ids(columns) and len(set(columns)) == len(columns)
+            and column_id in columns)
+
+
 def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
     """Derive positive relationships from one already-published generation."""
     from .schema_replay import FK_COLUMN_RELATION, persistence_pair
@@ -748,7 +764,7 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
                     or tables[0].metadata.get('schema_object') != column[:-1]):
                 continue
             for operation in migration_operations.get(target.id, ()):
-                if replay_scope(operation.id) == scope:
+                if replay_scope(operation.id) == scope and _fk_operation_owns_column(operation, target.id):
                     add(operation.path, source.path, source.id, 'SCHEMA_DEPENDENT', relation=edge.kind,
                         source_line=edge.source_line, evidence_kind='MIGRATION_DERIVED', dependency_id=target.id,
                         operation_id=operation.id, operation_line=operation.line)

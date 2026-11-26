@@ -157,6 +157,9 @@ ověřuje uložené sloupce složeného cizího klíče, přesné cesty operací
 zachování uloženého grafu čtecím reportem a nový offline scan. Doplňkové
 kontroly ověřují stejnojmenné i jiné sloupce, neúplné zachycení,
 přejmenování, novou identitu po opětovném vytvoření a starší grafy.
+Kontrola vlastnictví cíle vyžaduje typovaný záznam skutečné migrační
+operace. Chybějící nebo neplatný doklad vynechá důvod pro sloupec.
+Stávající důvody pro tabulku a view zůstávají dostupné.
 W02-AC01 má stav `PARTIAL`. [Ověření sloupců](changes/191_indexNamedForeignKeyColumns.md).
 
 ## T045 — doplňující automatická kontrola PR

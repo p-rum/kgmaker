@@ -95,3 +95,50 @@ popisuje zachycení pojmenovaných sloupců. Pravidla zadání pokrývají tento
 rozsah. Širší automatická změna grafových nebo feature závěrů má další
 acceptance. Úplná standardní sada této revize, běh mimo Linux a GitHub
 Actions mají při lokálním předání stav `NOT_RUN`.
+
+## Oprava po nezávislém review #175 — kroky 2 až 5
+
+Výchozí publikovaný head je `1eab5cff9c52cf50e90b901eea0e03f0387de71b`.
+Skutečný lokální replay složeného FK uložil otisk operace ve společném
+replayi. Objekt operace postrádal vlastní seznam zasažených sloupců.
+Regrese nad nezměněným zdrojem má očekávaný exit 1 a SHA-256 JUnit
+`d223550d291933f199398172e61690682f9e2e823aa18d6d3662254fa0de5b17`.
+
+`schema_replay.py` odvodí z již zachycených cílů operace jen sloupce použitých
+cizích klíčů. K cílovým identitám uloží identitu operace, zdrojový soubor,
+řádek a otisk replaye. `graph_provider.py` vyžaduje shodu záznamu s uloženou
+operací a přesnou identitu dotčeného sloupce. Pokud záznam chybí nebo je
+neplatný, report vynechá důvod pro FK sloupec. Běžný `scan` poskytne nový
+doklad. Starší tabulkové a view důvody se vyhodnocují dosavadní cestou.
+Jednotkové kontroly ověřují typy a souřadnice záznamu. Skutečný lokální replay
+SQL fixture ověřuje uložení důkazu, čtení obou složek cizího klíče a zachování
+výstupů grafu při reportu. Workspace používá původní tabulkovou projekci.
+
+[Příklad](../stage-content-cache.md#selektivní-dopad-změn),
+[acceptance](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy)
+a [stavová matice](../production-analysis-progress.md) uvádějí podmínku
+dokladu. Vstupy příkazu v README a revize zadání dál odpovídají postupu
+`scan`, úprava zdroje a `impact`. W02 je `MERGED/PARTIAL` a W03 čeká na
+`VERIFIED_IN_SCOPE`.
+
+Cílená sada má **31 PASS / 0 SKIP** za 0,78 s, včetně skutečného
+lokálního replaye, typovaných záznamů operace, běžných tabulkových a view
+vazeb, workspace a plánovače. Pytest a sestavení a porovnání manifestů mají
+exit 0. SHA-256 JUnit je `c3ae9e642f5ce5fa1ccd3d8cf8c6d3eda333dea02485855f445486ce73ac9087`. Shodné 539řádkové manifesty mají
+SHA-256 `a6ff89b12d8e692519bb1deec25d4d6c81989a0dee915b7aa0865af73d91c782`.
+
+```bash
+python -m pytest -q --tb=short -ra -p no:cacheprovider \
+  tests/test_reverse_dependency_index.py tests/test_flyway.py \
+  tests/test_persistence_realms.py tests/test_completion.py \
+  -k 'test_flyway or test_completion or test_explicit_composite_fk_columns or test_fk_operation_column_witness or test_foreign_key_column_gate or test_fk_column_projection_retains_renamed_identity or test_workspace_keeps_table_level_foreign_keys_for_two_explicit_realms'
+```
+
+Skutečný `scan` a `impact --evidence-only --format json` mají exit 0.
+Report potvrdil jediný očekávaný důvod a shodu se záznamem operace.
+Před a po reportu jsou shodné bajty všech uložených výstupů. SHA-256
+JSON je `72139f381a3de9b4bc60f2146fab638b0a99b052e1a71ea73887c93b2d8b2a5d`. Plán má 135 shodných položek a stejné pořadí 32 úloh.
+Záznam má SHA-256 `32abf9cc00c07154068bc7ad5d5a999f89ef863357007c07d0427b82e93c74ab`.
+
+Úplná standardní sada této opravy, běh mimo Linux a GitHub Actions mají
+při lokálním předání stav `NOT_RUN`.

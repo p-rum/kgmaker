@@ -174,7 +174,10 @@ cestu (u závěru feature `null`), stav a seznam `reasons`:
 Při úplném lokálním přehrání verzovaných migrací ukládá `kgmaker scan` vazby
 `REFERENCES parent(col)` i pro složené klíče se všemi přesně rozlišenými sloupci.
 Pro důvod ve výstupu se musí shodovat uložená tabulka, sloupec, cizí klíč a
-migrační operace v jednom otisku replaye a databázovém streamu. Například po
+migrační operace v jednom otisku replaye a databázovém streamu. Uložený
+záznam operace musí uvádět přesný sloupec mezi svými cíli a doložit svou
+identitu, zdrojovou cestu a řádek. Starší grafy mohou uvádět důvody pro
+tabulky a view. Nové doklady pro sloupce vytvoří `scan`. Například po
 změně dříve uložené operace `ALTER COLUMN` spusťte
 `kgmaker impact --evidence-only --format json src/main/resources/db/migration/V3__alter.sql`.
 Neúplné přehrání, dodaný snapshot nebo implicitní `REFERENCES parent`

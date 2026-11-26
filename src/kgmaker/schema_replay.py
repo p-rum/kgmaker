@@ -686,8 +686,13 @@ def graph_entities(schema: dict, *, include_named_fk_columns: bool = False) -> t
         if not any(n.id == migration_id for n in nodes):
             nodes.append(Node(migration_id, 'migration', ev['path'], ev['path'], 1, metadata={'persistence_realm': schema_realm(schema)}))
         metadata = {'persistence_realm': schema_realm(schema)}
-        if named_columns.intersection(op['targets']):
+        columns = [target for target in op['targets'] if target in named_columns]
+        if columns:
             metadata['schema_snapshot_fingerprint'] = snapshot
+            metadata['foreign_key_operation_targets'] = {
+                'operation_id': op['id'], 'source_file': ev['path'], 'source_line': ev['line'],
+                'schema_snapshot_fingerprint': snapshot, 'column_ids': columns,
+            }
         nodes.append(Node(op['id'], 'migration_operation', op['kind'], ev['path'], ev['line'],
                           summary=op['unresolved'], metadata=metadata))
         edges.append(Edge(migration_id, op['id'], 'migration_changes', source_file=ev['path'], source_line=ev['line']))
