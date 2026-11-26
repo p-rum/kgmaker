@@ -2054,7 +2054,7 @@ pokus na `c5db937` dokládá change note. [Přesné historické výsledky](chang
 | T022-AC03 | `test_report_is_pure_deterministic_and_abstains_on_missing_source`; stejné bytes, vstup beze změny a zákaz I/O během renderu. | PASS |
 | T022-AC04 | `test_public_rejected_topology_markdown_keeps_last_artifact` a `test_markdown_render_failure_never_publishes_prepared_cache`; původní vstupy i artefakt zůstávají stejné. | PASS |
 | T022-AC05 | `test_foreign_visible_claim_or_proof_is_rejected_without_mutation`, `test_explicit_context_report_does_not_display_uncited_proof_as_selected` a nevyřešená vazba v deterministické fixture. | PASS |
-| T022-AC06 | Veřejné příklady a [doklady ověření](changes/195_renderTopologyMarkdown.md) patří uvedeným dvojicím revizí. Aktuální revize, jejich ověření a stav nezávislého review vede [PR #179](https://github.com/p-rum/kgmaker/pull/179). | PARTIAL |
+| T022-AC06 | [PR #179](https://github.com/p-rum/kgmaker/pull/179) je sloučené jako `fd8d5e958bf45b67775c04f78e817cc7d41ebfe9`. Nezávislé T045 na schváleném headu i přímý běh na merge daly 26 PASS / 0 SKIP. [Doklad sloučení](changes/201_recordTopologyMarkdownMerge.md) váže samostatné běhy na přesné revize. [Předchozí příklady a výsledky](changes/195_renderTopologyMarkdown.md) zůstávají historické. Širší provozní ověření má stav NOT_RUN. | PARTIAL |
 
 ## T003-S10-W06 — souběh publikace a poškozená cache
 
