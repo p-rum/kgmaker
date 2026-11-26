@@ -68,6 +68,8 @@ Restart Copilot CLI after installing the hook. Each new session refreshes the gr
 
 Ask Copilot `Use $kgmaker-excel-migration to prepare the Kotlin plan and Jira CSV for Fakturace.xlsm with Sazby.xlsx as a dependency.` The skill prepares the inputs, writes and validates the plan, and produces both exports. It uses static analysis only and forbids macro execution.
 
+`kgmaker excel migrate prepare` also writes `behavior.md` with data sources, calculations, entry points and available paths to displayed results. Use `kgmaker excel behavior --inventory <dir>/inventory.json --sheet <name>` for a focused view of a sheet and its upstream paths.
+
 ## Commands
 
 Offline production classification, graph schema v2 and scoped evidence views are
@@ -188,6 +190,7 @@ kgmaker status [--root PATH]
 kgmaker check [--root PATH]
 kgmaker docs [check|report] [--root PATH] [--confluence-dir PATH] [--confluence-report PATH]
 kgmaker impact [--root PATH] FILE [FILE ...]
+kgmaker impact [--root PATH] --evidence-only --format json FILE [FILE ...]
 kgmaker semantic prepare [--root PATH]
 kgmaker semantic extract [--root PATH] [--base REF] [--note PATH] [--token-budget TOKENS]
 kgmaker semantic update [--root PATH] [--base REF] [--note PATH] [--token-budget TOKENS]
@@ -303,6 +306,8 @@ The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph 
 
 In the KGMAKER repository, `kgmaker completion plan --root . --jobs 3` reads the
 current task inventory and emits dependency, verification and dispatch candidates as JSON.
+A specification can require `MERGED/VERIFIED_IN_SCOPE` for selected prerequisites,
+for example before dispatching work that depends on selective invalidation writes.
 The host skill runs role handoffs through the existing workflow. Use completion handoff with the persisted task ID to preview or apply one step.
 If the profile budget cannot fit the required context, retry that handoff with
 `kgmaker completion handoff TASK_ID --apply --token-budget 12000`.
@@ -325,6 +330,16 @@ and a backend-to-frontend value path tied to a generated client's contract
 checksum and release. An explicit offline Gradle build and JVM verifier check
 that workspace release mapping requires matching JAR bytes and a current consumer
 context. The fixture records the remaining integrity gaps.
+
+K1 and K2 also expose a `logical_key` for supported top-level Kotlin declarations
+when the compiler receives the complete captured Kotlin namespace for an explicitly
+declared source set. A compiler-reported source declaration conflict or an unknown
+signature for a competing declaration can withhold the key. A scanner omission
+within the selected Kotlin source set can also withhold keys during inspection
+and offline projection. An attested key can join occurrences across snapshots
+after line movement.
+A call site still resolves through its compiler context and
+occurrence ID. [Supported types and source-set requirements](docs/compiler-inspection.md#logické-klíče-deklarací-kotlinu).
 
 ## Implementation memory and workflow
 
@@ -1018,6 +1033,9 @@ listener/send declarations and declared bindings into the shared interfaces view
 Broker realms and consumer groups remain distinct; configuration-only and regex
 subscriptions retain their unresolved boundaries. Explicit workspace/private
 compiler indexes are required; the projection performs no inspection or transport.
+For raw JVM captures with an explicit build model, the catalogue checks the
+captured and current scanner versions of the same source file. It preserves
+the selected scope and exact source evidence. [Kafka catalogue contract](docs/kafka-interfaces.md).
 
 ### Explicit interface contracts (T013; merged PR74)
 
@@ -1302,6 +1320,8 @@ and [change128](docs/changes/128_unifiedFlowViews.md).
 Při opakované explicitní JVM/TS inspekci worker i projekce vypočítají aktuální
 compiler evidence znovu. JSON hlásí `cache.stages`
 se stavem BYPASS. Offline scan/hook/feature zachovávají stávající chování.
+Otisk launcheru a platformních souborů se počítá průběžným čtením.
+Každá grafová fáze předá výsledek své živé validace přímo dalšímu kroku.
 Java launcher váže také `lib/ct.sym` a na POSIX přesné locale vstupy
 `LANG`, `LC_ALL`, `LC_CTYPE`. Změna zaznamenaného vstupu během inspekce
 vrátí `STALE` a zachová poslední uložený graf.
@@ -1314,7 +1334,24 @@ A failed graph replacement restores both outputs. A runtime import with an
 explicit graph object requires it to match the stored generation, when present.
 Retry the original command after the other writer finishes.
 [Příkazy a omezení](docs/stage-content-cache.md),
-[ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md).
+[ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md),
+[ověření nákladů živé inspekce](docs/changes/178_reduceLiveInspectionOverhead.md).
+
+### Selektivní dopad změněných souborů (T003-S10-W02)
+
+`kgmaker impact --evidence-only --format json src/main/java/Api.java` použijte
+po úpravě souboru před dalším scanem nebo inspekcí. Report používá jednu
+uloženou generaci grafu a uvádí důvody pro opětovné ověření doložených compiler
+callers, migračních vazeb a OpenAPI deklarací. U Flyway sleduje zachycené
+migrační operace pro stejný objekt. OpenAPI a citace použité revize feature
+porovnává podle původních bajtů. Změna LF↔CRLF může označit i tranzitivní
+callery dříve doloženého compiler cíle s přesným lokátorem původních bajtů.
+`changed_sources` dál porovnává normalizovaný text. Report vynechá compiler
+důkazy raw JVM kontextu s neplatným uloženým otiskem a zachová výsledky
+z ostatních doložených kontextů. Operace pouze čte a uvádí `PARTIAL`
+s diagnostikou hranic. Podporuje lokální repozitář zvolený přes `--root`.
+Kombinace `--evidence-only` s `--workspace` končí chybou použití.
+[Výstup a podporovaný rozsah](docs/stage-content-cache.md#selektivní-dopad-změn).
 
 ### Doklad skutečného testovacího běhu (T047-S10)
 

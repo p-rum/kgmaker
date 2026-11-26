@@ -8,10 +8,11 @@ import subprocess
 import sys
 import zipfile
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 import pytest
 
-from kgmaker.analysis_model import AnalysisError, canonical
+from kgmaker.analysis_model import AnalysisError, canonical, digest
 from kgmaker.excel import inventory, jira, plan
 from kgmaker.excel.source import preflight, worker_command
 from kgmaker.worker_protocol import WorkerError
@@ -104,6 +105,10 @@ def test_real_multi_workbook_evidence_and_data_stays_local(tmp_path, sample, act
     edge_sources(observed, output, "reads", input_cell)
     edge_sources(observed, udf_formula, "calls", udf)
     edge_sources(observed, evidence_at(observed, "defined-name", name="InvoiceTotal"), "reads", output)
+    scoped = cli(tmp_path, "behavior", "--inventory", "inventory.json", "--sheet", "Sheet1")
+    assert scoped.returncode == 0, scoped.stderr
+    report_entries = scoped.stdout.split("## Entry points", 1)[1].split("## Declared data sources", 1)[0]
+    assert "Worksheet_Change" in report_entries and "Workbook_Open" not in report_entries
 
     base = cli(tmp_path, "packet", "--inventory", "inventory.json", "--entity", macro["id"])
     assert base.returncode == 0, base.stderr
@@ -197,6 +202,148 @@ def test_archive_budget_and_xml_decl_fail_closed(tmp_path, monkeypatch):
     assert preflight(archive, "xlsx") == "EXCEL_UNSAFE_XML"
     monkeypatch.setattr("kgmaker.excel.source.MAX_XML_BYTES", 2)
     assert preflight(archive, "xlsx") == "EXCEL_ARCHIVE_LIMIT"
+
+
+def _write_currency_workbook(path):
+    spreadsheet = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+    office = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+    packaging = "http://schemas.openxmlformats.org/package/2006"
+    currency = {
+        "CNB": 'WEBSERVICE("https://cnb.example.invalid/rates")',
+        "ECB": None,
+        "Provider": 'WEBSERVICE("https://provider.example.invalid/rates")',
+        "ParseCNB": 'VALUE(FILTERXML(CNB!A1,"//rate"))',
+        "ParseECB": "SUM(ECB!A2:A2)",
+        "ParseProvider": 'VALUE(FILTERXML(Provider!A1,"//rate"))',
+        "Selected": "IFERROR(ParseCNB!A1,ParseECB!A1)",
+        "CrossRate": "Selected!A1/ParseProvider!A1",
+        "Amount": None,
+        "Converted": "Amount!A1*CrossRate!A1",
+        "Fee": "Converted!A1*0.015",
+        "Total": "Converted!A1+Fee!A1",
+        "Rounded": "ROUND(Total!A1,2)",
+        "Audit": "IF(CrossRate!A1>0,Total!A1,0)",
+        "Display": "Rounded!A1",
+    }
+    types, sheets, relations = [], [], []
+
+    def part_type(name, kind):
+        types.append(f'<Override PartName="/{name}" ContentType="application/vnd.openxmlformats-officedocument.'
+                     f'spreadsheetml.{kind}+xml"/>')
+
+    def relation(kind, target, index=1):
+        return f'<Relationship Id="rId{index}" Type="{office}/{kind}" Target="{target}"/>'
+
+    def rels(*items):
+        return f'<Relationships xmlns="{packaging}/relationships">{"".join(items)}</Relationships>'
+
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zip:
+        part_type("xl/workbook.xml", "sheet.main")
+        zip.writestr("_rels/.rels", rels(relation("officeDocument", "xl/workbook.xml")))
+        for index, (name, formula) in enumerate(currency.items(), 1):
+            filename = f"worksheets/sheet{index}.xml"
+            part_type(f"xl/{filename}", "worksheet")
+            sheets.append(f'<sheet name="{name}" sheetId="{index}" r:id="rId{index}"/>')
+            relations.append(relation("worksheet", filename, index))
+            table = ''
+            if name == "ECB":
+                data = ('<row r="1"><c r="A1" t="inlineStr"><is><t>Rate</t></is></c></row>'
+                        '<row r="2"><c r="A2"><v>23.719</v></c></row>')
+                table = '<tableParts count="1"><tablePart r:id="rId1"/></tableParts>'
+                zip.writestr(f"xl/worksheets/_rels/sheet{index}.xml.rels",
+                             rels(relation("table", "../tables/table1.xml")))
+            elif name == "Amount":
+                data = '<row r="1"><c r="A1"><v>12345.6789</v></c></row>'
+            else:
+                rows = range(1, 101) if name == "Audit" else (1,)
+                data = "".join(f'<row r="{row}"><c r="A{row}"><f>{escape(formula)}</f></c></row>' for row in rows)
+            zip.writestr(f"xl/{filename}", f'<worksheet xmlns="{spreadsheet}" xmlns:r="{office}">'
+                         f'<sheetData>{data}</sheetData>{table}</worksheet>')
+        zip.writestr("xl/workbook.xml", f'<workbook xmlns="{spreadsheet}" xmlns:r="{office}">'
+                     f'<sheets>{"".join(sheets)}</sheets></workbook>')
+        zip.writestr("xl/_rels/workbook.xml.rels", rels(*relations, relation("connections", "connections.xml", 16)))
+        part_type("xl/connections.xml", "connections")
+        part_type("xl/tables/table1.xml", "table")
+        part_type("xl/queryTables/queryTable1.xml", "queryTable")
+        zip.writestr("xl/connections.xml", f'<connections xmlns="{spreadsheet}">'
+                     '<connection id="1" name="Example ECB" type="4">'
+                     '<webPr url="https://ecb.example.invalid/rates"/></connection></connections>')
+        zip.writestr("xl/tables/table1.xml", f'<table xmlns="{spreadsheet}" id="1" name="DailyRates" '
+                     'displayName="DailyRates" ref="A1:A2" tableType="queryTable">'
+                     '<tableColumns count="1"><tableColumn id="1" name="Rate"/></tableColumns></table>')
+        zip.writestr("xl/tables/_rels/table1.xml.rels", rels(relation("queryTable", "../queryTables/queryTable1.xml")))
+        zip.writestr("xl/queryTables/queryTable1.xml", f'<queryTable xmlns="{spreadsheet}" connectionId="1" '
+                     'name="DailyRates"/>')
+        zip.writestr("[Content_Types].xml", f'<Types xmlns="{packaging}/content-types">'
+                     '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+                     f'{"".join(types)}</Types>')
+
+
+def test_currency_behavior_reports_three_sources_across_fifteen_sheets(tmp_path, actual_worker):
+    workbook = tmp_path / "Synthetic rates.xlsx"
+    _write_currency_workbook(workbook)
+    original = workbook.read_bytes()
+    bundle = tmp_path / "bundle"
+    result = cli(tmp_path, "migrate", "prepare", "--workbook", workbook, "--out-dir", bundle)
+    assert result.returncode == 0, result.stderr
+    assert workbook.read_bytes() == original
+    observed = plan.load_inventory(bundle / "inventory.json")
+    assert len(observed["relations"]) > 200
+    assert evidence_at(observed, "address", sheet="ECB", range="A2:A2")
+    names = {item["reference"]: item["id"] for item in observed["evidence"] if item["kind"] == "external-source"}
+    assert len(names) == 3
+    report = (bundle / "behavior.md").read_text(encoding="utf-8")
+    assert "15 sheets" in report
+    assert "Declared query-table binding" in report
+    assert "Conditional result** · IFERROR" in report
+    assert "division" in report and "multiplication" in report
+    assert "https://" not in report and "12345.6789" not in report and "IFERROR(" not in report
+    display_routes = [line for line in report.splitlines() if "source-to-output" in line and "Display / A1" in line]
+    assert len(display_routes) == 3, report
+    assert all(any(key in route and "CrossRate / A1" in route for route in display_routes) for key in names.values())
+    full = cli(tmp_path, "behavior", "--inventory", bundle / "inventory.json", "--include-source")
+    assert full.returncode == 0, full.stderr
+    assert all(url in full.stdout for url in names)
+    assert "IFERROR(ParseCNB!A1,ParseECB!A1)" in full.stdout and "12345.6789" in full.stdout
+    assert full.stdout.index("## Calculations") < full.stdout.index("## Limits")
+    scoped = cli(tmp_path, "behavior", "--inventory", bundle / "inventory.json", "--book", "main", "--sheet", "Display")
+    assert scoped.returncode == 0, scoped.stderr
+    assert sum("source-to-output" in line for line in scoped.stdout.splitlines()) == 3
+    assert "Formula in source** · ` main / Display / A1 " in scoped.stdout
+    assert "Formula in source** · ` main / CrossRate / A1 " in scoped.stdout
+    assert "Conditional result** · IFERROR" in scoped.stdout
+    assert "Formula in source** · ` main / Audit" not in scoped.stdout
+    legacy = {**observed, "worker": "excel-poi-6.0.0-2"}
+    legacy["inventory_id"] = digest({key: val for key, val in legacy.items() if key != "inventory_id"})
+    assert plan.load_inventory(write_json(tmp_path / "legacy-inventory.json", legacy)) == legacy
+
+
+def test_query_destination_connects_to_formula_read_without_cell_evidence(tmp_path):
+    from kgmaker.excel import behavior
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    builder.register(selection.books[0], "test-sha", 0, {
+        "links": {}, "builtin_functions": [],
+        "sheets": [{"name": "Sheet1", "visibility": "VISIBLE"}],
+        "cells": [{"sheet": "Sheet1", "cell": "B1", "type": "FORMULA", "formula": "=A2"}],
+        "names": [], "tables": [],
+        "connections": [{"part": "xl/connections.xml", "id": "1", "index": 1,
+                         "mechanism": "ODBC", "reference": "rates"}],
+        "query_tables": [{"part": "xl/queryTables/queryTable1.xml", "sheet": "Sheet1",
+                          "id": "1", "range": "A2:A2"}],
+        "modules": [],
+    }, [])
+
+    value = builder.document()
+    report = behavior.markdown(value, sheet="Sheet1")
+
+    assert not any(row["kind"] == "cell" and row["locator"].get("cell") == "A2"
+                   for row in value["evidence"])
+    paths = [line for line in report.splitlines() if "source-to-output path" in line]
+    source = next(row for row in value["evidence"] if row["kind"] == "external-source")
+    assert any(source["id"] in path and "Sheet1 / B1" in path for path in paths), report
 
 
 def test_unmapped_and_missing_book_are_explicit(tmp_path, sample, actual_worker):
@@ -344,6 +491,177 @@ def _register_source(builder, book, *, source, formulas=(), names=(), builtins=(
         "names": list(names), "tables": [],
         "modules": [{"name": "Module1", "type": "Module", "source": source}],
     }, [])
+
+
+def test_vba_behavior_tracks_http_response_calculation_and_alternative_assignments(tmp_path):
+    from kgmaker.excel import behavior
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    source = '''Public Sub Fetch()
+    Dim http As Object, rate As Double, endpoint As String
+    endpoint = "https://cnb.example.invalid/rates"
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    http.Open "GET", endpoint, False
+    http.Send
+    rate = CDbl(http.ResponseText)
+    total = rate * 100
+    ThisWorkbook.Worksheets("Sheet1").Range("C1").Value = total
+    RateLabel.Caption = Format(total, "0.0000")
+    Set http = customObject
+    http.Open "GET", "https://not-an-http-client.example.invalid/"
+End Sub
+Public Sub ChooseRate(ByVal usePrimary As Boolean)
+    If usePrimary Then
+        rate = 101.25
+    Else
+        rate = 201.50
+    End If
+    MsgBox rate
+End Sub
+Public Sub PublishDynamic(ByVal rowNumber As Long)
+    ThisWorkbook.Worksheets("Sheet1").Cells(rowNumber, 2).Value = 2 * rowNumber
+End Sub'''
+    _register_source(builder, selection.books[0], source=source)
+    value = builder.document()
+    url = evidence_at(value, "external-source", procedure="Fetch", line=5)
+    assert url["reference"] == "https://cnb.example.invalid/rates"
+    assert len([item for item in value["evidence"] if item["kind"] == "external-source"]) == 1
+    response = evidence_at(value, "vba-operation", procedure="Fetch", line=7)
+    write = evidence_at(value, "vba-operation", procedure="Fetch", line=9)
+    edge_sources(value, response, "source", url)
+    edge_sources(value, write, "writes", evidence_at(value, "address", range="C1"))
+    message = evidence_at(value, "vba-operation", procedure="ChooseRate", line=20)
+    assert len(message["alternatives"]["rate"]) == 2
+    report = behavior.markdown(value)
+    assert "Alternative definitions" in report and "Display property write" in report
+    assert any("source-to-output" in line and url["id"] in line and "line 10" in line
+               for line in report.splitlines())
+    assert "101.25" not in report and "ResponseText" not in report and "https://" not in report
+    full = behavior.markdown(value, include_source=True)
+    assert "CDbl(http.ResponseText)" in full and "total = rate * 100" in full
+    assert "101.25" in full and "201.50" in full
+    assert ".Cells(rowNumber, 2).Value = 2 * rowNumber" in full
+    dynamic = evidence_at(value, "vba-operation", procedure="PublishDynamic")
+    assert not any(edge["source"] == dynamic["id"] and edge["kind"] == "writes" for edge in value["relations"])
+    redacted = plan.packet(value)
+    assert any(row["kind"] == "vba-operation" for row in redacted["evidence"])
+    assert not any(set(row) & plan.SOURCE_FIELDS for row in redacted["evidence"])
+
+
+def test_vba_function_lineage_follows_returns_instead_of_unrelated_effects(tmp_path):
+    from kgmaker.excel import behavior
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    source = '''Public Function Fixed()
+    Set client = CreateObject("MSXML2.XMLHTTP")
+    client.Open "GET", "https://fixed.example.invalid/"
+    client.Send
+    unrelated = client.ResponseText
+    Fixed = CDbl(unrelated)
+    Fixed = 42
+End Function
+Public Function FixedAfterBranch()
+    Set client = CreateObject("MSXML2.XMLHTTP")
+    client.Open "GET", "https://branch.example.invalid/"
+    client.Send
+    FixedAfterBranch = CDbl(client.ResponseText)
+    If flag Then
+        unrelated = True
+    End If
+    FixedAfterBranch = 42
+End Function
+Public Function Quote()
+    Set client = CreateObject("MSXML2.XMLHTTP")
+    client.Open "GET", "https://quote.example.invalid/"
+    client.Send
+    Quote = CDbl(client.ResponseText)
+End Function
+Public Function Adjusted()
+    Adjusted = Quote() * 2
+End Function'''
+    _register_source(builder, selection.books[0], source=source,
+                     formulas=("Fixed()", "Adjusted()", "FixedAfterBranch()"))
+    value = builder.document()
+    report = behavior.markdown(value)
+    paths = [line for line in report.splitlines() if "source-to-output path" in line]
+    assert len(paths) == 1, report
+    assert "Sheet1 / B2" in paths[0] and "Adjusted" in paths[0] and "Quote" in paths[0]
+    assert "Fixed" not in paths[0] and "Sheet1 / B1" not in paths[0]
+
+
+def test_vba_non_mutating_intrinsic_preserves_definition_for_later_write(tmp_path):
+    from kgmaker.excel import behavior
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    source = '''Public Sub Fetch()
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    http.Open "GET", "https://rates.example.invalid/"
+    http.Send
+    rate = CDbl(http.ResponseText)
+    Format(rate, "0.00")
+    ThisWorkbook.Worksheets("Sheet1").Range("A1").Value = rate
+End Sub'''
+    _register_source(builder, selection.books[0], source=source)
+
+    value = builder.document()
+    report = behavior.markdown(value, sheet="Sheet1")
+    source = evidence_at(value, "external-source", procedure="Fetch", line=3)
+    paths = [line for line in report.splitlines() if "source-to-output path" in line]
+    assert any(source["id"] in path and "line 7" in path for path in paths), report
+
+
+def test_vba_keeps_endpoint_unresolved_after_opaque_call(tmp_path):
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    source = '''Public Sub Refresh()
+    Dim endpoint As String
+    endpoint = "https://stale.example.invalid/"
+    Set client = CreateObject("MSXML2.XMLHTTP")
+    Call RewriteUrl(endpoint)
+    observed = endpoint
+    client.Open "GET", endpoint
+    client.Send
+End Sub
+Public Sub RewriteUrl(ByRef address As String)
+    address = "https://replacement.example.invalid/"
+End Sub'''
+    _register_source(builder, selection.books[0], source=source)
+    value = builder.document()
+    request = evidence_at(value, "external-source", procedure="Refresh", line=7)
+    assert request["method"] == "GET" and request["reference"] is None
+    observed = evidence_at(value, "vba-operation", procedure="Refresh", line=6)
+    assert not any(edge["source"] == observed["id"] and edge["kind"] == "depends-on" for edge in value["relations"])
+
+
+def test_vba_read_does_not_inherit_a_later_http_write_to_the_same_cell(tmp_path):
+    from kgmaker.excel import behavior
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    source = '''Public Sub Sequence()
+    ThisWorkbook.Worksheets("Sheet1").Range("A1").Value = 0
+    copied = ThisWorkbook.Worksheets("Sheet1").Range("A1").Value
+    ThisWorkbook.Worksheets("Sheet1").Range("B1").Value = copied
+    Set client = CreateObject("MSXML2.XMLHTTP")
+    client.Open "GET", "https://rates.example.invalid/"
+    client.Send
+    ThisWorkbook.Worksheets("Sheet1").Range("A1").Value = client.ResponseText
+End Sub'''
+    _register_source(builder, selection.books[0], source=source)
+    report = behavior.markdown(builder.document(), sheet="Sheet1")
+    paths = [line for line in report.splitlines() if "source-to-output path" in line]
+    assert any("Sheet1 / A1" in path for path in paths), report
+    assert all("Sheet1 / B1" not in path for path in paths)
+    assert "VBA read stops at the observed cell or range" in report
 
 
 def test_vba_run_resolves_only_complete_literal_arguments(tmp_path):

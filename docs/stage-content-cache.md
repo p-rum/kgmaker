@@ -61,6 +61,9 @@ Worker a graph validátory kontrolují čerstvé výsledky vůči vybranému
 kontextu, scope, upstream odpovědi a workeru. Digest uložený vedle cache je
 kontrola integrity formátu. Autoritu konkrétní hrany nebo coverage určuje
 aktuální worker a projekce. Zaznamenané vstupy se ověří znovu před commit.
+Otisk launcheru a platformních souborů čte při každé kontrole všechny jejich
+bajty průběžně. Grafová fáze při živém běhu použije objekt z jediné kontroly
+svého výstupu. [Měření a ověření](changes/178_reduceLiveInspectionOverhead.md).
 Změna zdroje, konfigurace, workeru, classpath nebo zachyceného otisku
 launcheru během inspekce vrací `STALE`.
 Cyklický odkaz při další kontrole launcheru zneplatní dříve dostupný otisk.
@@ -133,3 +136,59 @@ NOT_RUN kontroly jsou v [change133](changes/133_stageContentCache.md). Celý T00
 zůstává PARTIAL; cache není inkrementální build compileru ani production latency slib.
 
 Aktuální ověřený scope opravy a zbývající práce jsou v [change135](changes/135_bindCachedCompilerEvidence.md).
+
+## Selektivní dopad změn
+
+Uložte výchozí graf pomocí `kgmaker scan` nebo explicitní inspekce, proveďte
+změnu a spusťte report ještě před obnovením indexu.
+
+```bash
+kgmaker impact --root ./service --evidence-only --format json \
+  src/main/java/Api.java src/main/resources/db/migration/V1__schema.sql openapi.json
+```
+
+Režim pokrývá všechny uložené kontexty lokálního repozitáře. Vstupy jsou relativní
+cesty k souborům. Podporuje odstranění zachycených souborů. `--scope` přijímá
+`all`. Kombinace s `--workspace`, `--context`, `--entity` nebo
+`--include-data-flow` vrátí chybu použití s kódem 2. Kontrola `--workspace`
+proběhne před načtením jeho manifestu.
+
+JSON v1 uvádí SHA-256 jedné uložené generace `graph_sha256`, pole `changed_sources`
+s předchozím a zjištěným hashem (při odstranění `after_sha256: null`), pole
+`affected` a `diagnostics`. Každý dotčený záznam má stávající identitu `id`, druh,
+cestu (u závěru feature `null`), stav a seznam `reasons`:
+
+| Druh | Stav | Důvod |
+|---|---|---|
+| `COMPILER_CALLER` | `RECHECK` | Přímý lokální `declared_target` s dvojicí compiler důkazů ze stejného obsahově ověřeného kontextu. Report uvádí identitu kontextu, call site a obou důkazů. Přenos dopadu sleduje přesnou identitu zasaženého symbolu přes volání uvnitř souboru i mezi soubory. |
+| `SCHEMA_DEPENDENT` | `RECHECK` | Cizí klíč k tabulce nebo explicitní projekce view k jeho zdrojovému sloupci ve stejném deterministicky přehrávaném Flyway streamu. Report uvádí grafovou vazbu a identitu objektu. Je-li dostupná uložená vazba `operation_targets` k tomuto objektu, uvádí také identitu a řádek příslušné migrační operace, včetně zachycených operací před poslední změnou objektu. |
+| `CONTRACT_DECLARATION` | `RECHECK` | Doložená deklarace endpointu v zachycené OpenAPI JSON/YAML se zdrojovou grafovou vazbou, použitelnou variantou a jejím fingerprintem. Porovnává se hash původních bajtů z registrace. |
+| `FEATURE_CONCLUSION` | `STALE` | Přímá platná citace souboru z požadavku na vstup, capability match, impact path nebo test plan v použité lokální revizi. Report uvádí identitu citace, revizi a starý i aktuální hash původních bajtů. Použitá revize vyžaduje souhlas kandidáta, receipt a původního packetu. Lidské rozhodnutí odkazuje na odpověď v packetu. |
+
+`changed_sources` porovnává soubory stejným způsobem jako uložený graf.
+U textových zdrojů scanneru je to hash textu s normalizovanými konci řádků.
+Při samotné změně LF↔CRLF může report označit v `affected` přímé i tranzitivní
+callery. Uložený lokátor cíle musí uvádět přesnou cestu a hash
+původních bajtů. V raw JVM kontextu report ověří identitu capture a zvlášť
+porovná normalizovaný grafový otisk a bajtový otisk obou compiler důkazů callera.
+Při shodném normalizovaném textu porovná aktuální bajty s uloženým bajtovým
+otiskem cíle. Běžná změna textu dál použije dříve doložené vazby také při
+chybějícím nebo neshodném lokátoru cíle. Report načítá bajty jen zadaných cest.
+Cesta požadavku se pro porovnání normalizuje a původní packet drží svou identitu.
+[Ověřená regrese po #145](changes/145_buildReverseDependencyIndexes.md).
+
+Výstup má `coverage: PARTIAL`. Obsahuje pozitivní historické vazby a může uvést
+diagnostiku pro chybějící nebo nečitelný zdroj, starší graph, neověřenou compiler
+vrstvu či nedostupnou revizi feature. Záznamy revizí se čtou pouze z běžných souborů.
+Každá hodnota raw i normalizované mapy JVM capture musí být 64 malých
+hexadecimálních znaků SHA-256. Při neplatném otisku report vynechá compiler
+důkazy poškozeného kontextu a zachová doložené výsledky z ostatních kontextů.
+Při nečitelném nebo nesprávně strukturovaném uloženém grafu příkaz skončí kódem
+1 a bez výstupu JSON. Nečitelný změněný zdroj vrací `DEPENDENCY_PATH_UNAVAILABLE`.
+Nové soubory mimo zachycený rozsah, negativní
+lookupy, dynamický dispatch, cross-workspace vazby, aktuální platnost starého
+compiler rozlišení a nasazení nebo dostupnost dat vyžadují vlastní důkaz.
+Report je vodítko k revalidaci. Uložený graf, stav feature a pravidla jejího
+`apply` ani `revise` se příkazem nemění. Příkaz nespouští workery, buildy, instalaci,
+migrace ani aplikaci. Graph/store nadále čte v1/v2/v3 bez migrace. Dosavadní
+formáty příkazu `impact` se používají stejně. [Ověření a limity](changes/145_buildReverseDependencyIndexes.md).

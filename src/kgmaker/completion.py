@@ -15,6 +15,9 @@ REFERENCE = re.compile(rf"\b{ITEM_ID}\b(?!-[A-Z]\d)")
 RANGE = re.compile(rf"\b({ITEM_ID})\s*(?:až|–)\s*({ITEM_ID})\b")
 MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\([^)]+\)")
 DEPENDENCY_LINE = re.compile(r"^- (?:Depends on|Závislosti): (.+)$", re.MULTILINE)
+VERIFICATION_DEPENDENCY_LINE = re.compile(
+    r"^- (?:Verified dependencies|Povinně ověřené závislosti):[ \t]*(.*)$", re.MULTILINE,
+)
 ROW = re.compile(rf"^\| \[({ITEM_ID})\]\((tasks/[^)]+\.md)\) \| (.+) \|$")
 DELIVERY = {"PLANNED", "IN_PROGRESS", "PR_OPEN", "MERGED", "DEFERRED", "BLOCKED"}
 VERIFICATION = {"VERIFIED_IN_SCOPE", "PARTIAL", "NOT_RUN", "FAIL"}
@@ -32,14 +35,19 @@ class Item:
     owner: str
     dependencies: tuple[str, ...] | None
     conditional_dependencies: tuple[str, ...]
+    verification_dependencies: tuple[str, ...]
 
 
-def _dependency_text(source: str, item_id: str) -> str | None:
+def _specification_step(source: str, item_id: str) -> str:
     # Several tasks share a specification. Read the corresponding step only.
     step_heading = re.search(rf"^### {item_id} — .+$", source, re.MULTILINE)
     if step_heading:
         source = re.split(r"^#{2,3} ", source[step_heading.end():], maxsplit=1,
                           flags=re.MULTILINE)[0]
+    return source
+
+
+def _dependency_text(source: str, item_id: str) -> str | None:
     line = DEPENDENCY_LINE.search(source)
     if not line:
         return None
@@ -110,6 +118,7 @@ def _read_items(root: Path, inventory: str) -> dict[str, Item]:
             raw = path.read_bytes()
             specs[path] = raw.decode("utf-8"), hashlib.sha256(raw).hexdigest()
         source, fingerprint = specs[path]
+        source = _specification_step(source, item_id)
         text = _dependency_text(source, item_id)
         conditional = ""
         if text is not None and item_id.startswith("T047-"):
@@ -118,6 +127,17 @@ def _read_items(root: Path, inventory: str) -> dict[str, Item]:
             text = parts[0].replace("T003-S11 benchmark/budget metodiku",
                                     "T003-S11-W05 a T003-S11-W06")
             conditional = parts[1] if len(parts) == 2 else ""
+        dependencies = _dependencies(text, ids, item_id) if text is not None else None
+        verified_lines = VERIFICATION_DEPENDENCY_LINE.findall(source)
+        if len(verified_lines) > 1:
+            raise ValueError(f"duplicate verified dependency declarations for {item_id}")
+        verification_dependencies = ()
+        if verified_lines:
+            declared = MARKDOWN_LINK.sub(r"\1", verified_lines[0].replace(chr(96), ""))
+            required = _dependencies(declared, ids, item_id)
+            if not required or not set(required) <= set(dependencies or ()):
+                raise ValueError(f"invalid verified dependencies for {item_id}: use declared dependencies")
+            verification_dependencies = required
         owner = re.match(rf"Upstream owner: ({ITEM_ID})\b", fields[5])
         pulls = re.findall(r"github\.com/p-rum/kgmaker/pull/(\d+)\b", fields[4])
         items[item_id] = Item(
@@ -128,8 +148,9 @@ def _read_items(root: Path, inventory: str) -> dict[str, Item]:
             evidence=fields[2],
             pull_requests=tuple(dict.fromkeys(map(int, pulls))),
             owner=owner[1] if owner else item_id,
-            dependencies=_dependencies(text, ids, item_id) if text is not None else None,
+            dependencies=dependencies,
             conditional_dependencies=_dependencies(conditional, ids, item_id) or (),
+            verification_dependencies=verification_dependencies,
         )
     return items
 
@@ -200,6 +221,10 @@ def plan(root: Path, jobs: int = 1) -> dict:
                     blockers.append(f"{dependency}: dependency requires source review")
                 elif upstream.verification == "FAIL" or upstream.delivery != "MERGED":
                     blockers.append(f"{dependency}: {upstream.delivery}/{upstream.verification}")
+                elif dependency in item.verification_dependencies and upstream.verification != "VERIFIED_IN_SCOPE":
+                    blockers.append(
+                        f"{dependency}: {upstream.delivery}/{upstream.verification}; VERIFIED_IN_SCOPE required"
+                    )
             blockers.extend(f"{failure}: indirect dependency FAIL"
                             for failure in _indirect_failures(item_id, items))
             if not blockers and len(dispatch) < jobs:

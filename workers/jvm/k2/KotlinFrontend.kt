@@ -6,15 +6,23 @@ import com.intellij.psi.*
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.standalone.buildStandaloneAnalysisAPISession
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtSdkModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtSourceModule
@@ -59,6 +67,27 @@ class KotlinFrontend(private val state: State) {
         return ClassUtil.getJVMClassName(klass)?.let { "L" + it.replace('.', '/') + ";" }
     }
 
+    private fun declaredType(type: KaType): String? {
+        val klass = type as? KaClassType ?: return null
+        if (klass.nullability != KaTypeNullability.NON_NULLABLE || klass.abbreviation != null ||
+            klass.typeArguments.isNotEmpty()) return null
+        return klass.classId.asSingleFqName().asString()
+    }
+
+    private fun declaration(symbol: KaNamedFunctionSymbol, function: KtNamedFunction, name: String): Map<String, Any>? {
+        if (!function.isTopLevel || function.name != name || function.typeReference == null ||
+            function.annotationEntries.isNotEmpty() || function.containingKtFile.fileAnnotationList != null ||
+            function.contextReceivers.isNotEmpty() || symbol.typeParameters.isNotEmpty() ||
+            symbol.receiverParameter != null || symbol.isSuspend || symbol.isExternal ||
+            symbol.visibility != KaSymbolVisibility.PUBLIC || symbol.isExpect || symbol.isActual ||
+            symbol.valueParameters.any { it.isVararg }) return null
+        val pkg = symbol.callableId?.packageName ?: return null
+        if (pkg != function.containingKtFile.packageFqName || symbol.name.asString() != name) return null
+        val parameters = symbol.valueParameters.map { declaredType(it.returnType) ?: return null }
+        val result = declaredType(symbol.returnType) ?: return null
+        return State.kotlinDeclaration(pkg.asString(), name, parameters, result)
+    }
+
     private fun method(symbol: KaFunctionSymbol, source: PsiElement? = null): String? {
         // Local and synthesized signatures do not have a unique declaration ABI.
         // Light constructors omit JVM synthetic enclosing-instance parameters.
@@ -96,6 +125,8 @@ class KotlinFrontend(private val state: State) {
             "default_arguments", symbol.valueParameters.map { it.hasDefaultValue },
             "suspend", (symbol as? KaNamedFunctionSymbol)?.isSuspend ?: false,
             "inline", (symbol as? KaNamedFunctionSymbol)?.isInline ?: false)
+        if (source is KtNamedFunction && source == psi && symbol is KaNamedFunctionSymbol)
+            declaration(symbol, source, name)?.let { metadata["kotlin_declaration"] = it }
         return state.method(owner, name, signature, location, metadata)
     }
 
@@ -210,10 +241,23 @@ class KotlinFrontend(private val state: State) {
                     })
                 }
             }
-            for (file in session.modulesWithFiles.values.flatten().filterIsInstance<KtFile>().sortedBy { it.virtualFilePath }) {
+            val captured = session.modulesWithFiles.values.flatten().filterIsInstance<KtFile>()
+                .sortedBy { it.virtualFilePath }
+            val conflicts = KotlinDeclarationConflicts(state, files, captured)
+            for (file in captured) {
                 state.diagnostic("K2_SOURCE_MODEL_PARTIAL",
                     "K2 models named-function declarations, explicit call expressions, type annotations and property use-site metadata; other source execution and framework constructs remain unmodeled", loc(file))
                 analyze(file) {
+                    for (diagnostic in file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)) {
+                        if (diagnostic is KaFirDiagnostic.ConflictingOverloads) {
+                            conflicts.overload(diagnostic.psi, diagnostic.conflictingOverloads.map { it.psi })
+                        } else if (diagnostic is KaFirDiagnostic.ErrorSuppression &&
+                            diagnostic.diagnosticName == "CONFLICTING_OVERLOADS") {
+                            conflicts.suppressedOverload(diagnostic.psi)
+                        } else if (diagnostic.severity == KaSeverity.ERROR) {
+                            conflicts.signatureError(diagnostic.psi)
+                        }
+                    }
                     file.accept(object : KtTreeVisitorVoid() {
                         override fun visitClassOrObject(declaration: KtClassOrObject) {
                             val symbol = declaration.symbol as? KaClassSymbol
@@ -289,6 +333,10 @@ class KotlinFrontend(private val state: State) {
 
                         override fun visitNamedFunction(function: KtNamedFunction) {
                             val symbol = function.symbol as? KaNamedFunctionSymbol
+                            if (function.isTopLevel && (function.valueParameterList == null || symbol == null ||
+                                    symbol.valueParameters.any { it.returnType is KaErrorType })) {
+                                conflicts.incomplete(function)
+                            }
                             val caller = symbol?.let { method(it, function) }
                             if (caller == null) {
                                 state.diagnostic("K2_UNSUPPORTED_DECLARATION", "No unambiguous JVM light-method signature", loc(function))
@@ -381,6 +429,7 @@ class KotlinFrontend(private val state: State) {
                     })
                 }
             }
+            conflicts.finish()
         } finally {
             if (::methodLookup.isInitialized) methodLookup.close()
             Disposer.dispose(disposable)

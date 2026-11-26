@@ -1,13 +1,16 @@
 """Offline graph refresh preserving validated compiler evidence in the shared store."""
+from collections import defaultdict, deque
+from functools import cache
 from pathlib import Path
+import re
 import shlex
 
 from .compiler_sources import (
     JVM_JPA_SOURCE_SNAPSHOTS, JVM_RAW_CAPTURE_PREFIX, JVM_RAW_SOURCE_SNAPSHOT, JVM_SOURCE_SNAPSHOTS,
-    jvm_raw_capture_id, normalized_source_projection, unsupported_kotlin_source,
+    compiler_source_digest, jvm_raw_capture_id, normalized_source_projection, unsupported_kotlin_source,
 )
 from .model import KnowledgeGraph
-from .store import load_graph
+from .store import load_graph, load_graph_generation
 from .worker_protocol import WorkerError
 
 
@@ -106,8 +109,8 @@ def _selection_key(context: dict) -> str:
     return digest(payload)
 
 
-def validate_context_snapshot(root: Path, context: dict) -> None:
-    """Validate one captured context without executing a worker or build."""
+def validate_context_snapshot(root: Path, context: dict) -> tuple[dict, ...]:
+    """Validate a capture offline and report omissions affecting optional Kotlin identity."""
     if context.get("freshness") == "STALE":
         raise WorkerError(
             "STALE_INDEX: " + str(context.get("stale_reason", "compiler context requires inspection"))
@@ -117,6 +120,7 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     # Compare every captured source and classpath; timestamps never establish freshness.
     from .analysis_model import file_hash, safe_path
     from .inspection import artifact_hash
+    kotlin_omissions = ()
     if "return_flow_rule_version" in context:
         from .return_flow import VERSION as RETURN_VERSION
         if context["return_flow_rule_version"] != RETURN_VERSION:
@@ -242,6 +246,7 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
         from .scanner import scan_repository
         current = scan_repository(root, project_model=context.get("project_model"))
         from .inspection import source_snapshot
+        from .symbol_identity import kotlin_source_omissions
         current_files = source_snapshot(root, current, context)
         if current_files != context.get("source_files", {}):
             raise WorkerError("STALE_INDEX: source/config inputs changed; inspect again", "STALE")
@@ -252,6 +257,7 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
             if unsupported is not None:
                 raise WorkerError("STALE_INDEX: selected Kotlin source uses unsupported raw byte coordinates: "
                                   + unsupported, "STALE")
+        kotlin_omissions = kotlin_source_omissions(context, current.diagnostics)
     for path, expected in context.get("source_files", {}).items():
         target = safe_path(root, path)
         if not target.is_file() or file_hash(target) != expected:
@@ -262,6 +268,7 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
                 raise WorkerError("STALE_INDEX: classpath changed; import/inspect again", "STALE")
         except (OSError, ValueError):
             raise WorkerError("STALE_INDEX: classpath unavailable; import/inspect again", "STALE") from None
+    return kotlin_omissions
 
 
 def validate_compiler_snapshot(root: Path, graph: KnowledgeGraph) -> None:
@@ -297,9 +304,11 @@ def resolve_context_classpath_artifact(root: Path, context: dict, sha256: str) -
 
 def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
                     preserved_contexts: list[dict], *,
-                    layer_context_ids: set[str] | None = None) -> KnowledgeGraph:
+                    layer_context_ids: set[str] | None = None,
+                    source_omissions: dict[str, tuple[dict, ...]] | None = None) -> KnowledgeGraph:
     """Merge isolated compiler layers whose IDs and snapshots remain valid."""
     from dataclasses import replace
+    from .symbol_identity import without_logical_key
     preserve_ids = ({context["id"] for context in preserved_contexts}
                     if layer_context_ids is None else layer_context_ids)
     old_edges = []
@@ -307,7 +316,9 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
         selected = tuple(context_id for context_id in edge.context_ids if context_id in preserve_ids)
         if selected:
             old_edges.append(replace(edge, context_ids=selected))
-    old_symbols = [item for item in stored.symbols if item.get("context_id") in preserve_ids]
+    omissions = source_omissions or {}
+    old_symbols = [without_logical_key(item) if item["context_id"] in omissions else item
+                   for item in stored.symbols if item.get("context_id") in preserve_ids]
     old_sites = [item for item in stored.call_sites if item.get("context_id") in preserve_ids]
     old_cfgs = [item for item in stored.cfgs if item.get("context_id") in preserve_ids]
     old_ids = {item["id"] for item in [*old_symbols, *old_sites] if isinstance(item.get("id"), str)}
@@ -344,7 +355,7 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
             seen_contexts.add(context.get("id"))
     diagnostics = list(fresh.diagnostics)
     for context in preserved_contexts:
-        for diagnostic in context.get("diagnostics", []):
+        for diagnostic in [*context.get("diagnostics", []), *omissions.get(context["id"], ())]:
             if diagnostic not in diagnostics:
                 diagnostics.append(diagnostic)
     selected_annotations = [item for item in [*fresh.analysis_annotations, *stored.analysis_annotations]
@@ -386,13 +397,15 @@ def merge_compiler_context(root: Path, fresh: KnowledgeGraph, selected_context: 
     selection = _selection_key(selected_context)
     preserved = [context for context in _compiler_contexts(stored)
                  if _selection_key(context) != selection]
-    active_ids = set()
+    active_ids, omissions = set(), {}
     for context in preserved:
         if context.get("freshness") == "STALE":
             continue
-        validate_context_snapshot(root, context)
+        omitted = validate_context_snapshot(root, context)
+        if omitted:
+            omissions[context["id"]] = omitted
         active_ids.add(context["id"])
-    return _merge_contexts(fresh, stored, preserved, layer_context_ids=active_ids)
+    return _merge_contexts(fresh, stored, preserved, layer_context_ids=active_ids, source_omissions=omissions)
 
 
 def retain_compiler_layer(root: Path, syntax: KnowledgeGraph) -> KnowledgeGraph:
@@ -405,16 +418,253 @@ def retain_compiler_layer(root: Path, syntax: KnowledgeGraph) -> KnowledgeGraph:
     if stored is None or not any(c.get("analyzer_version") for c in stored.contexts):
         return syntax
     contexts = _compiler_contexts(stored)
-    published, active_ids = [], set()
+    published, active_ids, omissions = [], set(), {}
     for context in contexts:
         if context.get("freshness") == "STALE":
             published.append(context)
             continue
         try:
-            validate_context_snapshot(root, context)
+            omitted = validate_context_snapshot(root, context)
         except WorkerError as error:
             published.append(_stale_context(context, str(error)))
         else:
             published.append(context)
             active_ids.add(context["id"])
-    return _merge_contexts(syntax, stored, published, layer_context_ids=active_ids)
+            if omitted:
+                omissions[context["id"]] = omitted
+    return _merge_contexts(syntax, stored, published, layer_context_ids=active_ids, source_omissions=omissions)
+
+
+def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
+    """Derive positive relationships from one already-published generation."""
+    from .schema_replay import persistence_pair
+
+    index = defaultdict(list)
+    if graph.schema_version == 1:
+        return index
+    files = {path: checksum for path, checksum in graph.files.items()
+             if re.fullmatch(r"[a-f0-9]{64}", checksum)}
+    nodes = {node.id: node for node in graph.nodes}
+    contexts = {c.get("id"): c for c in graph.contexts
+                if isinstance(c.get("id"), str) and c.get("analyzer_version")
+                and c.get("origin_trust") == "LOCAL_COMPILER_INPUTS"
+                and c.get("freshness") == "CONTENT_VERIFIED" and isinstance(c.get("source_files"), dict)
+                and ((c.get("source_snapshot_version") != JVM_RAW_SOURCE_SNAPSHOT
+                      and not c["id"].startswith(JVM_RAW_CAPTURE_PREFIX))
+                     or jvm_raw_capture_id(c) == c["id"])}
+    symbols = {item["id"]: item for item in graph.symbols} if graph.schema_version == 3 else {}
+    proofs = {item["id"]: item for item in graph.evidence}
+    compiler_edges = defaultdict(set)
+
+    @cache
+    def source_digest(context_id, path):
+        return compiler_source_digest(files, contexts[context_id], path)
+
+    def add(path, dependent_path, target, kind, *, target_raw_sha256=None, **witness):
+        if path in files and dependent_path in files:
+            index[path].append({"kind": kind, "id": target, "path": dependent_path,
+                                "target_raw_sha256": target_raw_sha256,
+                                "reason": {"dependency_path": path, "before_sha256": files[path], **witness}})
+
+    def realm(node):
+        record = node.metadata.get("persistence_realm") if isinstance(node.metadata, dict) else None
+        if isinstance(record, dict) and record.get("derivation") == "MIGRATION_DERIVED":
+            return persistence_pair(record.get("database_id"), record.get("stream_id"))
+        return None
+
+    migration_operations = defaultdict(list)
+    for edge in graph.edges:
+        if edge.kind != "operation_targets" or nodes[edge.target].kind not in {"db_table", "db_column"}:
+            continue
+        operations = migration_operations[edge.target]
+        operation = nodes[edge.source]
+        stream = realm(operation)
+        if (operation.kind == "migration_operation" and operation.summary is None
+                and stream and stream == realm(nodes[edge.target]) and operation.path in files
+                and edge.source_file == operation.path and edge.source_line == operation.line
+                and type(edge.source_line) is int and edge.source_line > 0
+                and edge.confidence == "EXTRACTED" and edge.evidence_kind == "SYNTAX_CANDIDATE"):
+            operations.append(operation)
+
+    for edge in graph.edges:
+        source, target = nodes[edge.source], nodes[edge.target]
+        if edge.kind in {"declares_call", "declares_reference", "resolves_to"} and edge.evidence_kind == "SYMBOL_RESOLVED":
+            if len(edge.context_ids) != 1 or edge.context_ids[0] not in contexts or edge.source_file not in files:
+                continue
+            context_id = edge.context_ids[0]
+            checksum = source_digest(context_id, edge.source_file)
+            if checksum is None:
+                continue
+            for identity in edge.evidence_ids:
+                proof = proofs[identity]
+                if (proof.get("source") == edge.source and proof.get("target") == edge.target
+                        and proof.get("relation") == edge.kind and proof.get("kind") == "SYMBOL_RESOLVED"
+                        and proof.get("context_ids") == [context_id] and proof.get("freshness") == "CONTENT_VERIFIED"
+                        and proof.get("origin_trust") == "LOCAL_COMPILER_INPUTS"
+                        and proof.get("source_file") == edge.source_file and proof.get("sha256") == checksum):
+                    compiler_edges[(edge.source, edge.target, edge.kind, context_id, edge.source_file)].add(identity)
+        elif (edge.kind, source.kind, target.kind) in {
+            ("foreign_key_to", "db_constraint", "db_table"),
+            ("derived_from", "db_view_field", "db_column"),
+        }:
+            left = realm(source)
+            if (left and left == realm(target) and edge.source_file == source.path
+                    and edge.confidence == "EXTRACTED" and edge.evidence_kind == "SYNTAX_CANDIDATE"
+                    and type(edge.source_line) is int and edge.source_line > 0):
+                witness = {"relation": edge.kind, "source_line": edge.source_line,
+                           "evidence_kind": "MIGRATION_DERIVED", "dependency_id": target.id}
+                operations = migration_operations.get(target.id)
+                if operations is None:
+                    add(target.path, source.path, source.id, "SCHEMA_DEPENDENT", **witness)
+                else:
+                    for operation in operations:
+                        add(operation.path, source.path, source.id, "SCHEMA_DEPENDENT",
+                            operation_id=operation.id, operation_line=operation.line, **witness)
+        elif edge.kind == "declares_endpoint" and source.kind == "file" and target.kind == "api_endpoint":
+            registrations = target.metadata.get("http_registrations") if isinstance(target.metadata, dict) else None
+            if source.path not in files or edge.source_file != source.path or not isinstance(registrations, list):
+                continue
+            # Source graph evidence covers normalized text. Registration records bind raw bytes.
+            binding = {"source": source.id, "target": target.id, "relation": edge.kind,
+                       "kind": "SYNTAX_CANDIDATE", "extractor": "source-patterns-2",
+                       "source_file": source.path, "sha256": files[source.path],
+                       "freshness": "CONTENT_VERIFIED", "origin_trust": "LOCAL_SOURCE",
+                       "context_ids": list(edge.context_ids)}
+            if not any(all(proofs[identity].get(key) == value for key, value in binding.items())
+                       for identity in edge.evidence_ids):
+                continue
+            for record in registrations:
+                if not isinstance(record, dict):
+                    continue
+                checksum = record.get("source_sha256")
+                if (record.get("provider") in ("openapi-json", "openapi-yaml")
+                        and record.get("source_path") == source.path and isinstance(checksum, str)
+                        and re.fullmatch(r"[a-f0-9]{64}", checksum)
+                        and record.get("unresolved_reasons") == [] and isinstance(record.get("variant_fingerprint"), str)):
+                    add(source.path, source.path, target.id, "CONTRACT_DECLARATION", relation=edge.kind,
+                        evidence_kind="OPENAPI_DECLARATION", variant_fingerprint=record["variant_fingerprint"],
+                        before_sha256=checksum)
+
+    for site in graph.call_sites if graph.schema_version == 3 else ():
+        context_id, caller_id, target_id = site.get("context_id"), site.get("caller"), site.get("declared_target")
+        if (site.get("evidence_kind") != "SYMBOL_RESOLVED" or context_id not in contexts
+                or caller_id not in symbols or target_id not in symbols):
+            continue
+        caller, target = nodes[caller_id], nodes[target_id]
+        if (site.get("path") != caller.path or caller.path not in files or target.path not in files
+                or any(symbols[identity].get("context_id") != context_id for identity in (caller_id, target_id))
+                or source_digest(context_id, caller.path) is None):
+            continue
+        target_checksum = source_digest(context_id, target.path)
+        if target_checksum is None:
+            continue
+        relation = "declares_reference" if site.get("invocation_kind") == "METHOD_REFERENCE" else "declares_call"
+        ids = set(site.get("evidence_ids", []))
+        declaration = ids & compiler_edges[(caller_id, site["id"], relation, context_id, caller.path)]
+        resolution = ids & compiler_edges[(site["id"], target_id, "resolves_to", context_id, caller.path)]
+        if declaration and resolution:
+            target_locator = symbols[target_id]
+            target_raw_sha256 = target_locator.get("sha256")
+            if target_locator.get("path") != target.path or target_raw_sha256 != target_checksum:
+                target_raw_sha256 = None
+            add(target.path, caller.path, caller_id, "COMPILER_CALLER", relation=relation, dependency_id=target_id,
+                call_site_id=site["id"], context_id=context_id, evidence_ids=sorted(declaration | resolution),
+                target_raw_sha256=target_raw_sha256)
+    return index
+
+
+def dependency_impact(root: Path, changed_files: list[str]) -> dict:
+    """Plan revalidation of evidenced dependents, without modifying a store or running workers."""
+    from .analysis_model import AnalysisError, canonical, safe_path
+    from .feature import applied_dependency_citations
+    from .scanner import EXTENSIONS
+    from .workspace import _regular_file_hashes
+
+    root = root.resolve()
+    targets = {safe_path(root, value).relative_to(root).as_posix() for value in changed_files}
+    if not targets or "." in targets:
+        raise AnalysisError("Supply at least one repository-relative file")
+    generation = load_graph_generation(root)
+    if generation is None:
+        raise AnalysisError("No readable graph found. Run kgmaker scan before recording the changed files.", 1)
+    graph, fingerprint = generation
+    index = _reverse_dependency_index(graph)
+    citations, diagnostics = applied_dependency_citations(root, targets)
+    citation_paths = {item["path"] for item in citations}
+    diagnostics.append({"code": "POSITIVE_HISTORICAL_EVIDENCE_ONLY",
+                        "reason": "Negative lookups, uncaptured relationships and cross-workspace bindings are outside this index."})
+    if graph.schema_version < 3:
+        diagnostics.append({"code": "LEGACY_COMPILER_INDEX_UNAVAILABLE", "graph_schema_version": graph.schema_version})
+    elif not any(c.get("freshness") == "CONTENT_VERIFIED" for c in _compiler_contexts(graph)):
+        diagnostics.append({"code": "VERIFIED_COMPILER_LAYER_UNAVAILABLE"})
+    observed, changed, seeds = {}, [], set()
+    for path in sorted(targets):
+        if path not in graph.files and path not in citation_paths:
+            diagnostics.append({"code": "DEPENDENCY_PATH_NOT_CAPTURED", "path": path})
+            continue
+        try:
+            target = safe_path(root, path)
+            try:
+                target.lstat()
+            except FileNotFoundError:
+                if safe_path(root, path).exists():
+                    raise OSError("Unstable source path") from None
+                raw_after = graph_after = None
+            else:
+                # Disappearance after the initial stat is an unavailable read.
+                hashes = _regular_file_hashes(target, normalize_newlines=target.suffix.lower() in EXTENSIONS)
+                if hashes is None:
+                    raise OSError("Expected stable regular file")
+                raw_after, graph_after = hashes
+        except (ValueError, OSError):
+            diagnostics.append({"code": "DEPENDENCY_PATH_UNAVAILABLE", "path": path})
+            continue
+        observed[path] = raw_after
+        before = graph.files.get(path)
+        if before is not None and before != graph_after:
+            changed.append({"path": path, "before_sha256": before, "after_sha256": graph_after})
+            seeds.add((path, None))
+        elif before is not None and raw_after is not None:
+            # A matching compiler locator proves the target's historical raw bytes.
+            seeds.update((path, item["reason"]["dependency_id"])
+                         for item in index.get(path, ()) if item["target_raw_sha256"] is not None
+                         and item["target_raw_sha256"] != raw_after)
+
+    affected = {}
+
+    def add(kind, path, identity, status, reason):
+        record = affected.setdefault((kind, path, identity), {"kind": kind, "path": path, "id": identity,
+                                                              "status": status, "reasons": {}})
+        record["reasons"][canonical(reason)] = reason
+
+    seen = set(seeds)
+    queue = deque(sorted(seeds))
+    while queue:
+        path, identity = queue.popleft()
+        for item in index.get(path, ()):
+            if item["kind"] == "CONTRACT_DECLARATION":
+                continue
+            reason = item["reason"]
+            if identity is not None and reason.get("dependency_id") != identity:
+                continue
+            dependent = item["path"], item["id"]
+            add(item["kind"], *dependent, "RECHECK", reason)
+            if dependent not in seen:
+                seen.add(dependent)
+                queue.append(dependent)
+    for path, current_hash in observed.items():
+        for item in index.get(path, ()):
+            reason = item["reason"]
+            if item["kind"] == "CONTRACT_DECLARATION" and reason["before_sha256"] != current_hash:
+                add(item["kind"], path, item["id"], "RECHECK", reason)
+    for item in citations:
+        path = item["path"]
+        if path in observed and item["before_sha256"] != observed[path]:
+            add("FEATURE_CONCLUSION", None, item["conclusion_id"], "STALE",
+                {**item, "after_sha256": observed[path]})
+    values = []
+    for _, record in sorted(affected.items()):
+        record["reasons"] = [value for _, value in sorted(record["reasons"].items())]
+        values.append(record)
+    return {"schema_version": 1, "graph_sha256": fingerprint, "coverage": "PARTIAL",
+            "changed_sources": changed, "affected": values, "diagnostics": diagnostics}

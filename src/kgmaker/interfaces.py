@@ -9,7 +9,7 @@ import re
 from typing import Mapping
 
 from .analysis_model import AnalysisError, digest
-from .compiler_sources import compiler_source_digest
+from .compiler_sources import JVM_RAW_SOURCE_SNAPSHOT, compiler_source_digest
 from .domain import normalize_api_path
 from .framework import HTTP_ANNOTATIONS
 from .model import KnowledgeGraph
@@ -852,14 +852,17 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
     listener/send. The existing upstream binding validator is replayed only to
     compare original public identities and proofs, without publishing its output.
     """
-    from dataclasses import replace
+    from dataclasses import asdict, replace
     from pathlib import Path
+    from .classification import Classifier
     from .kafka_code import VERSION as CODE_VERSION, validate_code_fact
     from .kafka_bindings import VERSION as BINDING_VERSION, build_links
+    from .scanner import scan_repository
     from .store import load_graph
+    from .symbol_identity import kotlin_source_omissions
     from .views import _summarize_view_evidence, ContextSelectionError, ServiceInventoryError
     from .workspace import (qualified, _qualified_node, _qualified_kafka_metadata, _qualified_evidence,
-                            _qualified_symbol, _qualified_call_site)
+                            _qualified_compiler_symbol, _qualified_call_site)
 
     def fail(message):
         _fail('INVALID_KAFKA_INTERFACE', message)
@@ -950,6 +953,44 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
     public_symbols = {s['id']:s for s in graph.symbols}
     public_sites = {s['id']:s for s in graph.call_sites}
     validated, code_refs = {}, {}
+    scanner_files, model_classifiers = {}, {}
+
+    def matches_source_only_file(repo, local, context, original, public):
+        # Offline retention keeps the current scanner File when the captured
+        # ProjectModel File has the same identity.
+        model = context.get('project_model')
+        if (original.kind != 'file' or public is None or not original.build_membership
+                or context.get('source_snapshot_version') != JVM_RAW_SOURCE_SNAPSHOT
+                or not model or original.path not in context['compiler_inputs']):
+            return False
+        if len(full_nodes) != len(graph.nodes) and sum(node.id == public.id for node in graph.nodes) != 1:
+            return False
+        raw = compiler_source_digest(local.files, context, original.path)
+        if raw is None or graph.files.get(public.path) != raw:
+            return False
+        try:
+            if repo not in scanner_files:
+                scanned = scan_repository(roots[repo])
+                if scanned.raw_file_hashes is None:
+                    return False
+                scanner_files[repo] = (
+                    scanned.files, scanned.raw_file_hashes,
+                    {node.id: node for node in scanned.nodes if node.kind == 'file'},
+                )
+            files, raw_files, nodes = scanner_files[repo]
+            plain = nodes.get(original.id)
+            if (plain is None or (plain.scope, plain.role) != (original.scope, original.role)
+                    or files.get(original.path) != local.files.get(original.path)
+                    or raw_files.get(original.path, files.get(original.path)) != raw
+                    or _qualified_node(repo, plain) != public):
+                return False
+            key = repo, context['id']
+            if key not in model_classifiers:
+                model_classifiers[key] = Classifier(roots[repo], model)
+            modeled = model_classifiers[key].classify(original.path)
+            return replace(plain, **asdict(modeled)) == original
+        except (OSError, ValueError):
+            return False
 
     def check_proof(expected):
         actual = proofs.get(expected['id'])
@@ -1004,14 +1045,18 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
             if original is None:
                 fail('Original compiler Node is missing from saved authority')
             expected_node=_qualified_node(repo,original)
-            if by_id.get(expected_node.id)!=expected_node:
+            public=by_id.get(expected_node.id)
+            if public!=expected_node and not matches_source_only_file(repo,local,context,original,public):
                 fail('Original public compiler Node is missing or changed')
         check_original_node(authority.metadata['origin_id'])
         # Relevant original compiler declarations/sites must survive qualification.
+        public_context=full_contexts.get(qualified(repo,context['id']),{})
+        omit_logical_key=bool(kotlin_source_omissions(public_context,graph.diagnostics))
         for symbol in local.symbols:
             if symbol.get('context_id')==context['id']:
                 check_original_node(symbol['id'])
-                expected_symbol=_qualified_symbol(repo,symbol)
+                expected_symbol=_qualified_compiler_symbol(repo,symbol,context.get('repo_id'),
+                                                           omit_logical_key=omit_logical_key)
                 if public_symbols.get(expected_symbol['id'])!=expected_symbol:
                     fail('Original compiler declaration tuple is changed')
         for site in local.call_sites:

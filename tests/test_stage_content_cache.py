@@ -79,6 +79,22 @@ def java_launch(tmp_path, monkeypatch):
     return [str(java)], jdk / 'lib/ct.sym'
 
 
+def test_launch_capture_hashes_without_materializing_platform_files(java_launch, monkeypatch):
+    argv, ct_sym = java_launch
+    java = Path(argv[0])
+    files = (java, ct_sym, ct_sym.with_name('modules'), ct_sym.parent.parent / 'release')
+    expected = {str(path): file_hash(path) for path in files}
+    read_bytes = Path.read_bytes
+
+    def reject_whole_read(path):
+        if path in files:
+            pytest.fail('Launcher fingerprint must stream the selected file')
+        return read_bytes(path)
+
+    monkeypatch.setattr(Path, 'read_bytes', reject_whole_read)
+    assert launch_inputs(argv)['files'] == expected
+
+
 @pytest.mark.skipif(os.name != 'posix', reason='POSIX Java locale capture')
 @pytest.mark.parametrize('name', ['LANG', 'LC_ALL', 'LC_CTYPE'])
 def test_java_launch_capture_binds_exact_locale(java_launch, monkeypatch, name):
@@ -170,12 +186,14 @@ def test_unreadable_java_launcher_allows_live_inspection_without_cache(transport
     argv, _ = java_launch
     monkeypatch.setattr(inspection, 'command', lambda *args, **kwargs: argv)
 
-    def hash_readable(path):
+    open_file = Path.open
+
+    def open_readable(path, *args, **kwargs):
         if path == Path(argv[0]).resolve():
             raise PermissionError('launcher bytes unavailable')
-        return file_hash(path)
+        return open_file(path, *args, **kwargs)
 
-    monkeypatch.setattr(extraction_cache, 'file_hash', hash_readable)
+    monkeypatch.setattr(Path, 'open', open_readable)
     result = inspection.inspect_jvm(root)
     assert result['exit_code'] == 0
     assert calls == {'analyze': 1, 'graph': 1, 'framework': 1}
@@ -484,6 +502,30 @@ def test_cached_graph_context_is_bound_to_validated_upstream_response(transport,
     result = inspection.inspect_jvm(root)
     assert calls == {'analyze': 2, 'graph': 2, 'framework': 2}
     assert facts(result['graph']) == facts(original['graph'])
+
+
+@pytest.mark.parametrize('stage', ['compiler-graph', 'framework-graph'])
+def test_invalid_live_graph_stage_preserves_generation(transport, monkeypatch, stage):
+    from kgmaker import framework
+
+    root, _, _, _, calls, _ = transport
+    inspection.inspect_jvm(root)
+    before = snapshot(root / '.kgmaker')
+    module, name = ((inspection, 'graph_from_response') if stage == 'compiler-graph'
+                    else (framework, 'augment_framework_graph'))
+    builder = getattr(module, name)
+
+    def invalid_graph(*args, **kwargs):
+        graph = builder(*args, **kwargs)
+        selected = next(c for c in graph.contexts if c.get('analyzer_version'))
+        selected['coverage'] = {'calls_resolved': 999}
+        return graph
+
+    monkeypatch.setattr(module, name, invalid_graph)
+    with pytest.raises(WorkerError, match='Stage graph differs from upstream worker result') as error:
+        inspection.inspect_jvm(root)
+    assert error.value.status == 'INVALID_PROTOCOL'
+    assert calls['analyze'] == 2 and snapshot(root / '.kgmaker') == before
 
 
 @pytest.mark.parametrize('mode', ['cancel', 'timeout'])
