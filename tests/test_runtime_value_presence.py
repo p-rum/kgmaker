@@ -134,10 +134,12 @@ def test_actual_java_value_presence_affects_only_matching_live_data_check(applic
     caller, copy, plain = (symbols[name]['id'] for name in ('main', 'copy', 'plain'))
     assertions = {}
     present = None
-    for run, expected in [('combined-present', 'PRESENT'), ('combined-absent', 'ABSENT'),
-                          ('present', 'PRESENT'), ('absent', 'ABSENT')]:
+    combined_runs = (('combined-present', 'PRESENT'), ('combined-absent', 'ABSENT'), ('combined-threw', 'PRESENT'))
+    for run, expected in (*combined_runs, ('present', 'PRESENT'), ('absent', 'ABSENT')):
         combined = run.startswith('combined-')
-        arguments = (caller, copy, plain) if combined else ()
+        threw = run == 'combined-threw'
+        companion = symbols['throwingCompanion']['id'] if threw else plain
+        arguments = (caller, copy, companion) if combined else ()
         before_capture = outputs(root)
         if combined:
             raw = subprocess.run([*argv, run, *arguments], cwd=root, capture_output=True, check=True,
@@ -146,7 +148,8 @@ def test_actual_java_value_presence_affects_only_matching_live_data_check(applic
             capture = json.loads(raw)
             assert capture['status'] == 'PARTIAL' and capture['diagnostics'] == ['INSTRUMENTED_SCOPE_ONLY']
             earlier, presence, later = capture['facts']
-            assert earlier == {'kind': 'call', 'caller': caller, 'target': plain, 'outcome': 'RETURNED'}
+            assert earlier == {'kind': 'call', 'caller': caller, 'target': companion,
+                               'outcome': 'THREW' if threw else 'RETURNED'}
             assert later == {'kind': 'call', 'caller': caller, 'target': copy, 'outcome': 'RETURNED'}
             assert presence['kind'] == FACT
         manifest = produce(application, run, *arguments)
@@ -178,7 +181,7 @@ def test_actual_java_value_presence_affects_only_matching_live_data_check(applic
     assert impact_paths(after, source) == impact_paths(call_graph, source)
     assert adjacency(after) == adjacency(call_graph)
     assert [edge for edge in after.edges if edge.kind != RELATION] == call_graph.edges
-    for run in ('combined-present', 'combined-absent'):
+    for run, _ in combined_runs:
         record, = [row for row in after.evidence if row.get('runtime_id') == 'value-' + run]
         assert record['id'] == assertions[run] and record['relation'] == RELATION
     packet = feature.prepare(root, 'requirement.md', 'w03', scope='production', context_id=context['id'])
@@ -214,12 +217,14 @@ def test_actual_java_value_presence_affects_only_matching_live_data_check(applic
         assert 'value-present' in item['verification_scope'] and assertions['present'] in item['verification_scope']
         check_projected_hook_authority(root, packet, live['candidate'], item)
         assert not feature.apply(root, 'w03', live['candidate'])['valid']
-        combined = deepcopy(specification)
-        combined['inputs'][0]['availability_proof']['runtime_evidence_id'] = assertions['combined-present']
-        combined_result = data_check(root, 'w03', combined)
-        combined_item, = combined_result['candidate']['input_requirements']
-        assert combined_result['valid'] and (combined_item['availability'], combined_item['usability']) == ('PARTIAL', 'UNASSESSED')
-        assert 'value-combined-present' in combined_item['verification_scope']
+        for run in ('combined-present', 'combined-threw'):
+            combined = deepcopy(specification)
+            combined['inputs'][0]['availability_proof']['runtime_evidence_id'] = assertions[run]
+            combined_result = data_check(root, 'w03', combined)
+            combined_item, = combined_result['candidate']['input_requirements']
+            assert combined_result['valid']
+            assert (combined_item['availability'], combined_item['usability']) == ('PARTIAL', 'UNASSESSED')
+            assert 'value-' + run in combined_item['verification_scope']
         for evidence_id in (assertions['absent'], assertions['combined-absent'], assertions['expired'],
                             call_record['id'], 'evidence:arbitrary'):
             rejected = deepcopy(specification)
