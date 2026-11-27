@@ -7,6 +7,7 @@ import json
 import math
 import time
 from collections import defaultdict, deque
+from hashlib import sha256
 from itertools import islice
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from .analysis_model import AnalysisError, atomic_write, canonical, digest
 VERSION = 'flow-view-1'
 _SOURCE_DIAGNOSTIC_LIMIT = 256
 _DIAGNOSTIC_LIMIT_CODE = 'FLOW_DIAGNOSTIC_LIMIT'
+_HTTP_ANNEX_LIMIT = 256
 _UNKNOWN_GAP_CODES = {'EXECUTION_AUTHORITY_UNKNOWN', 'STALE_EVIDENCE', 'EVIDENCE_FRESHNESS_UNKNOWN'}
 
 
@@ -75,6 +77,33 @@ def _bound_source_diagnostics(report):
     return result
 
 
+def _bound_http_annex(report):
+    if report.get('view') not in {'integrations', 'data-flow'}:
+        return report
+    http = report.get('http')
+    requests = http.get('requests') if isinstance(http, dict) else None
+    if not isinstance(requests, (list, tuple)) or len(requests) <= _HTTP_ANNEX_LIMIT:
+        return report
+
+    # The inventory already orders request IDs. Hash its omitted JSON array
+    # without retaining another collection of omitted IDs or request details.
+    omitted_ids = sha256(b'[')
+    for index, request in enumerate(islice(requests, _HTTP_ANNEX_LIMIT, None)):
+        if not isinstance(request, dict) or not isinstance(request.get('id'), str) or not request['id']:
+            raise AnalysisError('Invalid flow HTTP request')
+        canonical(request).encode('utf-8')  # Omission must not hide invalid output data.
+        if index:
+            omitted_ids.update(b',')
+        omitted_ids.update(canonical(request['id']).encode('utf-8'))
+    omitted_ids.update(b']')
+    gap = {'code': 'FLOW_HTTP_ANNEX_LIMIT', 'reason': 'Some HTTP request details exceeded the report limit.',
+           'max_requests': _HTTP_ANNEX_LIMIT, 'omitted_requests': len(requests) - _HTTP_ANNEX_LIMIT,
+           'omitted_request_ids_sha256': omitted_ids.hexdigest()}
+    coverage = report.get('coverage', {})
+    return {**report, 'http': {**http, 'requests': requests[:_HTTP_ANNEX_LIMIT]},
+            'coverage': {**coverage, 'gaps': [*coverage.get('gaps', ()), gap]}}
+
+
 def ordered_cfg(cfg):
     """Validate and visit adjacency; never turn sibling branches into a sequence."""
     blocks, edges = cfg.get('blocks'), cfg.get('edges')
@@ -119,7 +148,7 @@ def ordered_cfg(cfg):
 
 
 def finalize(report, graph=None):
-    result = copy.deepcopy(_bound_source_diagnostics(report))
+    result = copy.deepcopy(_bound_http_annex(_bound_source_diagnostics(report)))
     cfg, order, unreachable = ordered_cfg(result['cfg'])
     result['cfg'] = cfg
     result['flow_model_version'] = VERSION

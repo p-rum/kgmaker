@@ -19,6 +19,16 @@ and `data-flow` also support all three formats, preserving their previous JSON
 nodes/edges and supplemental binding/integration records. Their ordering is
 `RELATIONSHIP_ONLY`, which supplies no executable CFG evidence.
 
+The HTTP annex (`http.requests`) in these two relationship views retains the
+first 256 requests in canonical ID order for the selected scope and context.
+On overflow, `coverage.gaps` adds one `FLOW_HTTP_ANNEX_LIMIT` with
+`max_requests`, `omitted_requests` and `omitted_request_ids_sha256`. The digest
+is the SHA-256 of the omitted IDs in canonical UTF-8 JSON array order. JSON,
+Mermaid and Markdown carry the same gap. Retained rows keep their original
+evidence. This limit applies independently of `--max-nodes` and `truncated`.
+Malformed omitted rows still fail before publication.
+[Scope and verification](changes/219_boundFlowHttpAnnex.md)
+
 `ordering.display_order` is deterministic adjacency traversal for presentation.
 `CFG_PARTIAL_ORDER` means edges retain their syntax: branch alternatives are not
 consecutive actions, loop-back edges remain cycles, and async boundaries do not

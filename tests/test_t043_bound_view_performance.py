@@ -1,5 +1,6 @@
 """Deterministic scope and gate checks. Measurements run separately."""
 
+from hashlib import sha256
 import json
 
 import pytest
@@ -16,6 +17,7 @@ from benchmarks.t043_view_performance import (
 )
 from kgmaker import flow
 from kgmaker.analysis_model import AnalysisError, digest
+from kgmaker.model import Edge, KnowledgeGraph, Node
 from kgmaker.topology_filter import TopologyFilterError
 from test_unified_flow_views import model_graph, nested_process_graph
 
@@ -219,4 +221,87 @@ def test_t043_overflow_cannot_hide_nonfinite_legacy_coverage(tmp_path):
         flow.publish(report, 'json', output)
     assert output.read_bytes() == previous
     assert list(tmp_path.iterdir()) == [output]
+    assert json.dumps(report, sort_keys=True) == before
+
+
+_RELATION_256_SHA256 = {
+    'integrations': (
+        'e7d5476f5d6dfe3de0d73408b6d8455af4c4328c9082905d9c3d4d9d0e4663c4',
+        'a45531791f45eb6225d7f50404adb6459754ac062aeb774ce3cfca64aa030cdf',
+        '342f120addbaa5457f45ec36da7146b93755818db1a47dc39d78d3f51e1e569a',
+    ),
+    'data-flow': (
+        'f3f689ff93a039e359791660d7afad3fc97242257367fddf442a6c33d0325c27',
+        'fbca241648b208d464c46b095299cf6f54656aeaa295b380a277eb3c5924d1da',
+        'efbb623c5c7abd5befe0d7ca99184139562ce92178a17f648bdb00db05c52546',
+    ),
+}
+
+
+def relation_http_graph(count):
+    source = 'src/main/java/Checkout.java'
+    entry = Node('entry', 'method', 'checkout', source, scope='production')
+    requests = [
+        Node(f'http-{i:04d}', 'http_request_definition', f'request{i}', source, scope='production',
+             metadata={'caller': 'entry', 'route_expression': f'/orders/{i}'})
+        for i in range(count)
+    ]
+    foreign = Node('http-other-scope', 'http_request_definition', 'foreign', source, scope='test',
+                   metadata={'caller': 'entry', 'route_expression': '/other'})
+    return KnowledgeGraph(3, '.', 'schema-fixture', [entry, foreign, *reversed(requests)],
+                          [Edge(entry.id, node.id, 'defines_http_request') for node in requests], {})
+
+
+@pytest.mark.parametrize('view', ['integrations', 'data-flow'])
+def test_t043_bounds_http_annex_in_all_relation_formats(view):
+    formats = ('json', 'mermaid', 'markdown')
+    at_limit = flow.build_report(relation_http_graph(256), 'entry', view=view, max_nodes=1)
+    assert tuple(sha256(flow.render(at_limit, fmt).encode()).hexdigest() for fmt in formats) == _RELATION_256_SHA256[view]
+
+    graph = relation_http_graph(258)
+    original = digest(graph.to_dict())
+    report = flow.build_report(graph, 'entry', view=view, max_nodes=1)
+    assert report['nodes'] == ['entry'] and report['edges'] == [] and report['truncated']
+    assert report['scope'] == 'production' and report['status'] == 'PARTIAL'
+    assert report['execution'] == 'NOT_OBSERVED' and report['availability'] == 'UNKNOWN'
+    assert report['http'] == at_limit['http']
+    assert [row['id'] for row in report['http']['requests']] == [f'http-{i:04d}' for i in range(256)]
+    gap, = [item for item in report['coverage']['gaps'] if item['code'] == 'FLOW_HTTP_ANNEX_LIMIT']
+    assert gap['max_requests'] == 256 and gap['omitted_requests'] == 2
+    assert gap['omitted_request_ids_sha256'] == sha256(b'["http-0256","http-0257"]').hexdigest()
+    assert flow.finalize(report) == report
+    for fmt in formats:
+        text = flow.render(report, fmt)
+        assert 'http-0256' not in text and 'http-other-scope' not in text
+        if fmt == 'json':
+            decoded = json.loads(text)
+        else:
+            metadata, = [line for line in text.splitlines() if line.startswith('  %% flow-meta ')]
+            decoded = json.loads(metadata.removeprefix('  %% flow-meta '))
+        assert decoded['http'] == at_limit['http'] and gap in decoded['coverage']['gaps']
+    assert digest(graph.to_dict()) == original
+
+
+def test_t043_http_annex_overflow_is_not_node_truncation():
+    report = flow.build_report(relation_http_graph(257), 'entry', view='data-flow')
+    assert len(report['nodes']) == 258 and report['truncated'] is False
+    assert {gap['code'] for gap in report['coverage']['gaps']} == {'RELATIONSHIP_ONLY', 'FLOW_HTTP_ANNEX_LIMIT'}
+    report['return_consumer_bindings'] = [{'id': f'binding:{i}'} for i in range(257)]
+    assert flow.finalize(report)['return_consumer_bindings'] == report['return_consumer_bindings']
+
+
+@pytest.mark.parametrize('format_name', ['json', 'mermaid', 'markdown'])
+@pytest.mark.parametrize(('invalid_row', 'error', 'message'), [
+    ('invalid HTTP request', AnalysisError, 'Invalid flow HTTP request'),
+    ({'id': 'http-0256', 'route_expression': float('nan')}, ValueError, 'Out of range float values'),
+])
+def test_t043_http_annex_cannot_hide_invalid_omitted_rows(tmp_path, format_name, invalid_row, error, message):
+    report = flow.build_report(relation_http_graph(256), 'entry', view='integrations', max_nodes=1)
+    output = tmp_path / 'flow'
+    previous = flow.publish(report, format_name, output).encode()
+    report['http']['requests'].append(invalid_row)
+    before = json.dumps(report, sort_keys=True)
+    with pytest.raises(error, match=message):
+        flow.publish(report, format_name, output)
+    assert output.read_bytes() == previous and list(tmp_path.iterdir()) == [output]
     assert json.dumps(report, sort_keys=True) == before
