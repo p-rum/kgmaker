@@ -3,10 +3,10 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 643
+- Scope: production; omitted files: 644
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `b3104e8ca3ebf8d062288db6ce82be910e6069e0e4968f27cd75a8f28d008c30`; content: `e98d4a257a245adbc3aeee269636e742e1dcafb3b5e6c4e753dce980065fcbaf`; freshness: CONTENT_VERIFIED
+- Context: `c15ac4f1fd1f7c16fa1c3776c2abaf065a80fc663c82be2d08eea6ed593722b4`; content: `e4a15d99d3fa938ef24843c189ecfff7daecf58bf13d8f6a78ffdf4d89b91f43`; freshness: CONTENT_VERIFIED
 - Files indexed: 128
 - Symbols and sections: 1790
 - Internal imports: 547
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 518
+- Implementation episodes: 519
 - Inferred/ambiguous relationships: 9402/0
 
 ## Architecture diagram
@@ -1390,13 +1390,13 @@ flowchart LR
 - **function** `engine_fingerprint` line 112 — `engine_fingerprint`
 - **function** `_launch_file_hash` line 119 — `_launch_file_hash(path)`
 - **function** `launch_inputs` line 124 — `launch_inputs(argv)`
-- **function** `retain` line 167 — `retain(metadata, context_ids)`
-- **class** `InspectionStages` line 174 — `InspectionStages`
-- **function** `__init__` line 178 — `__init__(self, root, selected, argv, *, timeout, cancel_file)`
-- **function** `guard` line 196 — `guard(self)`
-- **function** `run` line 204 — `run(self, stage, builder, validator, *, base=None, upstream=None)`
-- **function** `attach` line 228 — `attach(self, graph)`
-- **function** `report` line 234 — `report(self)`
+- **function** `retain` line 170 — `retain(metadata, context_ids)`
+- **class** `InspectionStages` line 177 — `InspectionStages`
+- **function** `__init__` line 181 — `__init__(self, root, selected, argv, *, timeout, cancel_file)`
+- **function** `guard` line 199 — `guard(self)`
+- **function** `run` line 207 — `run(self, stage, builder, validator, *, base=None, upstream=None)`
+- **function** `attach` line 231 — `attach(self, graph)`
+- **function** `report` line 237 — `report(self)`
 
 ### `src/kgmaker/feature.py`
 - **function** `_analysis_details` line 25 — `_analysis_details(graph)`
@@ -2887,6 +2887,7 @@ flowchart LR
 - **merge: integrate current Criteria main into complete report** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/131_completeAnalysisReport.md, docs/complete-analysis-report.md, docs/feature-analysis.md; validation: scoped-report-integration=passed, actual-javac-typescript=passed, full-suite=unknown
 - **fix(T003-S06-W02): require proven query return owner** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/changes/49_projectJpaInheritedAttributes.md, docs/compiler-inspection.md; validation: jpa-focused=passed, t009-parent=passed, semantic=passed, source-identities=passed
 - **Change Aktualizace stavu, Aktuální oddělený T020 checkpoint — 2026-11-06, Aktuální pracovní inventář T048-S01 — 2026-11-07** — changed; files: docs/production-analysis-progress.md; validation: t022-draft-179-open-source=passed, t022-pr179-planner-parity=passed, t022-pr179-exact-product=passed, full-standard=unknown
+- **Change Akceptační kritéria, Aktualizace stavu, Aktuální audit dodání — 2026-11-14** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/213_bindObservedJdkLibraries.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: planner=passed, source-diff=passed, semantic-before-capture=passed, exact-focus=unknown, exact-native=unknown
 - **Verify reverse dependency reports after workbook freshness integration** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/145_buildReverseDependencyIndexes.md, docs/production-analysis-progress.md, docs/stage-content-cache.md; validation: actual_combined_124=passed, standard_python313_full=passed, excel_worker_setup=skipped, semantic_reconcile=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/9_bindMethodologyApproval.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: pytest203=passed, methodology27=passed, semantic=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/183_reconcileExcelCompletionInventory.md, docs/production-analysis-progress.md, docs/tasks/54_addExcelMigration.md, docs/tasks/55_automateExcelMigration.md; validation: planner_red_green=passed, completion_focused=passed, semantic=passed
@@ -3254,7 +3255,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/185_publishIsolatedJvmContext.md, docs/changes/186_reconcileInstallationCompletionInventory.md, docs/production-analysis-progress.md, docs/tasks/50_addTargetProjectSkills.md; validation: after170-source-and-cli-bindings=passed, after170-native-and-inventory=passed, full-standard=unknown
 - **Verify overload removal during Kotlin signature mutation** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/137_prepareIncrementalMutationOracle.md, docs/production-analysis-progress.md, fixtures/incremental-integrity/README.md; validation: scoped-strict-130=passed, upstream-t032-43=passed, full-suite=unknown
 - **stack authoritative schema Retry and JPQL parent into contracts** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/85_attachInterfaceContracts.md, docs/interface-contracts.md, docs/production-analysis-progress.md; validation: combined-descendant2df-full2587pass10optional=passed, t013-parent2116-and-own45pass=passed, actual-currentcomposition444pass=passed
-- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: docs/acceptance-inventory.md, docs/changes/212_recordProcessExportMerge.md, docs/production-analysis-progress.md; validation: planner=passed, source-diff=passed, architecture-cli-diagnostic=passed, semantic-before-capture=passed, standard=unknown
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/212_recordProcessExportMerge.md, docs/production-analysis-progress.md; validation: planner=passed, source-diff=passed, architecture-cli-diagnostic=passed, semantic-before-capture=passed, standard=unknown
 - **Change Acceptance a ověření, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/58_propagateViewEvidence.md, docs/production-analysis-progress.md; validation: focused=passed
 - **Change Akceptační kritéria a způsob ověření, Aktualizace stavu, Aktuální audit dodání — 2026-11-07** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/112_specifyTargetAgentIsolation.md, docs/changes/56_addDeliveryReferences.md, docs/changes/57_addArtifactTemplates.md; validation: targeted-tests=passed, full-tests=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/151_preserveRuntimeObservationEvidence.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: source_race_regression=passed, actual_jdk21_runtime_w06_t032=passed, full_py313=passed
@@ -6510,28 +6511,28 @@ flowchart LR
 - `src/kgmaker/excel/vba.py` may call `59 in `src/kgmaker/spring_conditions.py`` (name match at line 84; src/kgmaker/excel/vba.py:84; INFERRED 0.85)
 - `src/kgmaker/excel/vba.py` may call `59 in `src/kgmaker/spring_conditions.py`` (name match at line 89; src/kgmaker/excel/vba.py:89; INFERRED 0.85)
 - `src/kgmaker/excel/vba.py` may call `59 in `src/kgmaker/spring_conditions.py`` (name match at line 94; src/kgmaker/excel/vba.py:94; INFERRED 0.85)
-- `src/kgmaker/extraction_cache.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 199; src/kgmaker/extraction_cache.py:199; INFERRED 0.85)
-- `src/kgmaker/extraction_cache.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 201; src/kgmaker/extraction_cache.py:201; INFERRED 0.85)
-- `src/kgmaker/extraction_cache.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 203; src/kgmaker/extraction_cache.py:203; INFERRED 0.85)
+- `src/kgmaker/extraction_cache.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 202; src/kgmaker/extraction_cache.py:202; INFERRED 0.85)
+- `src/kgmaker/extraction_cache.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 204; src/kgmaker/extraction_cache.py:204; INFERRED 0.85)
+- `src/kgmaker/extraction_cache.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 206; src/kgmaker/extraction_cache.py:206; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `46 in `src/kgmaker/analysis_model.py`` (name match at line 118; src/kgmaker/extraction_cache.py:118; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `24 in `src/kgmaker/compiler_sources.py`` (name match at line 40; src/kgmaker/extraction_cache.py:40; INFERRED 0.85)
-- `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 153; src/kgmaker/extraction_cache.py:153; INFERRED 0.85)
-- `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 164; src/kgmaker/extraction_cache.py:164; INFERRED 0.85)
-- `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 171; src/kgmaker/extraction_cache.py:171; INFERRED 0.85)
-- `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 186; src/kgmaker/extraction_cache.py:186; INFERRED 0.85)
-- `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 187; src/kgmaker/extraction_cache.py:187; INFERRED 0.85)
-- `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 188; src/kgmaker/extraction_cache.py:188; INFERRED 0.85)
+- `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 156; src/kgmaker/extraction_cache.py:156; INFERRED 0.85)
+- `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 167; src/kgmaker/extraction_cache.py:167; INFERRED 0.85)
+- `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 174; src/kgmaker/extraction_cache.py:174; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 189; src/kgmaker/extraction_cache.py:189; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 190; src/kgmaker/extraction_cache.py:190; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 191; src/kgmaker/extraction_cache.py:191; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 192; src/kgmaker/extraction_cache.py:192; INFERRED 0.85)
+- `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 193; src/kgmaker/extraction_cache.py:193; INFERRED 0.85)
+- `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 194; src/kgmaker/extraction_cache.py:194; INFERRED 0.85)
+- `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 195; src/kgmaker/extraction_cache.py:195; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 38; src/kgmaker/extraction_cache.py:38; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 39; src/kgmaker/extraction_cache.py:39; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 43; src/kgmaker/extraction_cache.py:43; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 45; src/kgmaker/extraction_cache.py:45; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 46; src/kgmaker/extraction_cache.py:46; INFERRED 0.85)
-- `src/kgmaker/extraction_cache.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 223; src/kgmaker/extraction_cache.py:223; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 226; src/kgmaker/extraction_cache.py:226; INFERRED 0.85)
+- `src/kgmaker/extraction_cache.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 229; src/kgmaker/extraction_cache.py:229; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 31; src/kgmaker/extraction_cache.py:31; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 35; src/kgmaker/extraction_cache.py:35; INFERRED 0.85)
 - `src/kgmaker/extraction_cache.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 36; src/kgmaker/extraction_cache.py:36; INFERRED 0.85)
@@ -8110,8 +8111,8 @@ flowchart LR
 - `src/kgmaker/graph_provider.py` may call `19 in `src/kgmaker/compiler_sources.py`` (name match at line 277; src/kgmaker/graph_provider.py:277; INFERRED 0.85)
 - `src/kgmaker/graph_provider.py` may call `19 in `src/kgmaker/compiler_sources.py`` (name match at line 291; src/kgmaker/graph_provider.py:291; INFERRED 0.85)
 - `src/kgmaker/graph_provider.py` may call `81 in `src/kgmaker/extraction_cache.py`` (name match at line 420; src/kgmaker/graph_provider.py:420; INFERRED 0.85)
-- `src/kgmaker/graph_provider.py` may call `167 in `src/kgmaker/extraction_cache.py`` (name match at line 415; src/kgmaker/graph_provider.py:415; INFERRED 0.85)
-- `src/kgmaker/graph_provider.py` may call `167 in `src/kgmaker/extraction_cache.py`` (name match at line 416; src/kgmaker/graph_provider.py:416; INFERRED 0.85)
+- `src/kgmaker/graph_provider.py` may call `170 in `src/kgmaker/extraction_cache.py`` (name match at line 415; src/kgmaker/graph_provider.py:415; INFERRED 0.85)
+- `src/kgmaker/graph_provider.py` may call `170 in `src/kgmaker/extraction_cache.py`` (name match at line 416; src/kgmaker/graph_provider.py:416; INFERRED 0.85)
 - `src/kgmaker/graph_provider.py` may call `519 in `src/kgmaker/feature.py`` (name match at line 936; src/kgmaker/graph_provider.py:936; INFERRED 0.85)
 - `src/kgmaker/graph_provider.py` may call `503 in `src/kgmaker/feature.py`` (name match at line 1006; src/kgmaker/graph_provider.py:1006; INFERRED 0.85)
 - `src/kgmaker/graph_provider.py` may call `30 in `src/kgmaker/inspection.py`` (name match at line 302; src/kgmaker/graph_provider.py:302; INFERRED 0.85)
@@ -8494,8 +8495,8 @@ flowchart LR
 - `src/kgmaker/inspection.py` may call `33 in `src/kgmaker/classification.py`` (name match at line 415; src/kgmaker/inspection.py:415; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `33 in `src/kgmaker/classification.py`` (name match at line 709; src/kgmaker/inspection.py:709; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `33 in `src/kgmaker/classification.py`` (name match at line 728; src/kgmaker/inspection.py:728; INFERRED 0.85)
-- `src/kgmaker/inspection.py` may call `174 in `src/kgmaker/extraction_cache.py`` (name match at line 680; src/kgmaker/inspection.py:680; INFERRED 0.85)
-- `src/kgmaker/inspection.py` may call `174 in `src/kgmaker/extraction_cache.py`` (name match at line 827; src/kgmaker/inspection.py:827; INFERRED 0.85)
+- `src/kgmaker/inspection.py` may call `177 in `src/kgmaker/extraction_cache.py`` (name match at line 680; src/kgmaker/inspection.py:680; INFERRED 0.85)
+- `src/kgmaker/inspection.py` may call `177 in `src/kgmaker/extraction_cache.py`` (name match at line 827; src/kgmaker/inspection.py:827; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `27 in `src/kgmaker/model.py`` (name match at line 486; src/kgmaker/inspection.py:486; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `42 in `src/kgmaker/model.py`` (name match at line 583; src/kgmaker/inspection.py:583; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `10 in `src/kgmaker/model.py`` (name match at line 503; src/kgmaker/inspection.py:503; INFERRED 0.85)
@@ -8587,8 +8588,8 @@ flowchart LR
 - `src/kgmaker/inspection.py` may call `424 in `src/kgmaker/criteria_queries.py`` (name match at line 593; src/kgmaker/inspection.py:593; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `58 in `src/kgmaker/criteria_queries.py`` (name match at line 400; src/kgmaker/inspection.py:400; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `344 in `src/kgmaker/dataflow.py`` (name match at line 406; src/kgmaker/inspection.py:406; INFERRED 0.85)
-- `src/kgmaker/inspection.py` may call `228 in `src/kgmaker/extraction_cache.py`` (name match at line 748; src/kgmaker/inspection.py:748; INFERRED 0.85)
-- `src/kgmaker/inspection.py` may call `228 in `src/kgmaker/extraction_cache.py`` (name match at line 900; src/kgmaker/inspection.py:900; INFERRED 0.85)
+- `src/kgmaker/inspection.py` may call `231 in `src/kgmaker/extraction_cache.py`` (name match at line 748; src/kgmaker/inspection.py:748; INFERRED 0.85)
+- `src/kgmaker/inspection.py` may call `231 in `src/kgmaker/extraction_cache.py`` (name match at line 900; src/kgmaker/inspection.py:900; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `105 in `src/kgmaker/extraction_cache.py`` (name match at line 715; src/kgmaker/inspection.py:715; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `105 in `src/kgmaker/extraction_cache.py`` (name match at line 739; src/kgmaker/inspection.py:739; INFERRED 0.85)
 - `src/kgmaker/inspection.py` may call `105 in `src/kgmaker/extraction_cache.py`` (name match at line 842; src/kgmaker/inspection.py:842; INFERRED 0.85)

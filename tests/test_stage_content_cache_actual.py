@@ -50,7 +50,11 @@ def test_actual_jvm_locale_drift_preserves_published_generation(tmp_path, monkey
     assert cold['exit_code'] == 0 and not cold['diagnostics']
     assert any(site['resolution_reason'] == 'JAVAC_ATTRIBUTED_SYMBOL'
                for site in cold['graph']['call_sites'])
-    assert {stage['reason'] for stage in cold['cache']['stages']} == {'UNVERIFIED_REPLAY'}
+    stages = cold['cache']['stages']
+    assert len(stages) == 3
+    assert {(stage['status'], stage['reason']) for stage in stages} == {
+        ('BYPASS', 'UNVERIFIED_REPLAY'),
+    }
 
     def outputs():
         return {path.relative_to(root): path.read_bytes()
@@ -89,7 +93,10 @@ def test_actual_jvm_locale_drift_preserves_published_generation(tmp_path, monkey
     jdk = Path(inspection.command('jvm', options['home'])[0]).resolve().parent.parent
     platform_inputs = ['lib/ct.sym']
     if sys.platform == 'linux':
-        platform_inputs.extend(('lib/libjli.so', 'lib/server/libjvm.so'))
+        platform_inputs.extend((
+            'lib/libjli.so', 'lib/server/libjvm.so', 'lib/libjava.so',
+            'lib/libjimage.so', 'lib/libzip.so',
+        ))
     worker_stage = load_graph(root).extraction_cache['entries'][0]
     assert worker_stage['key']['stage'] == 'worker-analysis'
     for relative in platform_inputs:
