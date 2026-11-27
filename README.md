@@ -1444,6 +1444,13 @@ s diagnostikou hranic. Podporuje lokální repozitář zvolený přes `--root`.
 Kombinace `--evidence-only` s `--workspace` končí chybou použití.
 [Výstup a podporovaný rozsah](docs/stage-content-cache.md#selektivní-dopad-změn).
 
+Po změně kontraktu použijte `kgmaker impact --evidence-only --format json
+openapi.json`. Report označí přímo dotčený vstup i navazující vstupy
+propojené přes `dependency_ids` stejné aplikované revize. Přenesený důvod uvádí
+bezprostřední závislost i vstup s původní citací. Report zachová uloženou
+revizi i graf a u nezměněných bajtů vazby nerozvíjí.
+[Ověření přenosu dopadu](docs/changes/211_followAppliedInputDependencies.md).
+
 Při explicitním volání Python API `inspect_jvm` s oddělenými moduly může
 nová inspekce zveřejnit vybraný kontext ve stejné generaci, v níž označí
 prokazatelně zastaralý nezávislý kontext jako `STALE`. To zahrnuje dříve

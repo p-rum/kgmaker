@@ -203,6 +203,15 @@ operace. Chybějící nebo neplatný doklad vynechá důvod pro sloupec.
 Stávající důvody pro tabulku a view zůstávají dostupné.
 W02-AC01 má stav `PARTIAL`. [Ověření sloupců](changes/191_indexNamedForeignKeyColumns.md).
 
+Přípravné ověření čtecího dopadu na aplikovanou analýzu pokrývá přímou
+citaci OpenAPI a navazující vstupy stejné revize včetně sdíleného
+potomka. Při nezměněných bajtech report použije jeden odečet otisku
+a vynechá průchod vazbami. Kontroly pokrývají nezávislou citaci, původní
+aplikovanou revizi vedle nového packetu, neplatné vazby a neplatný receipt.
+Zachovávají bajty store a revizi CAS. Pro uvedený přípravný strom prošlo
+19 cílených a 60 souvisejících testů bez přeskočení. W02-AC01 zůstává
+`PARTIAL`. [Příkazy, výsledky a hranice](changes/211_followAppliedInputDependencies.md).
+
 ## T045 — doplňující automatická kontrola PR
 
 T045-S03 / T045-AC04. Workflow PR Review používá plugin `pytest-cov` a
