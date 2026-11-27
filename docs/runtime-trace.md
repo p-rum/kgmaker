@@ -53,7 +53,7 @@ kgmaker inspect code --root PROJECT --build-id BUILD_ID --context root:main
 
 Inspekce přebírá digest výhradně z vybrané položky. Build import označuje dodaný
 export jako `SUPPLIED_EXPORT_UNVERIFIED`. Manifest bez pole funguje pro
-build import a compiler inspekci. Runtime v2 a v3 vyžadují shodnou deklarovanou
+build import a compiler inspekci. Runtime v2–v4 vyžadují shodnou deklarovanou
 hodnotu v uloženém kontextu a v `--config-fingerprint`.
 
 Příklad explicitní kompilace SDK a aplikace:
@@ -87,7 +87,7 @@ uložený graf i snapshot a až potom se artefakt atomicky nahradí. Producer s�
 nezapisuje graph store; import je oddělená operace.
 
 Import ověří načtený manifest jednou před publikací. Před nahrazením
-každého výstupu znovu ověří zdrojové hashe a distribuci workeru. U v2 a v3
+každého výstupu znovu ověří zdrojové hashe a distribuci workeru. U v2–v4
 znovu ověří i zachycené vstupy vybraného compiler kontextu včetně bytecode.
 Zjištěný zastaralý vstup zastaví publikaci. Store obnoví dříve nahrazené
 výstupy téže publikace. Současné publikace do grafu hlídá kontrola
@@ -218,15 +218,42 @@ volajícího rámce. Při spuštění předávejte data
 aplikaci jejím běžným vstupem a vynechte je z argumentů příkazu capture.
 
 `runtime produce` vytvoří RuntimeManifest v4 s právě jedním `value_presence`
-a UTC časem začátku běhu. `runtime import` znovu ověří odkaz na compiler důkaz
-a vrátí `value_evidence_ids`. Graf používá oddělenou hranu `runtime_value_presence`
-bez vlivu na statické cesty. Pro stejný běh a přiřazení použijte stejný export
+a UTC časem začátku běhu. Výsledek zůstává `PARTIAL / INSTRUMENTED_SCOPE_ONLY`.
+Ve stejném `facts` mohou v původním pořadí zůstat běžná `call`, která
+splňují tvar z tabulky, náležejí vybranému compiler kontextu a mají
+`RETURNED` nebo `THREW`. Platí dosavadní společný limit faktů.
+Více hodnotových vzorků, `interface_dispatch`, `bean`, `condition` a
+`mapping` tento formát odmítne. Pole `observations` v exportu je prázdné.
+
+`runtime import` znovu ověří compiler důkaz a vrátí jeden identifikátor v
+`value_evidence_ids`. Do grafu vstupuje jediný hodnotový doklad na hraně
+`runtime_value_presence`. Doprovodná volání zůstávají pouze v exportu.
+Statické cesty se nemění. Pro stejný běh a přiřazení použijte stejný export
 při opakovaném importu. Pro nový běh použijte nové ID. Důvěra vychází z
 výslovné spolupráce instrumentované aplikace a lokálního exportu.
 
+Původní v1–v3 a v4 s jediným hodnotovým vzorkem lze dále číst. Původní čtečka
+v4 nový kombinovaný export odmítne. Graph/store schema v3 zůstává stejné.
+
+Příklad používá sestavenou [Java fixture](../tests/fixtures/runtime-trace/ValuePresenceApplication.java)
+a SDK ve stejném `classes`, uložený `EXECUTION_BOUND` kontext s fyzickými
+doklady a aktuální symbol ID metod `main`, `copy` a `plain`. Samotný
+`project build-import` označený `SUPPLIED_EXPORT_UNVERIFIED` tento důkaz
+nedodává. Hodnota fixture jde běžným vstupním prostředím aplikace.
+
+```sh
+FIXTURE_ONLY_VALUE=demo kgmaker runtime produce --root PROJECT --context CONTEXT_ID \
+  --runtime-id presence-and-calls --build-id BUILD_ID \
+  --config-fingerprint CONFIG_FINGERPRINT --service-id presence-fixture \
+  --service-version 1 --output .kgmaker/runtime/presence.json \
+  -- java -cp classes fixture.ValuePresenceApplication combined-present MAIN_ID COPY_ID PLAIN_ID
+kgmaker runtime import --root PROJECT --manifest PROJECT/.kgmaker/runtime/presence.json
+```
+
 [Živá kontrola dostupnosti](feature-analysis.md#runtime-presence-in-data-check)
 · [Původní ověření](changes/187_bindRuntimeValuePresence.md)
-· [Ověření následujícího řádku](changes/197_bindAdjacentRuntimeValueHook.md).
+· [Ověření následujícího řádku](changes/197_bindAdjacentRuntimeValueHook.md)
+· [Ověření společného běhu](changes/207_allowRuntimeValueCallCompanions.md).
 
 ## Opakovaný import a navigace
 
