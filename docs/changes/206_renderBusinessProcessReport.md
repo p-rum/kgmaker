@@ -90,3 +90,32 @@ ověření `IN_PROGRESS / PARTIAL`. Příkaz `process render` nadále vydává J
 AC02, ověření aktuálního source locatoru a širší CLI mají samostatný rozsah.
 Úplná sada, nezávislá recenze integrovaného výřezu a hostované CI měly při
 uvedeném přípravném ověření stav `NOT_RUN`.
+
+## Integrace po #165 — T036-S05 a T036-AC06
+
+Po sloučení [#165](https://github.com/p-rum/kgmaker/pull/165) je základem
+integrace `0e0c49120281e73ae131777e6f342f39407644e6` z větve `main`.
+Větev výkazu navazuje na `27619782d2856d9aa16c9ae3c9379cb73f56edaa` z
+[#190](https://github.com/p-rum/kgmaker/pull/190). Lokální sloučení zachovalo
+úpravy obou větví v README, inventáři akceptace a stavové matici. Zdroj
+rendereru a jeho test mají shodný obsah jako v předchozím commitu #190.
+
+Na přesném commitu `0e0c491` skončil příkaz `kgmaker semantic validate`
+s raw exit 2. Pět řádků přidaných do README posunulo důkaz existujícího
+konceptu volitelné sémantické vrstvy a jedné vazby z řádku 232 na 237.
+Důkaz druhé vazby se posunul z řádku 234 na 239. Omezená aktualizace
+obnovila tyto tři kotvy při zachování obsahu konceptu a vztahů. Srovnávací
+graf vychází z izolovaného stromu `0e0c491` a zachovává 511 přijatých epizod.
+Zápis nové epizody pokrývá pouze sedm souborů T036.
+
+Na předchozí dvojici `27619782` a `c8b77a35` prošel cílený nativní běh
+se 122 PASS, 0 SKIP a raw exit 0. První pokus o úplnou standardní sadu
+měl 2692 PASS, 1414 SKIP, 1 očekávaný XFAIL a 6 chyb při přípravě fixture.
+Vnořené `ensurepip` selhalo kvůli `No space left on device` a běh měl raw exit 1.
+JUnit SHA-256 `6b4deec3e82a33b5ffab5b2d248fd6d226d06c38da78074a471dda5dbb400fd3`.
+Po uvolnění místa opakování na stejné dvojici a se shodným manifestem
+vstupů skončilo s 2694 PASS, 1418 SKIP, 1 očekávaným XFAIL a raw exit 0.
+JUnit SHA-256 `68b9a670031f02bba9edd785a05b454c01ddea568acb51df5b5ed9c5809fef5a`.
+Výsledky se vztahují k předchozí dvojici. Cílený nativní běh, úplná sada,
+nezávislá recenze a hostované CI mají pro nový základ při této místní
+integraci stav `NOT_RUN`.

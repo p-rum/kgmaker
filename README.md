@@ -50,6 +50,11 @@ kgmaker scan
 
 `kgmaker init` creates Agent Skills under `.agents/skills/`, repository-level Copilot hooks, knowledge-graph and read-only architecture agents, repository instructions, and a local-index ignore rule. The instructions tell Copilot to consult `kgmaker-architect` before every substantive implementation request; it checks the graph and relevant source/tests, then gives the primary agent a focused implementation brief. Existing files are preserved. Pass `--force` only when you want to replace the kgmaker-managed instructions and skills.
 
+The installed agent instructions use the assigned task ID as the exact prefix
+of the title and task specification filename, followed by a hyphen and a
+descriptive English name, for example `ABC-007-fix-empty-input`. Use
+`kgmaker upgrade` to refresh managed instructions in an existing project.
+
 The six skills cover code navigation (`kgmaker-context`), semantic graph maintenance
 (`kgmaker-semantic`), requirement analysis (`kgmaker-feature-analysis`), data audits
 (`kgmaker-data-audit`), test proposals (`kgmaker-testgen`) and Excel migration

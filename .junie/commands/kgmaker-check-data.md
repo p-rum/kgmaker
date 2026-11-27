@@ -17,23 +17,19 @@ Read project `AGENTS.md` and `docs/tasks/README.md` when present before writing
 implementation specifications or changing a feature. In KGMAKER these are the
 canonical project rules. Preserve existing user project rules and runtime analysis IDs.
 
-New implementation specifications use `docs/tasks/<N>_<shortName>.md`:
-positive unpadded integer N and ASCII lowerCamelCase, e.g. `4_addSpringResolution.md`.
-Task ID is T plus N padded to at least three digits (`T004`); steps `T004-S01`,
-requirements `T004-R01`, acceptance `T004-AC01`. Allocate max + 1 after checking
-the registry, target branch and open PRs; recheck collisions before publication.
-Never reuse gaps or renumber published IDs. Keep revisions of the same task in
-its existing file; register independent extensions as new tasks with dependencies.
+Use the assigned task ID exactly as provided, preserving its letters, hyphens,
+digits, case, and leading zeros. Begin the task title with that ID, then append
+a hyphen and a concise, descriptive English name, for example
+`ABC-007-fix-empty-input`. Use the same form for the filename stem when writing a
+task specification. If no task ID has been assigned, ask for it before naming
+the task. Keep revisions of an existing task in its existing file.
 
-Every implementation/documentation PR adds a Czech change note named
-`docs/changes/<N>_<shortPrName>.md`, e.g. `3_unifyImplementationTasks.md`, using
-an independent max + 1 sequence and the same unpadded integer/lowerCamelCase format.
-Preserve this naming format when adding every new feature; task number, change-note
-number and GitHub PR number are not interchangeable. Include task/acceptance IDs,
-actual changes, compatibility, real validation results and unfinished scope.
+For PR change notes, follow the target project's conventions and include
+task/acceptance IDs, actual changes, compatibility, real validation results and
+unfinished scope.
 
 Every implementation step, including fixes, refactors and integrations, must
-have its own traceable entry in the PR's Czech change note: Task/Step/AC IDs,
+have its own traceable entry in the PR's change note with Task/Step/AC IDs,
 baseline SHA, actual changes/paths, compatibility, limitations, exact checks and
 PASS/FAIL/SKIP/NOT_RUN results, unperformed checks and remaining work.
 In the same PR reconcile README, applicable capability/API/CLI docs and examples,
@@ -48,9 +44,9 @@ instructions and Python templates consistent, preserving user edits on init.
 
 Specifications must separate target behavior from implemented capabilities and
 include revision, baseline, dependencies, concrete steps, acceptance and DoD.
-Update current documentation when code changes; retain historical notes and map
-legacy task aliases rather than create competing numbering systems. Do not rename
-runtime `analysis_id`, packet IDs, requirements or existing features to task IDs.
+Update current documentation when code changes and retain historical notes and
+legacy task aliases. Preserve runtime `analysis_id`, packet IDs, requirements
+and existing feature names.
 
 For the KGMAKER PR #5 baseline, scan/hook replace compiler indices and feature
 packets rebuild a source-only graph. Until T003-S02 is implemented, inspect saved

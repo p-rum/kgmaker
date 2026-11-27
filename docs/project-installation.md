@@ -13,6 +13,12 @@ odstraní známé vysloužilé výstupy. Neinstaluje Python balíček, nespoušt
 scan, compiler worker, testy ani migrace. Graf, historie analýz a vlastní
 `.kgmaker/NOTES.md` zůstávají při upgradu zachované. Hostitel může vyžadovat reload.
 
+Aktuální instrukce Copilot a příkazy Junie přebírají přidělené ID úkolu přesně
+včetně velikosti písmen, pomlček a počátečních nul. Za ID připojí pomlčku
+a výstižný anglický název, například `ABC-007-fix-empty-input`. Stejný tvar
+používají pro název souboru zadání před příponou. Bez přiděleného ID si o něj
+agent vyžádá doplnění.
+
 ```bash
 # Volitelný náhled bez zápisů; konflikt má i zde exit 2:
 kgmaker upgrade --root /cesta/k/projektu --dry-run
