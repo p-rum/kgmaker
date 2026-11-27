@@ -77,6 +77,49 @@ List, packet generation, validation, apply, review and other formats remain
 outside this slice. [Implementation evidence](changes/193_renderLocalProcess.md) ·
 [Verified merge and remaining acceptance](changes/196_recordProcessRenderMerge.md).
 
+## Mermaid for a supplied ProcessView (T035)
+
+The pure Python entry point accepts a typed `ProcessView` schema 1. The caller
+loads any supplied JSON document and handles any output file.
+
+```python
+import json
+from pathlib import Path
+from kgmaker.process_model import ProcessView
+from kgmaker.process_render import render_process_mermaid
+
+process = ProcessView.from_dict(json.loads(Path("process.json").read_text(encoding="utf-8")))
+diagram = render_process_mermaid(process)
+print(diagram, end="")
+```
+
+The flowchart has one vertex and one directed arrow for each supplied node and
+transition occurrence. Decisions, loop edges, conditions and boundaries use the
+technical labels and attributes of the view. Dotted arrows mark its `async`
+transitions. Parallel arrows remain distinct, and a lane requires an explicit
+`service:` owner ID. Nodes without a service owner appear outside the lanes.
+An explicit partial/truncated state stays visible in the title. The renderer
+preserves reported omissions, diagnostics and limits in the metadata.
+
+`%% process-meta` holds process identity, selected context IDs, entry/exit/outcome
+IDs and the technical view fields including scope and provenance. The
+`%% process-node`, `%% process-lane` and `%% process-edge` JSON comments map
+stable diagram identifiers to supplied occurrences and owners. Mermaid 11.4.1
+exposes edges in emitted order, so each edge record also carries a zero-based
+`index`. Resolve original IDs and evidence references against the same supplied
+view. This mapping has no additional `architecture explain` endpoint.
+
+The renderer validates the input and uses the shared bounded renderer limits
+(100,000 items, nesting depth 40, 1,000,000 aggregate characters and 16,384 per
+string). Mermaid 11.4.1 defaults allow at most 500 edges and 50,000 UTF-16 code
+units of flowchart text after removing the YAML header and metadata comments.
+The separate 4,000,000 UTF-8 byte output limit includes those comments. Exceeding
+any budget raises `ProcessMermaidError` with code `PROCESS_MERMAID_LIMIT` for the
+whole diagram. Invalid input and unsafe output also raise `ProcessMermaidError`.
+This is a pure API. Review overlays and business label authority are reserved for
+the T032-backed extension. The `process render` CLI still emits JSON.
+[Test evidence and deferred scope](changes/199_renderSuppliedProcessMermaid.md).
+
 ## Input and evidence boundaries
 
 Pass the matching T024 inventory and provider graph. The function validates the

@@ -2,8 +2,8 @@
 
 - Task ID: `T035`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-26
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T026](T-026_collapse-business-steps.md); [T027](T-027_cross-http-process-boundary.md); [T028](T-028_cross-async-process-boundary.md); [T029](T-029_project-process-failures.md); [T034](T-034_add-process-cli.md).
@@ -14,6 +14,13 @@
 ## Cíl a hranice samostatné dodávky
 
 Mermaid business průběhu. Výstupem tohoto úkolu je jediný otestovatelný kontrakt popsaný níže. Lze jej sloučit samostatně po splnění deklarovaných závislostí; není nutné dokončit celý T004. Závislosti neimplementuj skrytě v tomto PR. Při chybějícím upstream kontraktu zapiš BLOCKED a odkaz na konkrétní chybějící AC; fallback je povolen pouze jako přiznaný PARTIAL/UNKNOWN, pokud splní všechna zdejší kritéria.
+
+Revize 2 vymezuje první čistý Python výřez nad dodaným typovaným `ProcessView`.
+T035-S01 až S03 pokrývají technické popisky, orientované výskyty uzlů a hran,
+explicitní vlastníky, stav pokrytí a vazby na původní důkazy. Dílčí testy
+ověřují AC01 a AC03–AC05 v tomto rozsahu. Mapování se vztahuje k dodanému
+modelu. Napojení na CLI, schválené popisky AC02 a další vysvětlování mají
+samostatný rozsah. [Python API a příklady](../process-paths.md#mermaid-for-a-supplied-processview-t035).
 
 ## Podrobný rozsah a implementační kroky
 

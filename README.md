@@ -1038,6 +1038,13 @@ Use the same `--scope` and `--context-selection` for both commands when supplyin
 them. IDs, evidence and incomplete boundaries are preserved. See
 [read-only process render options and limits](docs/process-paths.md#read-only-process-render-t034).
 
+Use `kgmaker.process_render.render_process_mermaid(view)` for a Mermaid diagram
+from a supplied `ProcessView`. It keeps the oriented transition occurrences,
+explicit service lanes and technical evidence from that view. It uses the
+Mermaid 11.4.1 default limits of 500 edges and 50,000 UTF-16 code units for the
+flowchart. The `process render` CLI keeps its JSON contract.
+[Python diagram example and limits](docs/process-paths.md#mermaid-for-a-supplied-processview-t035).
+
 ### Kafka interface catalogue
 
 The pure [Kafka catalogue](docs/kafka-interfaces.md) projects explicit upstream
