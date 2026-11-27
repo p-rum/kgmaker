@@ -157,10 +157,12 @@ def launch_inputs(argv):
     if any(value and not (name == 'JAVA_TOOL_OPTIONS' and value == '-XX:-UsePerfData')
            for name, value in environment.items()):
         return None
-    if is_java and os.name == 'posix':
-        for name in ('LANG', 'LC_ALL', 'LC_CTYPE'):
-            value = os.environ.get(name)
-            environment[name] = os.fsencode(value).hex() if value is not None else None
+    byte_environment = ('LANG', 'LC_ALL', 'LC_CTYPE') if is_java and os.name == 'posix' else ()
+    if sys.platform == 'linux':
+        byte_environment += ('LD_LIBRARY_PATH',)
+    for name in byte_environment:
+        value = os.environ.get(name)
+        environment[name] = os.fsencode(value).hex() if value is not None else None
     return {'argv': list(argv), 'files': files, 'environment_sha256': digest(environment)}
 
 

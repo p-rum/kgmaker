@@ -30,9 +30,11 @@ výhradního vlastníka, kterého dokládá uložená generace. Kontroly odděle
 kontextů, modelu, konfigurace, classpath, distribuce a připojených důkazů platí
 i při kombinaci úpravy a smazání. `STALE` při vyřazení obsahuje obě sady cest.
 
-Stávající publikační kontrola před výměnou i po ní potvrzuje nepřítomnost
-smazaného vstupu a raw otisky původních cest. Pozdní návrat souboru nebo změna
-bajtů proto zachová poslední platnou generaci a vrátí `STALE`.
+Před každou výměnou výstupu publikační kontrola ověřuje nepřítomnost
+smazaných cest a otisky bajtů původních vstupů vyřazovaného kontextu.
+Pokud po výměně mezivýstupu a před závěrečnou výměnou `graph.json` zjistí
+návrat souboru nebo změnu bajtů, vrátí `STALE`. Publikace obnoví mezivýstupy,
+které stále vlastní, a zachová poslední platný `graph.json`.
 
 ## Krok 4 — nativní kontroly (AC01–AC03)
 
@@ -91,3 +93,11 @@ změny [#181](https://github.com/p-rum/kgmaker/pull/181) z aktuálního `main`
 `7919c283c4ea7b58eb99bfcfbc3971903984f438`. Nativní i úplná standardní sada
 a nezávislé review složené revize mají při této přípravě stav `NOT_RUN`.
 W02 zůstává `MERGED / PARTIAL` podle rozsahu dříve sloučených výřezů.
+
+## Krok 7 — přenos po #182
+
+Kandidát #184 `1fb557b190af2fac56b08dc4d4fdae2dbf3fd9ea` navazuje na
+`main` `adca1031dede08e294c3fd1234150d27ee6379a6` po sloučení [#182](https://github.com/p-rum/kgmaker/pull/182).
+Zdroje a testy W02 mají stejné bajty jako první rodič. Výsledky z kroku 4
+patří původnímu stromu. Nový nativní běh a úplná sada nad touto integrací
+mají při předání stav `NOT_RUN`. W02 zůstává `MERGED / PARTIAL`.
