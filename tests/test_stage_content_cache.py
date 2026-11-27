@@ -16,7 +16,10 @@ from kgmaker.scanner import scan_repository
 from kgmaker.worker_protocol import WorkerError
 
 
-LINUX_JAVA_NATIVE_FILES = ('lib/libjli.so', 'lib/server/libjvm.so')
+LINUX_JAVA_NATIVE_FILES = (
+    'lib/libjli.so', 'lib/server/libjvm.so', 'lib/libjava.so',
+    'lib/libjimage.so', 'lib/libzip.so',
+)
 
 
 @pytest.fixture
@@ -251,8 +254,13 @@ def test_relative_java_path_stays_bound_to_selection_cwd(tmp_path, monkeypatch, 
 
 @pytest.mark.parametrize(('relative', 'unavailable'), [
     ('bin/java', 'unreadable'),
-    pytest.param('lib/libjli.so', 'missing', marks=pytest.mark.skipif(sys.platform != 'linux', reason='Linux Java native library')),
-    pytest.param('lib/server/libjvm.so', 'unreadable', marks=pytest.mark.skipif(sys.platform != 'linux', reason='Linux Java native library')),
+    *[
+        pytest.param(relative, unavailable, marks=pytest.mark.skipif(
+            sys.platform != 'linux', reason='Linux Java native library',
+        ))
+        for relative in LINUX_JAVA_NATIVE_FILES
+        for unavailable in ('missing', 'unreadable')
+    ],
 ])
 def test_unavailable_java_launch_input_allows_live_inspection_without_cache(transport, java_launch, monkeypatch, relative, unavailable):
     root, _, _, _, calls, _ = transport

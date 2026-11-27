@@ -125,6 +125,16 @@ nepřítomnou, prázdnou a dvě ne-UTF-8 hodnoty. Capture-only regresní test
 se stejným store při změně po analýze i během publikace. W01-AC01 zůstává
 `PARTIAL`. [Kontroly a omezení](changes/198_bindLinuxLauncherEnvironment.md).
 
+Dílčí ověření W01-AC01, AC03 a AC04 pro `lib/libjava.so`,
+`lib/libjimage.so` a `lib/libzip.so` prověřilo přesné SHA-256 ve
+skutečném klíči `worker-analysis` s Temurin JDK 21.0.6+7. Syntetické
+regrese pokrývají nedostupné bajty a drift po analýze s `STALE`
+a zachováním posledního grafu. Přípravný strom má 87 unit a jeden
+nativní PASS bez přeskočení. AC02 používá stejný graph/store formát
+a existující regresní testy starších generací. AC01 zůstává `PARTIAL`.
+[Příkazy, výsledky a hranice](changes/213_bindObservedJdkLibraries.md) ·
+[#116](https://github.com/p-rum/kgmaker/issues/116)
+
 ## T003-S10-W02 — reverse dependency indexy
 
 Čtecí report z [#130](https://github.com/p-rum/kgmaker/pull/130) je MERGED

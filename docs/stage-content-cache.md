@@ -50,8 +50,10 @@ samotných konců řádků i změnu uloženého výběru bez odpovídající nov
 Java otisk zahrnuje `lib/ct.sym` a na POSIX přesné bajty `LANG`, `LC_ALL`
 a `LC_CTYPE` včetně hodnot mimo UTF-8 a rozdílu mezi nepřítomnou a prázdnou hodnotou. V uloženém
 klíči je jen SHA-256 prostředí. Na Linuxu se do otisku přidává obsah
-`lib/libjli.so` a `lib/server/libjvm.so` ve standardním rozložení JDK.
-[Ověření nativních vstupů](changes/180_bindLinuxJdkNativeInputs.md).
+`lib/libjli.so`, `lib/server/libjvm.so`, `lib/libjava.so`,
+`lib/libjimage.so` a `lib/libzip.so` ve standardním rozložení JDK.
+[Ověření prvních dvou nativních vstupů](changes/180_bindLinuxJdkNativeInputs.md) ·
+[Ověření dalších tří knihoven](changes/213_bindObservedJdkLibraries.md).
 Otisk prostředí JVM i TypeScriptu na Linuxu zahrnuje přesné zděděné bajty
 `LD_LIBRARY_PATH`, včetně rozdílu mezi chybějící a prázdnou proměnnou.
 Uložený klíč obsahuje jen souhrnný SHA-256 prostředí. Tato kontrola sleduje

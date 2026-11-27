@@ -43,6 +43,15 @@ Zavést cache per module/source-set/variant/extraction stage se všemi freshness
 - **T003-S10-W01-AC03:** Negativní a nejednoznačný případ nevytvoří silnější evidence ani dostupnost, než dovolují vstupy.
 - **T003-S10-W01-AC04:** Stavová matice odkazuje na konkrétní test/fixture/verzi a nepovýší celý milník nad skutečně ověřený scope.
 
+## Dílčí ověření Linux JDK
+
+Stávající otisk explicitní JVM inspekce váže také obsah
+`lib/libjava.so`, `lib/libjimage.so` a `lib/libzip.so` standardního
+Linux JDK. Testy pokrývají nedostupnost souborů a změnu otisku
+s uchováním poslední platné generace. AC01 zůstává `PARTIAL`.
+[Kontroly a omezení](../changes/213_bindObservedJdkLibraries.md) ·
+[#116](https://github.com/p-rum/kgmaker/issues/116)
+
 ## Větev, PR a Definition of Done
 
 - Implementuj výhradně v samostatné větvi, doporučeně `feat/t003-s10-01-stage-content-cache`; do stejné větve nepřidávej jiný work package.

@@ -1576,8 +1576,10 @@ Grafová fáze vrací svůj validovaný objekt a otisk launcheru čte soubory
 průběžně při každé kontrole.
 Otisk spuštění Java zahrnuje `lib/ct.sym`, který Javac používá pro starší
 `--java-release`, a na POSIX přesné hodnoty `LANG`, `LC_ALL` a `LC_CTYPE`.
-Na Linuxu zachytí také obsah `lib/libjli.so` a `lib/server/libjvm.so`
-ve standardním rozložení JDK. [Ověření nativních vstupů](changes/180_bindLinuxJdkNativeInputs.md).
+Na Linuxu zachytí také obsah `lib/libjli.so`, `lib/server/libjvm.so`,
+`lib/libjava.so`, `lib/libjimage.so` a `lib/libzip.so` ve standardním
+rozložení JDK. [Ověření prvních dvou nativních vstupů](changes/180_bindLinuxJdkNativeInputs.md) ·
+[Ověření dalších tří knihoven](changes/213_bindObservedJdkLibraries.md).
 Pro JVM i TypeScript se na Linuxu do existujícího SHA-256 prostředí zahrnuje
 zděděná hodnota `LD_LIBRARY_PATH` v původních bajtech. Kontrola ji porovnává
 od zachycení po publikaci a odlišuje chybějící proměnnou od prázdné.

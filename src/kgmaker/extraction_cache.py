@@ -141,7 +141,10 @@ def launch_inputs(argv):
     if is_java:
         platform_files = ('release', 'lib/modules', 'lib/ct.sym')
         if sys.platform == 'linux':
-            platform_files += ('lib/libjli.so', 'lib/server/libjvm.so')
+            platform_files += (
+                'lib/libjli.so', 'lib/server/libjvm.so', 'lib/libjava.so',
+                'lib/libjimage.so', 'lib/libzip.so',
+            )
         try:
             for relative in platform_files:
                 target = executable.parent.parent / relative

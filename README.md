@@ -1407,8 +1407,9 @@ Otisk launcheru a platformních souborů se počítá průběžným čtením.
 Každá grafová fáze předá výsledek své živé validace přímo dalšímu kroku.
 Java launcher váže také `lib/ct.sym` a na POSIX přesné locale vstupy
 `LANG`, `LC_ALL`, `LC_CTYPE`. Na Linuxu otisk zahrnuje také standardní
-JDK soubory `lib/libjli.so` a `lib/server/libjvm.so`. Otisk prostředí na Linuxu
-zahrnuje přesné zděděné bajty `LD_LIBRARY_PATH` u JVM i TypeScriptu.
+JDK soubory `lib/libjli.so`, `lib/server/libjvm.so`, `lib/libjava.so`,
+`lib/libjimage.so` a `lib/libzip.so`. Otisk prostředí na Linuxu zahrnuje
+přesné zděděné bajty `LD_LIBRARY_PATH` u JVM i TypeScriptu.
 Změna zachyceného vstupu během inspekce vrátí `STALE` a zachová poslední uložený graf.
 Při spuštění přes symbolický odkaz `java` se otisk váže na cílový JDK.
 Relativní položka `PATH` pro `java` i `node` se vyhodnotí v pracovním
@@ -1424,7 +1425,8 @@ Retry the original command after the other writer finishes.
 [ověření nákladů živé inspekce](docs/changes/178_reduceLiveInspectionOverhead.md),
 [ověření nativních vstupů JDK](docs/changes/180_bindLinuxJdkNativeInputs.md),
 [ověření relativní cesty k Node](docs/changes/188_anchorTypeScriptNodeLauncher.md),
-[ověření prostředí linuxového launcheru](docs/changes/198_bindLinuxLauncherEnvironment.md).
+[ověření prostředí linuxového launcheru](docs/changes/198_bindLinuxLauncherEnvironment.md),
+[ověření dalších tří knihoven Linux JDK](docs/changes/213_bindObservedJdkLibraries.md).
 
 ### Selektivní dopad změněných souborů (T003-S10-W02)
 
