@@ -84,6 +84,12 @@ mají vlastní stav a ověření.
 
 ## T052 — první běh dokončení 2026-11-19
 
+Dílčí oprava T052-S04/AC04 porovnává při `memory capture` výchozí graf z
+běžného scanu se stejnou lokální projekcí. Regrese rozlišuje nezměněný
+workbook a šablonu od skutečného smazání workbooku, zachovává historii a
+ověřuje jednoznačný záznam po migraci v1 i opakování odmítnutého zápisu.
+[Přesný rozsah a lokální kontroly](changes/202_alignMemoryCaptureProjection.md).
+
 Dílčí oprava T052-S01/AC01 ověřuje přímé závislosti na aktuálním inventáři.
 W02 je po sloučení čtecího rozsahu `MERGED/PARTIAL`. W03 čeká na
 `VERIFIED_IN_SCOPE` pro W02 včetně zápisu podle W02-AC01.

@@ -363,6 +363,15 @@ See the [project workflow guide](docs/project-workflows.md),
 
 `memory capture` records one deterministic episode from a Git baseline, the stored pre-task graph, a fresh graph, changed file hashes, affected node IDs, and bounded validation statuses. It stores no source text, raw diff, prompt transcript, test output, or sensitive path content. Repeating capture for the same Git/worktree fingerprint is idempotent. Semantic schema v1 and v2 remain readable; the first capture writes schema v3 while preserving valid concepts and relationships.
 
+Use a pre-task `kgmaker scan` without an external Confluence overlay for the
+graph baseline. Capture compares it with the same local graph projection, so
+unchanged workbook and template nodes stay out of the delta. See the
+[completion workflow](docs/completion-orchestrator.md#záznam-implementační-epizody).
+The first capture and a repeat project the same v3 evidence after validating
+any legacy artifact. Capture and `semantic apply` share a checkout publication
+lock. If publication is busy, the command exits with status 3 and can be
+retried after the active command finishes.
+
 `memory recall` ranks current graph locations and prior episodes against the implementation request. It labels changed or removed episode evidence as historical, applies result and token bounds, and reports the estimated reduction from the broad legacy graph context.
 
 The `task` commands persist workflow state under ignored `.kgmaker/workflow/`. A task follows `intake → analyze → plan → implement → test → review → done`; bounded retries may return test or review to implementation. Architect, implementation, test-expert, review, and orchestrator artifacts have strict role-specific JSON contracts. `task context` assembles a bounded packet from current graph nodes, semantic hits, implementation memory, impact candidates, tests, and prior task artifacts without modifying the graph or semantic layer.
