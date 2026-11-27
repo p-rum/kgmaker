@@ -264,6 +264,56 @@ the input. Markdown and Mermaid use the technical renderer. This export reads
 the explicit snapshot and writes the artifact set. Architectural view export
 is a remaining part of T038. [Task specification](tasks/T-038_publish-view-artifacts-atomically.md).
 
+## Compare supplied process views (T039)
+
+Pass two validated schema-1 `ProcessView` objects to
+`kgmaker.view_diff.diff_process_views`. This example uses the checked-in
+checkout snapshot and changes one captured step label.
+
+```python
+import json
+from pathlib import Path
+
+from kgmaker.process_model import ProcessView
+from kgmaker.view_diff import diff_process_views
+
+raw = Path("fixtures/process-model/checkout.json").read_text(encoding="utf-8")
+before = ProcessView.from_dict(json.loads(raw))
+edited = json.loads(raw)
+card = next(row for row in edited["technical_view"]["nodes"] if row["id"] == "card")
+card["label"] = "Review card"
+after = ProcessView.from_dict(edited)
+result = diff_process_views(before, after)
+
+assert result["status"] == "COMPARABLE"
+assert result["changes"]["nodes"]["changed"][0]["fields"] == {"presentation": ["label"]}
+```
+
+Comparison requires the same process ID, scope, rules version and selected
+context IDs, with matching captured context selection. Supported selection
+shapes are a service-to-context-ID map and the structured local T025 capture
+with exact current rows. Reordering the selected context's diagnostic
+records leaves the selection equivalent, including repeated entries.
+A shared build variant key alone cannot establish
+a matching capture. `INCOMPARABLE` includes reasons and an empty change
+map. `before` and `after` each preserve the input's fingerprint, coverage,
+diagnostics, limits, unresolved IDs and local truncation IDs.
+
+Within a comparable pair, the result groups changes by recorded identity.
+Parallel edges keep their own IDs and directions. Presentation, topology,
+resolution, freshness and provenance have separate fields. The result
+carries supplied annotation status as captured metadata. `added` and
+`removed` describe membership changes between matching complete
+projections. For incomplete, truncated or differently limited projections,
+`not_observed_before` and `not_observed_after` identify which supplied
+view lacks the record. A current snapshot can report complete overall
+coverage alongside a local `attributes.truncated = true` marker. Local
+markers appear in `truncated_node_ids` or `truncated_edge_ids` and qualify
+membership changes for that pair. Changes to these lists appear under
+`changes.coverage`.
+Architecture contract and release comparison, a CLI command and effective
+T032 review remain open. [Implementation and evidence](changes/215_compareCapturedProcessViews.md).
+
 ## Input and evidence boundaries
 
 Pass the matching T024 inventory and provider graph. The function validates the
