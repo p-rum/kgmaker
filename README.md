@@ -1427,7 +1427,9 @@ prokazatelně zastaralý nezávislý kontext jako `STALE`. To zahrnuje dříve
 zachycený smazaný vstup, který má v modelu uvedenou cestu a jediného
 vlastníka, i současnou úpravu jiného zachyceného vstupu téhož modulu.
 Při této kombinaci důvod `STALE` uvede smazané i změněné cesty. Platné důkazy
-dalších modulů se zachovají.
+dalších modulů se zachovají. Když jsou vybraný i vyřazovaný kontext produkční,
+může zůstat platný i dříve ověřený kontext se scope `test`, pokud má vlastní
+modul, oddělené zdroje a nezávislé compiler důkazy.
 [Podporovaný rozsah a příklad API](docs/compiler-inspection.md#obnova-izolovaného-jvm-kontextu).
 
 ### Doklad skutečného testovacího běhu (T047-S10)

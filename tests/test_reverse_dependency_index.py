@@ -511,6 +511,139 @@ def test_actual_jvm_uncaptured_eol_drift_during_peer_publication(tmp_path, retir
     assert peer['freshness'] == ('STALE' if retire_peer else 'CONTENT_VERIFIED')
 
 
+def _native_javac_scope_fixture(root, control_scope='test', *, shared_module=False):
+    _require_javac_worker()
+    api = 'edited/src/main/java/Api.java'
+    caller = 'edited/src/main/java/Caller.java'
+    selected = 'selected/src/main/java/Entry.java'
+    control_module = 'selected' if shared_module else 'control'
+    control_set = 'test' if control_scope == 'test' else 'main'
+    control = f'{control_module}/src/{control_set}/java/Control.java'
+    target = _write(root, api, 'package edited; class Api { static int value(int n) { return n; } }\n')
+    _write(root, caller, 'package edited; class Caller { int run() { return Api.value(1); } }\n')
+    entry = _write(root, selected,
+                   'package selected; class Entry { static int old() { return 1; } int run() { return old(); } }\n')
+    _write(root, control,
+           'package control; class Control { static int stable() { return 1; } int run() { return stable(); } }\n')
+    selections = [('edited', 'production', 'main', [api, caller]),
+                  ('selected', 'production', 'main', [selected]),
+                  (control_module, control_scope, control_set, [control])]
+    options = {'repo_id': 'separate-scopes', 'project_model': {'source_sets': [
+        {'module': module, 'scope': scope, 'id': source_set, 'files': files}
+        for module, scope, source_set, files in selections]}}
+    contexts = []
+    for module, scope, source_set, _ in selections:
+        result = inspect_jvm(root, module=module, scope=scope, source_set=source_set, **options)
+        assert result['exit_code'] == 0 and result['coverage']['calls_resolved'] == 1
+        contexts.append(result['context'])
+    initial = store.load_graph(root)
+    target.write_text('package edited; class Api { static int value(String n) { return n.length(); } }\n',
+                      encoding='utf-8')
+    entry.write_text('package selected; class Entry { static int newValue() { return 2; } '
+                     'int run() { return newValue(); } }\n', encoding='utf-8')
+    return options, (api, caller, control), contexts, initial
+
+
+@pytest.mark.parametrize('control_scope', ['test', 'production'])
+def test_actual_javac_preserves_fresh_control_during_production_peer_retirement(tmp_path, control_scope):
+    options, (api, caller, control), (edited, selected, retained), initial = _native_javac_scope_fixture(
+        tmp_path, control_scope)
+    diagram = tmp_path / store.MERMAID_FILE
+    diagram.write_bytes(diagram.read_bytes() + b'%% scoped rollback witness\n')
+    before = _store_bytes(tmp_path)
+    revision = store.graph_revision(tmp_path)
+    with patch('subprocess.Popen', side_effect=AssertionError('unexpected implicit compiler process')):
+        impact = dependency_impact(tmp_path, [api])
+        assert validate_context_snapshot(tmp_path, retained) == ()
+    assert impact['graph_sha256'] == hashlib.sha256(before[GRAPH_FILE]).hexdigest()
+    assert [(row['kind'], row['path'], row['status']) for row in impact['affected']] == [
+        ('COMPILER_CALLER', caller, 'RECHECK')]
+    dry = inspect_jvm(tmp_path, module='selected', publish=False, **options)
+    assert dry['exit_code'] == 0 and dry['coverage']['calls_resolved'] == 1
+    assert _store_bytes(tmp_path) == before and store.graph_revision(tmp_path) == revision
+
+    if control_scope == 'test':
+        control_file = tmp_path / control
+        original = control_file.read_bytes()
+        replace_file = store.os.replace
+        replaced = []
+
+        def control_drifts_after_first_replace(source, destination):
+            replace_file(source, destination)
+            if destination == diagram and not replaced:
+                assert destination.read_bytes() != before[store.MERMAID_FILE]
+                replaced.append(destination)
+                control_file.write_bytes(original.replace(b'\n', b'\r\n'))
+
+        with patch.object(store.os, 'replace', control_drifts_after_first_replace), \
+                pytest.raises(WorkerError) as error:
+            inspect_jvm(tmp_path, module='selected', **options)
+        assert error.value.status == 'STALE' and replaced == [diagram]
+        assert _store_bytes(tmp_path) == before and store.graph_revision(tmp_path) == revision
+        control_file.write_bytes(original)
+
+    result = inspect_jvm(tmp_path, module='selected', **options)
+    graph = store.load_graph(tmp_path)
+    retired, *old_layer = _compiler_layer(graph, edited['id'])
+    assert retired[0]['freshness'] == 'STALE' and not any(old_layer)
+    assert not _compiler_layer(graph, selected['id'])[0]
+    assert _compiler_layer(graph, retained['id']) == _compiler_layer(initial, retained['id'])
+    assert [node for node in graph.nodes if node.path == control] == [
+        node for node in initial.nodes if node.path == control]
+    assert graph.to_dict() == result['graph'] and store.graph_revision(tmp_path) != revision
+    new_site, = [site for site in graph.call_sites if site['context_id'] == result['context']['id']]
+    target = next(item for item in graph.symbols if item['id'] == new_site['declared_target'])
+    assert target['name'] == 'newValue'
+
+
+@pytest.mark.parametrize('case', ['drifting-test', 'shared-module', 'shared-old-selected-proof',
+                                  'unknown-old-selected-owner', 'missing-retained-test-scope',
+                                  'null-retained-test-worker', 'missing-retained-test-id'])
+def test_actual_javac_rejects_unqualified_test_control_during_peer_retirement(tmp_path, case):
+    options, (_, _, control), (edited, selected, retained), initial = _native_javac_scope_fixture(
+        tmp_path, shared_module=case == 'shared-module')
+    if case == 'drifting-test':
+        file = tmp_path / control
+        file.write_bytes(file.read_bytes().replace(b'return 1;', b'return 2;'))
+    elif case == 'shared-old-selected-proof':
+        old_site, = [row for row in initial.call_sites if row['context_id'] == selected['id']]
+        control_edge, = [edge for edge in initial.edges if retained['id'] in edge.context_ids
+                         and edge.kind == 'resolves_to']
+        cross_scope = replace(control_edge, target=old_site['declared_target'])
+        initial.edges.append(cross_scope)
+        store.save_graph(initial, tmp_path)
+        assert cross_scope in store.load_graph(tmp_path).edges
+    elif case == 'unknown-old-selected-owner':
+        marker = {'analyzer_version': selected['analyzer_version'], 'freshness': 'STALE',
+                  'selection_key': selected['selection_key']}
+        initial.contexts.append(marker)
+        write_json(tmp_path / GRAPH_FILE, initial.to_dict())
+        assert marker in store.load_graph(tmp_path).contexts
+    elif case in {'missing-retained-test-scope', 'null-retained-test-worker', 'missing-retained-test-id'}:
+        malformed = next(row for row in initial.contexts if row.get('id') == retained['id'])
+        if case == 'missing-retained-test-id':
+            # Keep the real context for its existing evidence references.
+            malformed = dict(malformed)
+            malformed.pop('id')
+        else:
+            initial.contexts.remove(malformed)
+            if case == 'missing-retained-test-scope':
+                malformed.pop('scope')
+            else:
+                malformed['worker'] = None
+        initial.contexts.append(malformed)
+        write_json(tmp_path / GRAPH_FILE, initial.to_dict())
+        saved = store.load_graph(tmp_path).contexts
+        assert saved[-1] == malformed
+        assert any(row.get('id') == edited['id'] for row in saved[:-1])
+    before = _store_bytes(tmp_path)
+    revision = store.graph_revision(tmp_path)
+    with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+        inspect_jvm(tmp_path, module='selected', **options)
+    assert error.value.status == 'STALE'
+    assert _store_bytes(tmp_path) == before and store.graph_revision(tmp_path) == revision
+
+
 def test_actual_javac_signature_change_reaches_transitive_callers_without_workers(tmp_path):
     _require_javac_worker()
     src = "app/src/main/java/"

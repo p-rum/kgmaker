@@ -175,6 +175,14 @@ nová cesta vyvolá odmítnutí. Návrat smazaného souboru nebo změna bajtů
 přežívajícího souboru po první výměně výstupu obnoví poslední platnou generaci.
 [Ověření kombinované změny](changes/200_retireMixedOwnedCompilerInputs.md).
 
+`test_actual_javac_preserves_fresh_control_during_production_peer_retirement`
+ověřuje na JDK 21 zachování nezávislé testovací vrstvy při obnově a vyřazení
+produkčních kontextů. Uložené důkazy testovacího modulu zůstanou stejné.
+Při pozdní změně LF→CRLF, sdíleném modulu, překryvu compiler důkazů nebo
+neúplné identitě kontextu vrátí inspekce `STALE` se zachováním uložených
+bajtů a revize CAS. Dílčí běh má 25 PASS bez přeskočení. W02-AC01 zůstává
+`PARTIAL`. [Přesné ověření a hranice](changes/205_retainFreshTestContext.md).
+
 `test_explicit_composite_fk_columns_join_historical_migration_operations`
 ověřuje uložené sloupce složeného cizího klíče, přesné cesty operací,
 zachování uloženého grafu čtecím reportem a nový offline scan. Doplňkové

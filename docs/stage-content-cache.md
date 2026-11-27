@@ -171,6 +171,11 @@ jediným vlastníkem, inspekce může jeho starou compiler vrstvu vyřadit i př
 současné úpravě jiného zachyceného vstupu téhož modulu. Pro čtecí report
 zadejte obě cesty, například `kgmaker impact --evidence-only --format json
 edited/src/main/kotlin/Example.kt edited/src/main/kotlin/Caller.kt`.
+Při obnově jednoho produkčního modulu a vyřazení dříve zachyceného kontextu
+dalšího produkčního modulu může `inspect_jvm` zachovat i ověřený kontext
+ve scope `test` s vlastním modulem a oddělenými vstupy a compiler důkazy.
+Toto pravidlo patří k explicitní publikaci přes Python API. Čtecí report
+nadále pracuje s jedinou uloženou generací.
 [Rozsah Python API a příklad](compiler-inspection.md#obnova-izolovaného-jvm-kontextu).
 
 JSON v1 uvádí SHA-256 jedné uložené generace `graph_sha256`, pole `changed_sources`
