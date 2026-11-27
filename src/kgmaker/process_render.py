@@ -1,13 +1,17 @@
-"""Bounded Mermaid rendering of a supplied ProcessView and optional local review."""
+"""Bounded diagrams and reports of a supplied ProcessView."""
 from collections import defaultdict
 from hashlib import sha256
 import json
+import re
 
+from .analysis_model import canonical, digest
 from .architecture_cli import _safe_output
-from .architecture_render import _MAX_OUTPUT_BYTES, _mermaid_json, _mermaid_text
+from .architecture_render import _MAX_OUTPUT_BYTES, _mermaid_json, _mermaid_text, _text
 from .architecture_render_common import InterfaceMarkdownError, _bounded
 from .process_model import ProcessView, validate_process_view
 from .process_store import read_process_reviews
+from .view_explanation import _path as _source_path, _range as _source_range
+from .workspace import split_id
 
 
 _MERMAID_MAX_EDGES = 500
@@ -16,6 +20,12 @@ _MERMAID_MAX_TEXT_UNITS = 50_000
 
 class ProcessMermaidError(ValueError):
     def __init__(self, code='INVALID_PROCESS_MERMAID'):
+        self.code = code
+        super().__init__(code)
+
+
+class ProcessMarkdownError(ValueError):
+    def __init__(self, code='INVALID_PROCESS_MARKDOWN'):
         self.code = code
         super().__init__(code)
 
@@ -132,3 +142,119 @@ def _render(document, labels):
     if len(result.encode('utf-8')) > _MAX_OUTPUT_BYTES:
         raise ProcessMermaidError('PROCESS_MERMAID_LIMIT')
     return result
+
+
+def render_process_markdown(view: ProcessView) -> str:
+    """Render technical evidence and the matching Mermaid diagram without source reads."""
+    try:
+        document = _normalized(view)
+        return _markdown(document, _render(document, {}))
+    except ProcessMermaidError as error:
+        raise ProcessMarkdownError(error.code.replace('MERMAID', 'MARKDOWN')) from None
+    except ProcessMarkdownError:
+        raise
+    except (ValueError, KeyError, TypeError, AttributeError, RecursionError, OverflowError):
+        raise ProcessMarkdownError() from None
+
+
+def _captured_locator(proof):
+    source = proof.get('source_id')
+    checksum = proof.get('content_hash')
+    if (not isinstance(source, str) or not isinstance(checksum, str)
+            or not re.fullmatch('[0-9a-f]{64}', checksum) or not proof['context_ids']):
+        return 'SOURCE_LOCATOR_UNAVAILABLE'
+    path = proof.get('source_file')
+    try:
+        repository, _ = split_id(source)
+        _source_path(path, repository)
+    except ValueError:
+        return 'SOURCE_LOCATOR_UNAVAILABLE'
+    locator = {'path': path, 'content_hash': checksum}
+    span, _ = _source_range(proof.get('source_range'))
+    if span is not None:
+        locator['range'] = span
+    elif type(proof.get('source_line')) is int and proof['source_line'] > 0:
+        locator['line'] = proof['source_line']
+    return locator
+
+
+def _identity_text(value):
+    # A visible JSON spelling also distinguishes spaces from literal escapes.
+    if value is not None:
+        return json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(',', ':')).replace(' ', r'\u0020')
+
+
+def _markdown(document, diagram):
+    lines = []
+    size = 0
+
+    def add(line=''):
+        nonlocal size
+        size += len(line.encode('utf-8')) + 1
+        if size > _MAX_OUTPUT_BYTES:
+            raise ProcessMarkdownError('PROCESS_MARKDOWN_LIMIT')
+        lines.append(line)
+
+    def table(headers, rows):
+        add('| ' + ' | '.join(headers) + ' |')
+        add('| ' + ' | '.join('---' for _ in headers) + ' |')
+        for row in rows:
+            cells = (_text(canonical(value) if isinstance(value, (list, dict)) else value) for value in row)
+            add('| ' + ' | '.join(cells) + ' |')
+        add()
+
+    def occurrence(item):
+        attrs = item['attributes']
+        truncated = attrs.get('truncated')
+        return (_identity_text(attrs['context_ids']), item['resolution_status'], item['freshness'],
+                attrs.get('boundary_reason'), truncated if type(truncated) is bool else None, _identity_text(item['original_ids']),
+                item['evidence_kinds'], _identity_text(item['evidence_refs']))
+
+    definition, technical = document['definition'], document['technical_view']
+    add('# Technical process report\n')
+    add('## Snapshot\n')
+    table(('Snapshot', 'Captured value'), (
+        ('Process ID', _identity_text(document['process_id'])), ('Revision', document['revision']),
+        ('Content fingerprint', digest(document)), ('Baseline fingerprint', _identity_text(definition['baseline_fingerprint'])),
+        ('Scope', _identity_text(technical['scope'])), ('Selected context IDs', _identity_text(definition['context_ids'])),
+        ('Context selection', _identity_text(technical['context_selection'])),
+        ('Technical coverage', document['technical_status']),
+        ('Purpose', 'UNKNOWN'), ('Source observation', 'NOT_CHECKED'), ('Runtime execution', 'NOT_CHECKED'),
+        ('Data availability', 'UNKNOWN'),
+    ))
+    add('## Triggers and outcomes\n')
+    table(('Role', 'IDs'), (
+        ('Triggers', _identity_text(definition['trigger_ids'])), ('Entries', _identity_text(document['entry_ids'])),
+        ('Exits', _identity_text(document['exit_ids'])), ('Outcomes', _identity_text(document['outcome_ids'])),
+    ))
+
+    columns = ('Contexts', 'Resolution', 'Freshness', 'Boundary reason', 'Truncated',
+               'Original IDs', 'Evidence kinds', 'Evidence refs')
+    add('## Steps\n')
+    table(('Step ID', 'Kind', 'Technical label', 'Owner', *columns),
+          ((_identity_text(node['id']), node['kind'], node['label'], _identity_text(node['owner_id']), *occurrence(node))
+           for node in technical['nodes']))
+    add('## Transitions\n')
+    table(('Transition ID', 'Source', 'Target', 'Relation', 'Condition', *columns),
+          ((_identity_text(edge['id']), _identity_text(edge['source']), _identity_text(edge['target']), edge['relation'],
+            edge['attributes'].get('condition'), *occurrence(edge)) for edge in technical['edges']))
+
+    add('## Diagram\n')
+    longest_run = max((len(run[0]) for run in re.finditer(r'`+', diagram)), default=0)
+    fence = '`' * max(3, longest_run + 1)
+    add(fence + 'mermaid')
+    add(diagram.removesuffix('\n'))
+    add(fence)
+    add()
+
+    add('## Uncertainty\n')
+    table(('Coverage field', 'Value'), sorted(technical['coverage'].items()))
+    table(('Diagnostic',), ((item,) for item in technical['diagnostics']))
+    table(('Captured limitation',), ((limit,) for limit in technical['limits']))
+    add('## Provenance\n')
+    refs = {ref for item in (*technical['nodes'], *technical['edges']) for ref in item['evidence_refs']}
+    table(('Evidence ID', 'Kind', 'Freshness', 'Polarity', 'Contexts', 'Source ID', 'Captured locator'),
+          ((_identity_text(proof['id']), proof['evidence_kind'], proof['freshness'], proof['polarity'],
+            _identity_text(proof['context_ids']), _identity_text(proof.get('source_id')), _captured_locator(proof))
+           for proof in technical['provenance'] if proof['id'] in refs))
+    return '\n'.join(lines) + '\n'

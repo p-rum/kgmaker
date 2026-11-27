@@ -1048,6 +1048,11 @@ Use `kgmaker.process_render.render_reviewed_process_mermaid(root, view, document
 to add labels from effective local T032 approval for the same supplied view and
 captures. Technical occurrences and evidence records stay the same.
 
+Use `kgmaker.process_render.render_process_markdown(view)` for a technical
+Markdown report from the supplied snapshot. It includes exact steps and
+transitions, captured coverage and evidence, and the same Mermaid diagram.
+[Python report example and limits](docs/process-paths.md#markdown-report-for-a-supplied-processview-t036).
+
 ### Kafka interface catalogue
 
 The pure [Kafka catalogue](docs/kafka-interfaces.md) projects explicit upstream
