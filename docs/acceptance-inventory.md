@@ -1585,7 +1585,7 @@ See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
 | T036-AC03 | VERIFIED_IN_SCOPE | Jediná normalizace váže Markdown a bajtově shodný blok Mermaid na stejnou revizi. Připnuté parsery a SVG ověřují strukturu a technické výskyty. |
 | T036-AC04 | VERIFIED_IN_SCOPE | Neplatný typ, scope, kontext důkazu či reference, nebezpečný obsah a překročený rozpočet vyvolají `ProcessMarkdownError` bez změny vstupu či posledního uloženého výkazu. |
 | T036-AC05 | VERIFIED_IN_SCOPE | Fixture zachovávají `PARTIAL`, vynechání, samostatné lokální truncation, důvod nevyřešeného ručního předání a `STALE` zachyceného důkazu. Neznámý důkaz a stav `NOT_CHECKED` zůstávají výslovné. |
-| T036-AC06 | PARTIAL | Čisté Python API a konkrétní fixture mají na připravených zdrojích 122 PASS / 0 SKIP včetně připnutých parserů, SVG a Javacu. [Dokumentace, doklady a oddělený rozsah](changes/206_renderBusinessProcessReport.md). |
+| T036-AC06 | PARTIAL | Čisté Python API a konkrétní fixture mají po sloučení [#190](https://github.com/p-rum/kgmaker/pull/190) na `71ace79` 122 PASS / 0 SKIP, raw exit 0, včetně připnutých parserů, SVG a Javacu. [Dokumentace, doklady a oddělený rozsah](changes/206_renderBusinessProcessReport.md) · [Přímý běh na merge](changes/208_recordBusinessProcessReportMerge.md). |
 
 
 ## T014 — current-parent descendant-result transfer

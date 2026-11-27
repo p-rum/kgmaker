@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 637
+- Scope: production; omitted files: 638
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `8114aaba8692c3c0eaa7a198b2ef10c9948152011b353353c4600242acdb1599`; content: `161615acc4f980256b6c62cb19f849654172b8e3420e78d6b5aa5994c3b20f98`; freshness: CONTENT_VERIFIED
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 513
+- Implementation episodes: 514
 - Inferred/ambiguous relationships: 9354/0
 
 ## Architecture diagram
@@ -2933,6 +2933,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/202_alignMemoryCaptureProjection.md, docs/completion-orchestrator.md, docs/production-analysis-progress.md; validation: focused-memory-projection=passed
 - **test(t047-s01): verify cold Kotlin call evidence after target deletion** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/137_prepareIncrementalMutationOracle.md, docs/production-analysis-progress.md, fixtures/incremental-integrity/README.md; validation: cold-delete-focus=passed, strict-focused-133=passed, source-manifest=passed, full-suite=unknown
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Co lze nyní použít** — removed; files: README.md, docs/acceptance-inventory.md, docs/changes/12_mapCrossRepoArtifacts.md, docs/flyway-workspace-proofs.md, docs/production-analysis-progress.md; validation: focused5=passed, workspace-provider=passed, real-maven-jdk21-jdk22=passed, mandatory-workers-full205=passed, semantic=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: docs/acceptance-inventory.md, docs/changes/208_recordBusinessProcessReportMerge.md, docs/production-analysis-progress.md; validation: planner=passed, source-diff=passed, semantic-before-capture=passed
 - **merge refreshed W01 T009 parent into S06 W02** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/changes/49_projectJpaInheritedAttributes.md, docs/compiler-inspection.md; validation: jpa-focused=passed, semantic=passed, current-main=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest195=passed, spring-meta-stereotype=passed, component-scan-scope=passed
 - **feat(t020): render bounded interface Markdown with original evidence links** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/changes/100_renderInterfaceMarkdown.md; validation: expanded_pure176=passed, final_renderer47=passed, strict_full=unknown
@@ -3098,7 +3099,7 @@ flowchart LR
 - **merge: retarget golden corpus onto merged coroutine main** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/62_verifyJvmGoldenCorpus.md, docs/compiler-inspection.md; validation: actual-corpus=passed, parent-pure=passed, donor-provenance=passed
 - **Require verified scope for explicitly gated completion dependencies** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/175_requireVerifiedDependencies.md, docs/completion-orchestrator.md, docs/production-analysis-progress.md; validation: planner-workflow-tests=passed
 - **Merge remote-tracking branch 'origin/main' into fix/t010-ambiguous-provider-routes** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/88_preserveAmbiguousHttpProviders.md, docs/production-analysis-progress.md; validation: actual-focus-149=passed, current-parent-pure-59=passed, full-acceptance-pending=unknown
-- **fix(runtime): accept companion calls with a single value sample** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/207_allowRuntimeValueCallCompanions.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: exact-head-native=unknown, standard=unknown, planner=passed, source-diff=passed, semantic-before-capture=passed
+- **fix(runtime): accept companion calls with a single value sample** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/207_allowRuntimeValueCallCompanions.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: exact-head-native=unknown, standard=unknown, planner=passed, source-diff=passed, semantic-before-capture=passed
 - **merge: integrate K2 main with portable Windows installation candidate** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/40_supportWindowsUserInstall.md, docs/compiler-inspection.md; validation: linux-focused=passed, diagnostic-syntax=passed, native-diagnostic-matrix=skipped
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/architecture.md, docs/changes/121_invalidateDerivedViews.md; validation: targeted-pytest=passed, diff-check=passed, full-suite=skipped, runtime-toolchain=skipped
 - **Record exact runtime import verification and deduplication scope** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/151_preserveRuntimeObservationEvidence.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: runtime-alias-jdk21-cas=passed, native-jdk21-maven-kafka-k1-k2=passed, standard-cpython313=passed, github-actions=unknown
