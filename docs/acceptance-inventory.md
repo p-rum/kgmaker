@@ -1597,6 +1597,17 @@ See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
 | T036-AC05 | VERIFIED_IN_SCOPE | Fixture zachovávají `PARTIAL`, vynechání, samostatné lokální truncation, důvod nevyřešeného ručního předání a `STALE` zachyceného důkazu. Neznámý důkaz a stav `NOT_CHECKED` zůstávají výslovné. |
 | T036-AC06 | PARTIAL | Čisté Python API a konkrétní fixture mají po sloučení [#190](https://github.com/p-rum/kgmaker/pull/190) na `71ace79` 122 PASS / 0 SKIP, raw exit 0, včetně připnutých parserů, SVG a Javacu. [Dokumentace, doklady a oddělený rozsah](changes/206_renderBusinessProcessReport.md) · [Přímý běh na merge](changes/208_recordBusinessProcessReportMerge.md). |
 
+## T038 — atomická publikace dodaného ProcessView
+
+| Kritérium | Ověření místního výřezu | Důkaz |
+|---|---|---|
+| T038-AC01 | VERIFIED_IN_SCOPE | Tři formáty mají společný fingerprint. Test čtenáře přes přepnutí manifestu ověřuje bajty a hashe staré i nové generace. Opakování aktivního exportu zachovává manifest i soubory. |
+| T038-AC02 | VERIFIED_IN_SCOPE | Pozdní selhání Markdown rendereru, chyba zápisu či výměny manifestu, zrušení a deadline během přípravy i u publikační hranice zachovají předchozí generaci. Po přepnutí určuje výsledek uložený manifest i při přerušeném stdout. |
+| T038-AC03 | VERIFIED_IN_SCOPE | Pokus o traversal a přesměrování symlinkem odmítne veřejný příkaz. Dva samostatné zapisovače ze stejného základu mají právě jeden úspěch. Posloupnost A → B → A má novou identitu exportu a odmítne původního zapisovače. |
+| T038-AC04 | VERIFIED_IN_SCOPE | Neplatný scope, cizí manifest i selhání renderu či zápisu zachovají porovnané bajty a časy změn uložených artefaktů. Změna obsahu snapshotu nebo připraveného artefaktu před publikací se odmítne. |
+| T038-AC05 | VERIFIED_IN_SCOPE | Skutečný Markdown parser a Mermaid parser s SVG potvrzují identický diagram, příslušnost ke snapshotu a zachování `PARTIAL`, `TRUNCATED` i výslovné nevyřešené hranice. Dodaná review anotace zůstává v JSON a technické výstupy ji nepoužijí jako schválený popisek. |
+| T038-AC06 | PARTIAL | `tests/test_t038_publish_view_artifacts_atomically.py` a regrese T036 mají na lokálním kandidátovi nad `d759fa9` 36 PASS / 0 SKIP, raw exit 0, včetně připnutého Markdown parseru, Mermaid 11.4.1 a SVG s jsdom 26. Úplný běh a formální T045 revize přesného base/head mají stav NOT_RUN. Architektonický export zbývá. [Doklad](changes/210_publishProcessViewAtomically.md). |
+
 
 ## T014 — current-parent descendant-result transfer
 

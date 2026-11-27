@@ -1062,6 +1062,15 @@ Markdown report from the supplied snapshot. It includes exact steps and
 transitions, captured coverage and evidence, and the same Mermaid diagram.
 [Python report example and limits](docs/process-paths.md#markdown-report-for-a-supplied-processview-t036).
 
+Publish JSON, Markdown and Mermaid for one explicit technical ProcessView.
+
+```bash
+kgmaker process export --snapshot process.json --output reports/process
+```
+
+Read `reports/process/manifest.json` once and use the three paths in that
+manifest to read one generation. [Process export options and manifest](docs/process-paths.md#atomic-process-export-t038).
+
 ### Kafka interface catalogue
 
 The pure [Kafka catalogue](docs/kafka-interfaces.md) projects explicit upstream
