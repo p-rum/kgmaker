@@ -106,7 +106,7 @@
     "docs/changes/197_bindAdjacentRuntimeValueHook.md": "22f22a61b5a7d1a446991944a6d2be805692e44e841fee7a132b1173facbaaed",
     "docs/changes/198_bindLinuxLauncherEnvironment.md": "4b56db955a854f7195f70ef13cc8fc14c5c338a8b58462b13db7b0f81331c904",
     "docs/changes/1_addProductionScope.md": "01d4001f03b21b1115d6461514f4b643d12cff3ae03bcaabfb6645bb3dd15113",
-    "docs/changes/200_retireMixedOwnedCompilerInputs.md": "aab6c5425751328017d3ceb0be4a0a0a10eff4e6205948b3a6ba6c6e1946206d",
+    "docs/changes/200_retireMixedOwnedCompilerInputs.md": "e5762170f7f6604b4e84c448101e069cc51823e5042b2235792a29745d0e83d2",
     "docs/changes/201_recordTopologyMarkdownMerge.md": "4760b4faa92027be35bad955d71de3df86f78eff844dbebbea1d6aa19303ef37",
     "docs/changes/202_alignMemoryCaptureProjection.md": "531ba58e7239c1138d8a0970445b202b15dc22c849d36f0dd776dcaadb163eca",
     "docs/changes/26_addCodeReviewAgent.md": "b3daa09ab9ec31c301fbaa1afe2101becde926ea5db35260c4ab7582f49a023d",
@@ -313172,9 +313172,9 @@
     },
     {
       "base_commit": "adca1031dede08e294c3fd1234150d27ee6379a6",
-      "head_commit": "d0dfd024fa108f74f82aef49c0a940307230f8a4",
-      "worktree_fingerprint": "d60909c79fdcb6b7f90316959eac15a09a1b2a09ef2ea1a603b02056008580eb",
-      "title": "Correct the mixed compiler input change provenance",
+      "head_commit": "2f560ef598ee33ac6eae40e3c05fa855d10090a8",
+      "worktree_fingerprint": "2195944792fd0635069ce2397ee98d9dd90e70943be538ab249487c12356b844",
+      "title": "Record tested mixed compiler input scope in the inventory",
       "changed_files": [
         {
           "path": "README.md",
@@ -313189,7 +313189,7 @@
         {
           "path": "docs/changes/200_retireMixedOwnedCompilerInputs.md",
           "status": "A",
-          "sha256": "aab6c5425751328017d3ceb0be4a0a0a10eff4e6205948b3a6ba6c6e1946206d"
+          "sha256": "e5762170f7f6604b4e84c448101e069cc51823e5042b2235792a29745d0e83d2"
         },
         {
           "path": "docs/compiler-inspection.md",
@@ -313644,6 +313644,7 @@
         "section:docs/changes/200_retireMixedOwnedCompilerInputs.md:Krok 5 — použití a stav (AC04)::64",
         "section:docs/changes/200_retireMixedOwnedCompilerInputs.md:Krok 6 — draft #184 a přenos po #181::83",
         "section:docs/changes/200_retireMixedOwnedCompilerInputs.md:Krok 7 — přenos po #182::97",
+        "section:docs/changes/200_retireMixedOwnedCompilerInputs.md:Krok 8 — doložení stavu W02 (T003-S10-W02-AC04, T052-AC04)::106",
         "section:docs/changes/200_retireMixedOwnedCompilerInputs.md:Současná úprava a odstranění JVM vstupů v izolovaném kontextu::1",
         "section:docs/compiler-inspection.md:Alternativa s vlastní kompletní distribucí, bez fallbacku:::183",
         "section:docs/compiler-inspection.md:Argument to parameter bindings::845",
@@ -313985,6 +313986,7 @@
           "section:docs/changes/200_retireMixedOwnedCompilerInputs.md:Krok 5 — použití a stav (AC04)::64",
           "section:docs/changes/200_retireMixedOwnedCompilerInputs.md:Krok 6 — draft #184 a přenos po #181::83",
           "section:docs/changes/200_retireMixedOwnedCompilerInputs.md:Krok 7 — přenos po #182::97",
+          "section:docs/changes/200_retireMixedOwnedCompilerInputs.md:Krok 8 — doložení stavu W02 (T003-S10-W02-AC04, T052-AC04)::106",
           "section:docs/changes/200_retireMixedOwnedCompilerInputs.md:Současná úprava a odstranění JVM vstupů v izolovaném kontextu::1",
           "section:docs/compiler-inspection.md:Logické klíče deklarací Kotlinu::1731",
           "section:docs/compiler-inspection.md:Pozorované hrany a statické cesty::1712"
@@ -314168,7 +314170,7 @@
           "status": "unknown"
         }
       ],
-      "id": "episode:d192764fec23885627a16f51ed1aa50454020b5d497d9cf2ae12c6ee7caa0c47"
+      "id": "episode:69acae6f10c3b9c9994ca0aa052a76816f710879dbecbbcb424725abc051188c"
     }
   ]
 }

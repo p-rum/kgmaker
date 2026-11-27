@@ -102,3 +102,22 @@ head draftu #184 `1fb557b190af2fac56b08dc4d4fdae2dbf3fd9ea` s tehdejším
 Zdroje a testy W02 zůstaly shodné s dosavadním headem draftu. Výsledky z kroku 4
 patří původnímu stromu. Při přípravě této integrace měly nový nativní běh i úplná
 standardní sada stav `NOT_RUN`. W02 zůstává `MERGED / PARTIAL`.
+
+## Krok 8 — doložení stavu W02 (T003-S10-W02-AC04, T052-AC04)
+
+Výchozí revize je `d0dfd024fa108f74f82aef49c0a940307230f8a4`. Po
+[review T045](https://github.com/p-rum/kgmaker/pull/184#issuecomment-7206793117)
+uvádí řádek W02 v [implementačním inventáři](../production-analysis-progress.md)
+výsledky konkrétních revizí a odkazuje na #184 bez dočasného stavu pull requestu.
+Cílená sada s K1/K2 na `fa51826bf291eb17bef9d9d14d36fe3b3e4a5686` a na
+výchozí revizi měla v obou případech 36 PASS / 0 SKIP. Úplná sada CPython 3.13
+na výchozí revizi měla 2 673 PASS / 1 400 SKIP / 1 XFAIL, návratový kód 0.
+
+Změna se týká `docs/production-analysis-progress.md`, tohoto záznamu a generovaného
+grafu. Implementace, testy a jejich kompatibilita zůstaly beze změny. Na stromu
+`1a99401e034405840750695255b496c26c0a1345` prošly `kgmaker semantic validate`,
+`kgmaker scan`, `kgmaker status`, `kgmaker check` a `git diff --check`.
+`kgmaker completion plan --jobs 32` zachoval 135 položek a pořadí 32 delegací.
+Při přípravě tohoto záznamu měly nativní a úplná sada pro novou revizi stav
+`NOT_RUN`. W02 zůstává `MERGED / PARTIAL` a zahájení S10-W03 dál vyžaduje
+`VERIFIED_IN_SCOPE` pro W02.
