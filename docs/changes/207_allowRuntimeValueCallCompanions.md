@@ -204,16 +204,10 @@ rozsah. Identita, revize specifikace a závislosti zadání se nemění.
 Instanční pole, další typy a vícekrokové toky, Windows, async a reflexe
 mají vlastní ověření. Změna nedokládá úplnou dostupnost ani použitelnost.
 
-Záznam přenosu na konečný základ připojí přesný commit a výsledky
-opakovaného nativního běhu a úplného `PYTHONPATH=src python3 -m pytest -q`
-v odděleném archivu. Doloží také `git diff --check "$base" "$head"`,
-`kgmaker semantic update --base "$base"`, použitou podobu sémantického
-patche, `kgmaker semantic apply`, `kgmaker semantic validate`, zachycení
-a idempotenci jedné epizody `kgmaker memory capture --base "$base"` a
-příkazy `kgmaker scan`, `kgmaker status` a `kgmaker check`.
-Při tomto přípravném ověření mají testy výsledné revize, celý standardní
-běh, grafové brány, nezávislé review, Windows a hostované CI stav
-`NOT_RUN`. Historické výsledky se vztahují k výše uvedeným zdrojům.
+Při původní přípravě na `f7015b6` měly grafové kontroly přenosu, přesný
+nativní běh a úplná sada na tehdy budoucí revizi, review, Windows i GitHub
+Actions stav `NOT_RUN`. Následující část zaznamenává kontroly skutečného
+přenosu po #190. Historické zdrojové výsledky platí pro výše uvedené stromy.
 
 ## Přenos na skutečný main po #190
 
@@ -263,6 +257,30 @@ testové bloby pro reprodukci RED z veřejných revizí a ověření příkazů.
 Oproti původnímu integračnímu návrhu se změnila dokumentace. Základ,
 fixture, test a produktový zdroj mají stejné původní bloby.
 
-Zde zaznamenané historické zdrojové testy platí pro původní zdrojový strom.
-Přesný nativní běh, standardní sada, review a hosted zůstanou v záznamu
-o přenosu jako `NOT_RUN` do jejich samostatného ověření nad přesnou revizí.
+### Výsledky přenosu pro T003-S13-W03 a AC04
+
+Běh 27. listopadu ověřil staged strom
+`fc7586dba9be4eab37f1e75bb571d551114b284f`, později commit
+`955f613e07ecb4ff4fe1654c6e0180ad6f9d8606` nad základem `71ace79`.
+
+- `git diff --cached --check` měl PASS a raw exit 0. Ověřeny byly také
+  tři shodné zdrojové bloby.
+- `tests/test_completion.py` mělo 13 PASS, 0 SKIP, 0 FAIL a raw exit 0.
+  SHA-256 JUnit `b99c6d6f4b773d9f3a3336e86f0a8bf7bf9bdf02c10283122b57cfaae67a8aed`.
+  Příkaz `completion plan --jobs 32` skončil raw exit 0. Zachoval
+  všech 135 položek, pořadí 32 položek k práci a požadavek
+  `VERIFIED_IN_SCOPE` pro T003-S10-W02 před T003-S10-W03.
+- `semantic update` měl raw exit 0 pro devět vlastních cest. Kontrola
+  sémantického patche, `semantic apply` a oba příkazy `semantic validate`
+  měly raw exit 0. Zachovaly se hodnoty všech 60 kurátorovaných konceptů
+  a 222 vazeb.
+- První a opakovaný `memory capture` měly raw exit 0. Všech 512 přijatých
+  epizod zůstalo bajtově shodných. Přibyla jedna epizoda omezená na devět
+  vlastních cest. Při opakování se nezměnil sémantický artefakt ani graf.
+- `scan`, `status` a `check` měly každý raw exit 0. Strojový graf
+  zachoval všechny tři uzly `Rates.xlsx`. `.kgmaker/GRAPH.mmd` zůstal
+  bajtově shodný se základem.
+
+Tyto výsledky platí pro uvedený strom přenosu. Pro následnou revizi s
+doplněným záznamem mají přesný nativní běh, úplná standardní sada,
+nezávislé review a GitHub Actions při přípravě záznamu stav `NOT_RUN`.

@@ -115,7 +115,7 @@
     "docs/changes/204_renderReviewedProcessMermaid.md": "22dd8e4c596821ef90a9862304867c668a428fe3fe91b9ac744f64331c8e40bc",
     "docs/changes/205_retainFreshTestContext.md": "55d8b49f763b6adc827ae7d87d5cbdc99380e977dd505034a8afa085a0ca125b",
     "docs/changes/206_renderBusinessProcessReport.md": "e192649832ea541943e04cb8ef37ab4d165d80a3bece4c82f7796cb98e064641",
-    "docs/changes/207_allowRuntimeValueCallCompanions.md": "a21b6910fd923a89196450cd5b48f24e1b9108f319b3efaa9aeb51e579b23558",
+    "docs/changes/207_allowRuntimeValueCallCompanions.md": "b5588463c8f2cfb0b995cf2cf4cfd45564d5d7fd495280f9bd69aff15ab9f343",
     "docs/changes/26_addCodeReviewAgent.md": "b3daa09ab9ec31c301fbaa1afe2101becde926ea5db35260c4ab7582f49a023d",
     "docs/changes/28_captureKotlinCompilerOptions.md": "ad0d6c0340c82d47d0998631d768170217ea36a8a1b167f865b178bc11fd4d5f",
     "docs/changes/29_mapCrossRepoArtifacts.md": "ac0f9bcbe744f806d1bdb4c708b21312e73576899de870096609c7ee68acd685",
@@ -317423,9 +317423,9 @@
     },
     {
       "base_commit": "71ace79093f853c385566dd90c25e0178cec8fca",
-      "head_commit": "71ace79093f853c385566dd90c25e0178cec8fca",
-      "worktree_fingerprint": "c67996b98b9b250e7343f941eff17eaab8a6b612d9043328705f6726319ea576",
-      "title": "Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální audit dodání — 2026-11-14",
+      "head_commit": "955f613e07ecb4ff4fe1654c6e0180ad6f9d8606",
+      "worktree_fingerprint": "45aacd536bbd2fc337da9764d4bed436dcdd377d4b3551f72f6543dc0f68395c",
+      "title": "fix(runtime): accept companion calls with a single value sample",
       "changed_files": [
         {
           "path": "README.md",
@@ -317440,7 +317440,7 @@
         {
           "path": "docs/changes/207_allowRuntimeValueCallCompanions.md",
           "status": "A",
-          "sha256": "a21b6910fd923a89196450cd5b48f24e1b9108f319b3efaa9aeb51e579b23558"
+          "sha256": "b5588463c8f2cfb0b995cf2cf4cfd45564d5d7fd495280f9bd69aff15ab9f343"
         },
         {
           "path": "docs/feature-analysis.md",
@@ -317752,9 +317752,10 @@
         "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Krok 3 a AC01/03 — hodnotový import a živé čtení::67",
         "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Krok 4 a AC01–AC03 — nativní a regresní kontroly::78",
         "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Krok 5 a AC04 — dokumentace a další ověření::197",
-        "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Přenos na skutečný main po #190::218",
+        "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Přenos na skutečný main po #190::212",
         "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Přítomnost hodnoty s doprovodným záznamem volání::1",
-        "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Z připraveného packetu zachovat dotčené existující uzly a vazby.::246",
+        "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Výsledky přenosu pro T003-S13-W03 a AC04::260",
+        "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Z připraveného packetu zachovat dotčené existující uzly a vazby.::240",
         "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Úplná standardní sada::162",
         "section:docs/feature-analysis.md:Agent reads packet.json and candidate-template.json, writes candidate.json.::56",
         "section:docs/feature-analysis.md:CLI workflow::33",
@@ -317940,9 +317941,10 @@
           "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Krok 3 a AC01/03 — hodnotový import a živé čtení::67",
           "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Krok 4 a AC01–AC03 — nativní a regresní kontroly::78",
           "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Krok 5 a AC04 — dokumentace a další ověření::197",
-          "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Přenos na skutečný main po #190::218",
+          "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Přenos na skutečný main po #190::212",
           "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Přítomnost hodnoty s doprovodným záznamem volání::1",
-          "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Z připraveného packetu zachovat dotčené existující uzly a vazby.::246",
+          "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Výsledky přenosu pro T003-S13-W03 a AC04::260",
+          "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Z připraveného packetu zachovat dotčené existující uzly a vazby.::240",
           "section:docs/changes/207_allowRuntimeValueCallCompanions.md:Úplná standardní sada::162",
           "section:docs/feature-analysis.md:Deferred Confluence connection configuration::430",
           "section:docs/feature-analysis.md:Test cases pro existující funkcionalitu a dohledatelnost::474",
@@ -318027,7 +318029,7 @@
           "status": "passed"
         }
       ],
-      "id": "episode:d928399672827ca120c33cd4101b91db0ef5321aa9a6f6a9e6c6fb51e8dd2598"
+      "id": "episode:b7e1a32546c18cc5035390a8205ef482921648a1d65742328f71b2fa260694bf"
     }
   ]
 }
