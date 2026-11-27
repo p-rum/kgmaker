@@ -96,8 +96,9 @@ W02 zůstává `MERGED / PARTIAL` podle rozsahu dříve sloučených výřezů.
 
 ## Krok 7 — přenos po #182
 
-Kandidát #184 `1fb557b190af2fac56b08dc4d4fdae2dbf3fd9ea` navazuje na
-`main` `adca1031dede08e294c3fd1234150d27ee6379a6` po sloučení [#182](https://github.com/p-rum/kgmaker/pull/182).
-Zdroje a testy W02 mají stejné bajty jako první rodič. Výsledky z kroku 4
-patří původnímu stromu. Nový nativní běh a úplná sada nad touto integrací
-mají při předání stav `NOT_RUN`. W02 zůstává `MERGED / PARTIAL`.
+Přenos po sloučení [#182](https://github.com/p-rum/kgmaker/pull/182) spojil dosavadní
+head draftu #184 `1fb557b190af2fac56b08dc4d4fdae2dbf3fd9ea` s tehdejším
+`main` `adca1031dede08e294c3fd1234150d27ee6379a6`.
+Zdroje a testy W02 zůstaly shodné s dosavadním headem draftu. Výsledky z kroku 4
+patří původnímu stromu. Při přípravě této integrace měly nový nativní běh i úplná
+standardní sada stav `NOT_RUN`. W02 zůstává `MERGED / PARTIAL`.
