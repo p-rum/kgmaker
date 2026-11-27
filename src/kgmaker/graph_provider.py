@@ -573,9 +573,11 @@ def _owns_deleted_jvm_inputs(initial: KnowledgeGraph, stored: KnowledgeGraph,
 
 def _isolated_jvm_peer(initial: KnowledgeGraph, fresh: KnowledgeGraph, stored: KnowledgeGraph,
                        context: dict, peers: list[dict], selected: dict, error: _JvmSourceDrift) -> bool:
-    if initial.raw_file_hashes is None or error.deleted.intersection(initial.files) or any(
-            initial.raw_file_hashes.get(path, initial.files.get(path)) != value
-            for path, value in error.changed.items()):
+    scope = selected.get('scope')
+    if (context.get('scope') != scope or initial.raw_file_hashes is None
+            or error.deleted.intersection(initial.files) or any(
+                initial.raw_file_hashes.get(path, initial.files.get(path)) != value
+                for path, value in error.changed.items())):
         return False
     files = {node.path: (node.build_membership, node.scope) for node in initial.nodes if node.kind == 'file'}
     active = [selected, *(item for item in peers if item.get('freshness') != 'STALE')]
@@ -587,24 +589,28 @@ def _isolated_jvm_peer(initial: KnowledgeGraph, fresh: KnowledgeGraph, stored: K
         libraries = {(Path(item['path']).resolve(strict=True), item['sha256']) for item in distribution[1:]}
         libraries = {(path, checksum) for path, checksum in libraries if path.parent == library_root}
         for item in active:
+            item_id = item.get('id')
             module, source_set = item.get('module'), item.get('source_set')
-            if (not isinstance(module, str) or not isinstance(source_set, str)
-                    or jvm_raw_capture_id(item) != item['id']
+            item_scope = item.get('scope')
+            worker = item.get('worker')
+            if (not isinstance(item_id, str) or not item_id
+                    or not isinstance(module, str) or not isinstance(source_set, str)
+                    or not isinstance(item_scope, str) or not isinstance(worker, dict)
+                    or jvm_raw_capture_id(item) != item_id
                     or item.get('freshness') != 'CONTENT_VERIFIED'
                     or item.get('origin_trust') != 'LOCAL_COMPILER_INPUTS'
                     or item.get('repo_id') != selected.get('repo_id')
-                    or item.get('scope') != selected.get('scope')
                     or item.get('project_model') != selected.get('project_model')
-                    or item.get('worker', {}).get('distribution') != distribution
+                    or worker.get('distribution') != distribution
                     or any(item.get(key) for key in ('build_id', 'build_context_id', 'manifest_hash',
                                                      'toolchain', 'dependency_model_hash', 'compiler_options',
                                                      'generated_source_roots', 'bytecode_artifacts'))
                     or not item.get('compiler_inputs')
-                    or any(files.get(path) != ((module + ':' + source_set,), item['scope'])
+                    or any(files.get(path) != ((module + ':' + source_set,), item_scope)
                            for path in item['source_files']
-                           if item['id'] != context['id'] or path not in error.deleted)):
+                           if item_id != context['id'] or path not in error.deleted)):
                 return False
-            if item['id'] != context['id'] and (item['module'] == context['module']
+            if item_id != context['id'] and (item['module'] == context['module']
                     or context['source_files'].keys() & item['source_files'].keys()):
                 return False
             classpath = item.get('classpath')
@@ -617,6 +623,23 @@ def _isolated_jvm_peer(initial: KnowledgeGraph, fresh: KnowledgeGraph, stored: K
                 return False
     except (OSError, RuntimeError):
         return False
+    other_scopes = [item for item in active if item.get('scope') != scope]
+    if other_scopes:
+        # A retained test capture must also be independent of both versions of the selected layer.
+        control_paths = {path for item in other_scopes for path in item['source_files']}
+        if (scope != 'production' or selected['source_files'].keys() & control_paths or any(
+                item.get('scope') != 'test' or item['module'] == selected['module']
+                or not _isolated_peer_evidence(fresh, item) for item in other_scopes)):
+            return False
+        stored_contexts = _compiler_contexts(stored)
+        stored_ids = [item.get('id') for item in stored_contexts]
+        if not _reference_ids(stored_ids) or len(set(stored_ids)) != len(stored_ids):
+            return False
+        selection = _selection_key(selected)
+        replaced = (item for item in stored_contexts if _selection_key(item) == selection)
+        if any(jvm_raw_capture_id(item) != item['id'] or control_paths.intersection(item['source_files'])
+               or not _isolated_peer_evidence(stored, item) for item in replaced):
+            return False
     if error.deleted and not _owns_deleted_jvm_inputs(initial, stored, context, error.deleted):
         return False
     return _isolated_peer_evidence(stored, context) and _isolated_peer_evidence(fresh, context)
