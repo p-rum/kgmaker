@@ -174,8 +174,11 @@ edited/src/main/kotlin/Example.kt edited/src/main/kotlin/Caller.kt`.
 Při obnově jednoho produkčního modulu a vyřazení dříve zachyceného kontextu
 dalšího produkčního modulu může `inspect_jvm` zachovat i ověřený kontext
 ve scope `test` s vlastním modulem a oddělenými vstupy a compiler důkazy.
-Toto pravidlo patří k explicitní publikaci přes Python API. Čtecí report
-nadále pracuje s jedinou uloženou generací.
+Při obnově a vyřazení dvou testovacích kontextů může zachovat odpovídající
+nezávislý produkční kontext. Před explicitní publikací přes Python API
+lze otestovat dopad na jedné uložené generaci příkazem
+`kgmaker impact --evidence-only --format json edited/src/test/java/Api.java`.
+[Nativní ověření](changes/209_retainFreshProductionContext.md).
 [Rozsah Python API a příklad](compiler-inspection.md#obnova-izolovaného-jvm-kontextu).
 
 JSON v1 uvádí SHA-256 jedné uložené generace `graph_sha256`, pole `changed_sources`

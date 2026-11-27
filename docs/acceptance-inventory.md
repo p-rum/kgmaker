@@ -183,6 +183,16 @@ neúplné identitě kontextu vrátí inspekce `STALE` se zachováním uloženýc
 bajtů a revize CAS. Dílčí běh má 25 PASS bez přeskočení. W02-AC01 zůstává
 `PARTIAL`. [Přesné ověření a hranice](changes/205_retainFreshTestContext.md).
 
+`test_actual_javac_preserves_fresh_production_control_during_test_peer_retirement`
+pokrývá W02-AC01 a AC03 při obnově a vyřazení dvou testovacích kontextů.
+Celá platná produkční vrstva se zachová a čtecí report uvede konkrétní
+doloženou cestu a původní compiler kontext. Nativní fixture ověří návrat
+bajtů uloženého grafu i revize CAS po pozdní změně LF→CRLF.
+`test_actual_javac_rejects_drifting_production_control_during_test_peer_retirement`
+pokrývá odmítnutí skutečně změněné produkční kontroly. Ověření čtyř
+přípravných případů s Javacem 21 je v záznamu změny. W02-AC01
+zůstává `PARTIAL`. [Rozsah a důkazy](changes/209_retainFreshProductionContext.md).
+
 `test_explicit_composite_fk_columns_join_historical_migration_operations`
 ověřuje uložené sloupce složeného cizího klíče, přesné cesty operací,
 zachování uloženého grafu čtecím reportem a nový offline scan. Doplňkové
