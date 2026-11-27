@@ -77,3 +77,81 @@ ve stavu `PR_OPEN / PARTIAL`. Úplná sada, nezávislé review a hostované CI
 měly v uvedeném místním ověření stav NOT_RUN. T036 stále čeká na dodání T035.
 Zbývá připojení CLI, autorita schválených popisků z T032 (AC02) a navazující
 vysvětlení a export.
+
+## T035-S05 a T035-AC06 — přenos kandidáta po #184
+
+27. listopadu 2026. Přenos spojuje dosavadní head [#183](https://github.com/p-rum/kgmaker/pull/183)
+`e8d737f80115b7475fe806b2cd83ad0d1cebedfe` jako prvního rodiče se skutečným
+`main` `1841553b2f2923f9342a1674cacc1ea36b8e9092` jako druhým rodičem.
+Po sloučení [#184](https://github.com/p-rum/kgmaker/pull/184) měl `main` strom
+`99da626c7ad5a17d9e25902f4113d37b98599128`. Přenos zahrnuje mezitím sloučené
+změny T022, orchestrátoru a compiler evidence W01 a W02.
+
+V původní zdrojové přípravě před opravou limitů měly renderer
+`src/kgmaker/process_render.py` a oba soubory jeho testů stejné bajty jako
+na dosavadním headu. Společné Mermaid encodery T021 a příprava
+Markdownu T022 zůstávají součástí stávajícího architektonického rendereru.
+Veřejné použití čisté funkce a kontrakt JSON příkazu T034 jsou beze změny.
+Přenos upřesňuje odkazy na #183 v acceptance a stavové matici a zachovává
+T035 `PR_OPEN / PARTIAL`. Řádek AC05 popisuje ověřené diagramy `PARTIAL`
+včetně `TRUNCATED` a hodnoty `UNKNOWN` v metadatech hranic. T036 při tomto
+stavu čeká na dodání T035.
+Autorita schválených popisků (AC02), širší CLI a export mají vlastní rozsah.
+
+Předchozí archivovaný nativní běh nad headem `e8d737f80115b7475fe806b2cd83ad0d1cebedfe`,
+základem `7919c283c4ea7b58eb99bfcfbc3971903984f438` a stromem
+`e6403da4f04d8f5594e535449fd0be4fb4c5f807` měl **109 PASS / 0 SKIP**, raw exit 0.
+JUnit SHA-256 `f23b2a8d9238ca4f2156d61ee9cf6ef4f4d3ae3c99fa455234e445d203a7174b`.
+Při této zdrojové přípravě prošly `git diff --cached --check` pro běžné cesty
+(raw exit 0) a `kgmaker completion plan --jobs 32` nad oběma inventáři
+(raw exit 0). Plán zachoval 135 položek a stejných 32 kandidátů k delegování.
+Jedinou změnou stavu je řádek T035, odvozené blokace se upravily u T036 a T042.
+
+Generované soubory se změnily na obou stranách. Dosavadní nesloučená epizoda
+`42bafeac9a4e1941616921fde6569036888303946919af586ea8d3c2956ea485` obsahuje
+chybný záznam o odebrání tří existujících uzlů `Rates.xlsx`. Při nové
+aktualizaci se použije stejná lokální projekce grafu pro základ i přenesené
+soubory a zachová se historie skutečného `main`. V této zdrojové fázi měly
+regenerace grafu, nativní a úplný běh nového páru, nezávislé review a hostované
+CI stav `NOT_RUN`.
+
+## T035-S03 a T035-S04 — limity Mermaid (T035-AC03, T035-AC04)
+
+27. listopadu 2026. Při kontrole přeneseného kandidáta nad `main`
+`1841553b2f2923f9342a1674cacc1ea36b8e9092` se ukázala mezera mezi limity
+`ProcessView` a výchozím Mermaid 11.4.1. Parser odmítne 501. hranu a vykreslení
+příliš dlouhého těla nahradí vlastním varovným diagramem. Dvě platné projekce
+před opravou nevyvolaly očekávaný `ProcessMermaidError`. Cílená reprodukce měla
+**2 FAIL / 0 SKIP**, raw exit 1, JUnit SHA-256
+`02f3121608fc1e3d9243ad84382dd0ca0baeb7a3ce44d947906679ef54f7e111`.
+Nezávislý archivovaný běh nad `e8d737f80115b7475fe806b2cd83ad0d1cebedfe`
+potvrdil chybu parseru u 501 hran a náhradní SVG s jedním vrcholem a bez hran
+u delšího těla. Kontrolní scénáře uspěly s raw exit 0 a SHA-256 dokladu
+`8061764b812473c2c9e66078aaa5804e590af2d3dc492f0e61f09111627bb154`.
+
+`src/kgmaker/process_render.py` omezuje celý diagram na 500 orientovaných
+výskytů hran a 50 000 jednotek UTF-16 vlastního těla flowchartu. Mermaid před
+měřením odstraňuje YAML hlavičku a komentáře s metadaty. Tato metadata se
+nadále počítají do samostatného limitu 4 000 000 bajtů UTF-8. Překročení
+kteréhokoliv limitu vrátí `PROCESS_MERMAID_LIMIT`. Výstup podporovaných
+diagramů zachovává původní výskyty a formát metadat. Příklad a hranice uvádí
+[čisté Python API](../process-paths.md#mermaid-for-a-supplied-processview-t035).
+
+`test_default_mermaid_host_limits_refuse_the_whole_diagram` ověřuje platný
+vstup s 501 hranami a tělo s 54 179 jednotkami UTF-16, shodu dodaného
+`ProcessView` a původní bajty uloženého artefaktu. Kladný
+`test_mermaid_host_text_budget_excludes_evidence_comments` má 59 556 znaků
+včetně metadat a 47 779 jednotek UTF-16 ve vlastním těle. Skutečný Mermaid
+vykreslí všech sedm vrcholů a osm hran do SVG.
+
+Po opravě měly cílené Python kontroly **9 PASS / 0 SKIP**, raw exit 0,
+JUnit SHA-256 `fa75ca9c1889a9ffa4c32ab000675b3267f122dc547b74e4658e4edc813c2b0a`.
+Připnutý Mermaid 11.4.1 s jsdom 26.0.0 a Node 24.22.3 ověřil také původní
+golden diagram, fan-out, zkrácený diagram a kladný případ s delšími metadaty.
+Výběr `tests/test_t035_render_business_process_mermaid.py -k 'not real_t029_javac'`
+měl **13 PASS / 0 SKIP**, jeden nezvolený případ a raw exit 0. JUnit SHA-256
+`dfa06bba9c71a38f493282c01554842ca02a38925e84b8c3c9c9111c75c7a6f6`.
+Kontrolované vstupy měly před a po běhu shodné bajty. Úplná sada, společný
+nativní běh přeneseného headu a nezávislé review měly při této zdrojové
+přípravě stav `NOT_RUN`. Schválené popisky a širší CLI zůstávají samostatným
+rozsahem.

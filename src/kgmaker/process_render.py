@@ -9,6 +9,10 @@ from .architecture_render_common import InterfaceMarkdownError, _bounded
 from .process_model import ProcessView, validate_process_view
 
 
+_MERMAID_MAX_EDGES = 500
+_MERMAID_MAX_TEXT_UNITS = 50_000
+
+
 class ProcessMermaidError(ValueError):
     def __init__(self, code='INVALID_PROCESS_MERMAID'):
         self.code = code
@@ -58,13 +62,15 @@ def render_process_mermaid(view: ProcessView) -> str:
         _safe_output({'metadata': metadata, 'nodes': technical['nodes'], 'edges': technical['edges']})
     except ValueError:
         raise ProcessMermaidError('UNSAFE_PROCESS_MERMAID') from None
+    if len(technical['edges']) > _MERMAID_MAX_EDGES:
+        raise ProcessMermaidError('PROCESS_MERMAID_LIMIT')
 
     scope = _mermaid_text(technical['scope'])
     title = f"Technical process | Scope: {scope} | Coverage: {document['technical_status']}"
     if technical['coverage'].get('truncated') is True:
         title += ' | TRUNCATED'
-    lines = ['---', 'title: ' + json.dumps(title), '---', 'flowchart LR',
-             '  %% process-meta ' + _mermaid_json(metadata)]
+    header = ['---', 'title: ' + json.dumps(title), '---']
+    lines = ['flowchart LR', '  %% process-meta ' + _mermaid_json(metadata)]
     node_ids = {}
     lanes = defaultdict(list)
     for node in technical['nodes']:
@@ -95,7 +101,13 @@ def render_process_mermaid(view: ProcessView) -> str:
         label = _label(edge, edge['relation'])
         lines.append(f'  {node_ids[edge["source"]]} {arrow}|"{label}"| {node_ids[edge["target"]]}')
 
-    result = '\n'.join(lines) + '\n'
+    # Mermaid 11.4.1 strips the header and metadata comments before counting
+    # the flowchart's JavaScript string length in UTF-16 code units.
+    text_units = sum(len(line.encode('utf-16-le')) // 2 + 1 for line in lines
+                     if not line.startswith('  %% process-'))
+    if text_units > _MERMAID_MAX_TEXT_UNITS:
+        raise ProcessMermaidError('PROCESS_MERMAID_LIMIT')
+    result = '\n'.join([*header, *lines]) + '\n'
     if len(result.encode('utf-8')) > _MAX_OUTPUT_BYTES:
         raise ProcessMermaidError('PROCESS_MERMAID_LIMIT')
     return result

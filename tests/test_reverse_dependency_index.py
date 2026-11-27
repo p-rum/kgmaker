@@ -279,6 +279,73 @@ def test_actual_jvm_retirement_of_deleted_owned_peer_input(tmp_path, backend):
     assert new_site['sha256'] == hashlib.sha256(peers['selected'].read_bytes()).hexdigest()
 
 
+@pytest.mark.parametrize('backend', ['k1', 'k2'])
+def test_actual_jvm_retirement_after_mixed_owned_peer_changes(tmp_path, backend):
+    options, peers, _, initial = _native_jvm_peer_fixture(tmp_path, backend, edit_peer=False, split_peer=True)
+    removed = peers['edited']
+    survivor = removed.with_name('Caller.kt')
+    removed_path = removed.relative_to(tmp_path).as_posix()
+    survivor_path = survivor.relative_to(tmp_path).as_posix()
+    original = removed.read_bytes()
+    edited = b'package edited\nfun run(value: Int): Int = value + 1\n'
+    ids = {item['module']: item['id'] for item in initial.contexts if item.get('analyzer_version')}
+    diagram = tmp_path / store.MERMAID_FILE
+    diagram.write_bytes(diagram.read_bytes() + b'%% mixed peer rollback witness\n')
+    previous = _store_bytes(tmp_path)
+    generation = store.graph_revision(tmp_path)
+    removed.unlink()
+    survivor.write_bytes(edited)
+
+    dry = inspect_jvm(tmp_path, module='selected', publish=False, **options)
+    assert dry['exit_code'] == 0 and dry['coverage']['calls_resolved'] == 1
+    assert store.graph_revision(tmp_path) == generation and _store_bytes(tmp_path) == previous
+
+    added = _write(tmp_path, removed.with_name('Added.kt'), 'package edited\nfun added() = 1\n')
+    with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+        inspect_jvm(tmp_path, module='selected', **options)
+    assert error.value.status == 'STALE'
+    assert store.graph_revision(tmp_path) == generation and _store_bytes(tmp_path) == previous
+    added.unlink()
+
+    original_replace = store.os.replace
+    for path, late_bytes, diagnostic in (
+        (removed, original, 'input reappeared or became unavailable before commit'),
+        (survivor, edited.replace(b'\n', b'\r\n'), 'source-stage inputs changed before commit'),
+    ):
+        replaced = []
+
+        def drift_after_first_replace(source, destination):
+            original_replace(source, destination)
+            if destination == diagram and not replaced:
+                assert destination.read_bytes() != previous[store.MERMAID_FILE]
+                replaced.append(destination)
+                path.write_bytes(late_bytes)
+
+        with patch.object(store.os, 'replace', drift_after_first_replace), \
+                pytest.raises(WorkerError, match=diagnostic) as error:
+            inspect_jvm(tmp_path, module='selected', **options)
+        assert error.value.status == 'STALE' and replaced == [diagram]
+        assert store.graph_revision(tmp_path) == generation and _store_bytes(tmp_path) == previous
+        removed.unlink(missing_ok=True)
+        survivor.write_bytes(edited)
+
+    result = inspect_jvm(tmp_path, module='selected', **options)
+    graph = store.load_graph(tmp_path)
+    stale, *retired = _compiler_layer(graph, ids['edited'])
+    assert stale[0]['freshness'] == 'STALE'
+    assert 'deleted compiler inputs: ' + removed_path in stale[0]['stale_reason']
+    assert 'changed compiler inputs: ' + survivor_path in stale[0]['stale_reason']
+    assert not any(retired) and removed_path not in graph.files
+    assert graph.files[survivor_path] == hashlib.sha256(edited).hexdigest()
+    assert not _compiler_layer(graph, ids['selected'])[0]
+    assert _compiler_layer(graph, ids['control']) == _compiler_layer(initial, ids['control'])
+    assert graph.to_dict() == result['graph']
+    new_site, = [site for site in graph.call_sites if site['context_id'] == result['context']['id']]
+    target = next(symbol for symbol in graph.symbols if symbol['id'] == new_site['declared_target'])
+    assert target['name'] == 'replacement' and target.get('logical_key')
+    assert new_site['sha256'] == hashlib.sha256(peers['selected'].read_bytes()).hexdigest()
+
+
 def test_actual_jvm_overlapping_deleted_peer_input_still_aborts(tmp_path):
     options, peers, _, _ = _native_jvm_peer_fixture(tmp_path, 'k1', overlap=True,
                                                    edit_peer=False, split_peer=True)

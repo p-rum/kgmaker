@@ -194,3 +194,43 @@ def test_output_bound_refuses_the_whole_diagram(monkeypatch):
     with pytest.raises(ProcessMermaidError, match='PROCESS_MERMAID_LIMIT'):
         render(view)
     assert view.to_json() == original
+
+
+@pytest.mark.parametrize('exceeded', ['edges', 'text'])
+def test_default_mermaid_host_limits_refuse_the_whole_diagram(tmp_path, exceeded):
+    from kgmaker.process_render import ProcessMermaidError
+
+    source = FIXTURE.read_bytes()
+    document = json.loads(source)
+    technical = document['technical_view']
+    if exceeded == 'edges':
+        original_edge = technical['edges'][0]
+        for index in range(501 - len(technical['edges'])):
+            identifier = f'parallel-{index}'
+            technical['edges'].append({**original_edge, 'id': identifier, 'original_ids': [identifier]})
+    else:
+        for node in technical['nodes'][:4]:
+            node['label'] = '\U0001f535' * 6500
+    view = ProcessView.from_dict(document)
+    snapshot = view.to_json()
+    artifact = tmp_path / 'kept.mmd'
+    artifact.write_bytes(b'last valid\n')
+
+    with pytest.raises(ProcessMermaidError, match='PROCESS_MERMAID_LIMIT'):
+        render(view)
+
+    assert view.to_json() == snapshot and FIXTURE.read_bytes() == source
+    assert artifact.read_bytes() == b'last valid\n'
+
+
+def test_mermaid_host_text_budget_excludes_evidence_comments(tmp_path):
+    document = json.loads(FIXTURE.read_bytes())
+    for node in document['technical_view']['nodes'][:4]:
+        node['label'] = '\U0001f535' * 5700
+    view = ProcessView.from_dict(document)
+    snapshot = view.to_json()
+    diagram = render(view)
+    assert len(diagram) > 50_000
+    check_records(view, diagram)
+    assert parse_and_render(diagram, tmp_path) == {'vertices': 7, 'edges': 8, 'lanes': 0}
+    assert view.to_json() == snapshot

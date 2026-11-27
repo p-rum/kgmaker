@@ -111,10 +111,13 @@ view. This mapping has no additional `architecture explain` endpoint.
 
 The renderer validates the input and uses the shared bounded renderer limits
 (100,000 items, nesting depth 40, 1,000,000 aggregate characters and 16,384 per
-string). Output is limited to 4,000,000 UTF-8 bytes. An invalid view, unsafe
-output or exceeded budget raises `ProcessMermaidError` without returning a partial
-diagram. The API performs no I/O. Review overlays and business label authority are
-reserved for the T032-backed extension. The `process render` CLI still emits JSON.
+string). Mermaid 11.4.1 defaults allow at most 500 edges and 50,000 UTF-16 code
+units of flowchart text after removing the YAML header and metadata comments.
+The separate 4,000,000 UTF-8 byte output limit includes those comments. Exceeding
+any budget raises `ProcessMermaidError` with code `PROCESS_MERMAID_LIMIT` for the
+whole diagram. Invalid input and unsafe output also raise `ProcessMermaidError`.
+This is a pure API. Review overlays and business label authority are reserved for
+the T032-backed extension. The `process render` CLI still emits JSON.
 [Test evidence and deferred scope](changes/199_renderSuppliedProcessMermaid.md).
 
 ## Input and evidence boundaries

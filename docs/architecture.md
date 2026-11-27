@@ -197,6 +197,10 @@ scope and any explicit context selection. Runtime and delivery evidence stay at 
 captured level. See the [topology rendering contract](service-topology.md#mermaid-rendering-t021)
 and [CLI example](architecture-json-cli.md#architecture-topology-mermaid-t021).
 
+T022 presents that same filtered view as Markdown with its Mermaid diagram,
+service inventory, relationships, omissions and provenance. Source observations
+stay `NOT_CHECKED`. See the [CLI example](architecture-json-cli.md#architecture-topology-markdown-t022).
+
 Workspace v1 optionally accepts a separate `service_ownership` schema v1.
 Each declaration attaches explicit repository-relative roots and/or exact
 repo-qualified module IDs to an already declared legacy service ID, with separately listed external

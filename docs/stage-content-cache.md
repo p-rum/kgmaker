@@ -52,6 +52,12 @@ a `LC_CTYPE` včetně hodnot mimo UTF-8 a rozdílu mezi nepřítomnou a prázdno
 klíči je jen SHA-256 prostředí. Na Linuxu se do otisku přidává obsah
 `lib/libjli.so` a `lib/server/libjvm.so` ve standardním rozložení JDK.
 [Ověření nativních vstupů](changes/180_bindLinuxJdkNativeInputs.md).
+Otisk prostředí JVM i TypeScriptu na Linuxu zahrnuje přesné zděděné bajty
+`LD_LIBRARY_PATH`, včetně rozdílu mezi chybějící a prázdnou proměnnou.
+Uložený klíč obsahuje jen souhrnný SHA-256 prostředí. Tato kontrola sleduje
+hodnotu proměnné od zachycení po publikaci. Doklad skutečného výběru knihoven
+a uzavření běhových vstupů vyžaduje samostatné ověření.
+[Ověření změny prostředí](changes/198_bindLinuxLauncherEnvironment.md).
 Chybějící nebo nečitelný vstup otisku
 znamená `INCOMPLETE_INPUT_CLOSURE`, pokud živá inspekce proběhne úspěšně.
 Při výběru přes symbolický odkaz `java` tvoří otisk bajty cílové binárky
@@ -160,9 +166,11 @@ cesty k souborům. Podporuje odstranění zachycených souborů. `--scope` přij
 proběhne před načtením jeho manifestu.
 
 Po reportu lze samostatně obnovit vybraný modul explicitní JVM inspekcí.
-Pokud nezávislý modul přišel výhradně o dříve zachycený vstup se stále
-deklarovaným jediným vlastníkem, inspekce může jeho starou compiler vrstvu
-vyřadit při stejné atomické publikaci. Report sám stále jen čte.
+Pokud nezávislý modul přišel o dříve zachycený vstup se stále deklarovaným
+jediným vlastníkem, inspekce může jeho starou compiler vrstvu vyřadit i při
+současné úpravě jiného zachyceného vstupu téhož modulu. Pro čtecí report
+zadejte obě cesty, například `kgmaker impact --evidence-only --format json
+edited/src/main/kotlin/Example.kt edited/src/main/kotlin/Caller.kt`.
 [Rozsah Python API a příklad](compiler-inspection.md#obnova-izolovaného-jvm-kontextu).
 
 JSON v1 uvádí SHA-256 jedné uložené generace `graph_sha256`, pole `changed_sources`
