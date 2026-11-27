@@ -48,9 +48,9 @@ tří artefaktů a odmítnutí cizího scope, nesouhlasného otisku a neplatnýc
 `process list` a `process render`. Z explicitního workspace načte původní
 indexy a jednou pořídí lokální snapshot bez diskové cache. T024 ověří
 spouštěče pro zvolený scope. Každý zadaný pin služby, repozitáře, modulu
-a kontextu musí odpovídat řádku `CURRENT`. Nesoulad manifestu nebo
-zjištěná změna zdroje při zachycení znamená `CURRENT_CAPTURE_CONFLICT`
-a exit 3.
+a kontextu musí odpovídat řádku `CURRENT`. Nesoulad manifestu vrací u obou
+příkazů `CURRENT_CAPTURE_CONFLICT` s exit 3. Při změně zdroje zjištěné T024
+vrací `list` stejný kód a exit. `render` dál vrací `INVALID_INPUT` s exit 2.
 
 ## T034-S04 — cílené ověření
 

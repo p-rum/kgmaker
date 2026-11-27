@@ -122,7 +122,7 @@
     "docs/changes/211_followAppliedInputDependencies.md": "301530b0f6bdcfcbe2deb1260b9e401a0e01615be2de48af2808aaefac1501a4",
     "docs/changes/212_recordProcessExportMerge.md": "1bbf813acc74bebb4e7f858d697554da5966ec71e2db190bce7719fa4483c042",
     "docs/changes/213_bindObservedJdkLibraries.md": "18829d253505eb0049840fdd1ea58ca87b6d70ba843fc4100218b60e84adec14",
-    "docs/changes/214_listCurrentProcessCandidates.md": "50491019c2d6aad1f59d6144dafea9a9a5e4af7f6f01429c623268e16fab6191",
+    "docs/changes/214_listCurrentProcessCandidates.md": "b3f2bf0aad36c31f207ecb02736f52a52579d35b15408647d7ab21f40a174e03",
     "docs/changes/26_addCodeReviewAgent.md": "b3daa09ab9ec31c301fbaa1afe2101becde926ea5db35260c4ab7582f49a023d",
     "docs/changes/28_captureKotlinCompilerOptions.md": "ad0d6c0340c82d47d0998631d768170217ea36a8a1b167f865b178bc11fd4d5f",
     "docs/changes/29_mapCrossRepoArtifacts.md": "ac0f9bcbe744f806d1bdb4c708b21312e73576899de870096609c7ee68acd685",
@@ -322531,7 +322531,7 @@
     {
       "base_commit": "7ad9fce7526add0986bee29f56ced33aa5da79e3",
       "head_commit": "7ad9fce7526add0986bee29f56ced33aa5da79e3",
-      "worktree_fingerprint": "f6e2071bdd64f42efc58dbefabcc622c8a8ed9777bce2d13f0596a25f7903b29",
+      "worktree_fingerprint": "3e6f886992650e9eeb1fb6831bce5b6bfdd71d7a40ae1277b0e84cc0c2c52ac1",
       "title": "Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06",
       "changed_files": [
         {
@@ -322547,7 +322547,7 @@
         {
           "path": "docs/changes/214_listCurrentProcessCandidates.md",
           "status": "A",
-          "sha256": "50491019c2d6aad1f59d6144dafea9a9a5e4af7f6f01429c623268e16fab6191"
+          "sha256": "b3f2bf0aad36c31f207ecb02736f52a52579d35b15408647d7ab21f40a174e03"
         },
         {
           "path": "docs/process-paths.md",
@@ -323216,7 +323216,7 @@
           "status": "unknown"
         }
       ],
-      "id": "episode:981e01dfe14f32ec0025f2b8292ffe5330ebb250d4cad4460716a3c48b54e4ea"
+      "id": "episode:af8959c192baef8aaa187e9dcfed1499723676574e926aef0c4af575c6363d97"
     }
   ]
 }
