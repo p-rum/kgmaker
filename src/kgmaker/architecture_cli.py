@@ -13,6 +13,7 @@ from .architecture_model import ViewDocument
 from .model import KnowledgeGraph
 from .remote_mapping import _bounded, _selection, _workspace, resolve_remote_mappings
 from .view_explanation import _ref
+from .view_store import ViewExportError
 from .inspection import sanitize
 
 BUNDLE_VERSION='architecture-interface-inputs-1'
@@ -38,11 +39,12 @@ def _fail(code,exit_code=2):
 
 def _configure(parser):
     actions=parser.add_subparsers(dest='architecture_command',required=True,parser_class=SafeParser)
+    scopes = ('production', 'test', 'test_fixture', 'development', 'unknown')
     for name in ('interfaces','topology','explain'):
         child=actions.add_parser(name)
         child.add_argument('--root',type=Path,default=Path.cwd(),help='coordinator and relative input path root')
         child.add_argument('--workspace',type=Path,help='explicit manifest for capture-local or check-source')
-        child.add_argument('--scope',choices=('production','test','test_fixture','development','unknown'),help='assert snapshot scope; local capture defaults to production')
+        child.add_argument('--scope',choices=scopes,help='assert snapshot scope; local capture defaults to production')
         child.add_argument('--context-selection',type=Path,help='versioned capture pins; exact assertion in snapshot replay')
         child.add_argument('--strict',action='store_true')
         formats=('json','markdown') if name=='interfaces' else ('json','mermaid','markdown') if name=='topology' else ('json',)
@@ -59,12 +61,7 @@ def _configure(parser):
             inputs.add_argument('--capture-snapshot',type=Path)
             inputs.add_argument('--capture-local',action='store_true',help='explicit source/parser replay; existing indexes required, no index publication; --view-cache separately opts into view publication')
             child.add_argument('--view-cache',type=Path,help='explicitly reuse/publish a derived view cache artifact')
-            child.add_argument('--focus')
-            child.add_argument('--direction',choices=('incoming','outgoing','both'),default='both')
-            child.add_argument('--max-hops',type=int)
-            child.add_argument('--max-nodes',type=int,default=200)
-            child.add_argument('--relations',nargs='*')
-            child.add_argument('--filter-contexts',nargs='*')
+            _configure_topology_filters(child)
         else:
             child.add_argument('--snapshot',type=Path,required=True)
             child.add_argument('--capture-snapshot',type=Path,required=True)
@@ -73,7 +70,26 @@ def _configure(parser):
             source=child.add_mutually_exclusive_group()
             source.add_argument('--source-status',type=Path,help='replay a supplied source-status handoff; no current source reads')
             source.add_argument('--check-source',action='store_true',help='explicit confined hash observation of bound original source references')
+    export = actions.add_parser('export', help='publish JSON, Markdown and Mermaid from an explicit topology capture',
+                                allow_abbrev=False)
+    export.add_argument('--root', type=Path, default=Path.cwd(), help='coordinator path root')
+    export.add_argument('--capture-snapshot', type=Path, required=True, help='explicit T016 topology capture JSON')
+    export.add_argument('--output', type=Path, required=True, help='artifact directory inside the coordinator')
+    export.add_argument('--scope', choices=scopes, help='assert captured scope')
+    export.add_argument('--expected-fingerprint', help='exact canonical filtered topology SHA-256')
+    export.add_argument('--timeout', type=float, default=30.0, help='cooperative publication deadline in seconds')
+    export.add_argument('--cancel-file', type=Path, help='coordinator-local file that cancels an unpublished export')
+    _configure_topology_filters(export)
     return parser
+
+
+def _configure_topology_filters(parser):
+    parser.add_argument('--focus')
+    parser.add_argument('--direction', choices=('incoming', 'outgoing', 'both'), default='both')
+    parser.add_argument('--max-hops', type=int)
+    parser.add_argument('--max-nodes', type=int, default=200)
+    parser.add_argument('--relations', nargs='*')
+    parser.add_argument('--filter-contexts', nargs='*')
 
 
 def register(subparsers):
@@ -223,16 +239,28 @@ def _cache_target(args, workspace=None):
     return target
 
 
-def _topology(args,selected):
-    from .service_topology import capture_topology_inputs,aggregate_service_topology,prepare_service_topology_cache
-    from .topology_filter import filter_topology
-    target=_cache_target(args)
+def _validate_topology_filters(args):
     if args.max_nodes<1 or args.max_nodes>20000 or args.max_hops is not None and not 0<=args.max_hops<=20000:
         _fail('INVALID_FILTER')
     for values in (args.relations,args.filter_contexts):
         if values is not None:
             for value in values:_ref(value)
     if args.focus is not None:_ref(args.focus)
+
+
+def _filter_topology(args, view):
+    from .topology_filter import filter_topology
+
+    return filter_topology(view, focus_service=args.focus, direction=args.direction,
+        max_hops=args.max_hops, max_nodes=args.max_nodes, relations=args.relations,
+        scope=args.scope, context_ids=args.filter_contexts)
+
+
+def _topology(args,selected):
+    from .service_topology import capture_topology_inputs,aggregate_service_topology,prepare_service_topology_cache
+
+    target=_cache_target(args)
+    _validate_topology_filters(args)
     if args.capture_local:
         with _readonly_git():
             workspace,manifest=_preflight(args);_cancel(args)
@@ -246,10 +274,24 @@ def _topology(args,selected):
     args.prepared_view=(prepare_service_topology_cache(captured,target)
         if target is not None else None)
     original=args.prepared_view.document if args.prepared_view is not None else aggregate_service_topology(captured)
-    result=filter_topology(original,focus_service=args.focus,direction=args.direction,
-        max_hops=args.max_hops,max_nodes=args.max_nodes,relations=args.relations,
-        scope=args.scope,context_ids=args.filter_contexts)
+    result=_filter_topology(args, original)
     return result,ViewDocument.from_dict(result['document']).content_fingerprint
+
+
+def _export(args):
+    from ._view_export_cli import export_snapshot_artifacts
+    from .architecture_render import render_topology_artifacts
+    from .service_topology import aggregate_service_topology
+
+    _validate_topology_filters(args)
+
+    def decode_snapshot(value):
+        view = aggregate_service_topology(value)
+        _assert_selection(args, view.scope, None, None)
+        return _filter_topology(args, view)
+
+    return export_snapshot_artifacts(args, args.capture_snapshot, 'topology', decode_snapshot,
+                                     render_topology_artifacts, max_input_bytes=_MAX_INPUT_BYTES)
 
 
 def _explain(args,selected):
@@ -312,6 +354,8 @@ def run(argv):
         if not args.root.is_dir():_fail('INVALID_ROOT')
         if args.expected_fingerprint is not None and re.fullmatch('[0-9a-f]{64}',args.expected_fingerprint) is None:
             _fail('INVALID_EXPECTED_FINGERPRINT')
+        if args.architecture_command == 'export':
+            return _export(args)
         _cancel(args);selected=_selectors(args)
         result,fingerprint={'interfaces':_interfaces,'topology':_topology,'explain':_explain}[args.architecture_command](args,selected)
         if args.expected_fingerprint is not None and args.expected_fingerprint!=fingerprint:_fail('EXPECTED_FINGERPRINT_MISMATCH',3)
@@ -334,7 +378,7 @@ def run(argv):
             _cancel(args)
             prepared.publish()
         return code
-    except ArchitectureCLIError as error:
+    except (ArchitectureCLIError, ViewExportError) as error:
         _diagnostic(error.code,error.exit_code);return error.exit_code
     except KeyboardInterrupt:
         _diagnostic('CANCELLED',130);return 130

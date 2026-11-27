@@ -1627,7 +1627,17 @@ Rozsah zahrnuje také [čtecí katalog současných lokálních kandidátů](pro
 | T038-AC03 | VERIFIED_IN_SCOPE | Pokus o traversal a přesměrování symlinkem odmítne veřejný příkaz. Dva samostatné zapisovače ze stejného základu mají právě jeden úspěch. Posloupnost A → B → A má novou identitu exportu a odmítne původního zapisovače. |
 | T038-AC04 | VERIFIED_IN_SCOPE | Neplatný scope, cizí manifest i selhání renderu či zápisu zachovají porovnané bajty a časy změn uložených artefaktů. Změna obsahu snapshotu nebo připraveného artefaktu před publikací se odmítne. |
 | T038-AC05 | VERIFIED_IN_SCOPE | Skutečný Markdown parser a Mermaid parser s SVG potvrzují identický diagram, příslušnost ke snapshotu a zachování `PARTIAL`, `TRUNCATED` i výslovné nevyřešené hranice. Dodaná review anotace zůstává v JSON a technické výstupy ji nepoužijí jako schválený popisek. |
-| T038-AC06 | PARTIAL | [#194](https://github.com/p-rum/kgmaker/pull/194) je sloučeno jako `2e393c0`. Cílený běh T038 a T036 na tomtéž merge měl 39 PASS / 0 SKIP, raw exit 0, s připnutým Markdown parserem a Mermaid 11.4.1 s výstupem SVG a jsdom 26. Na schváleném headu `c536066` má úplná standardní sada 2 733 PASS / 1 409 SKIP / 1 očekávaný XFAIL, raw exit 0. Nezávislá revize přesné dvojice SHA je doložená. Úplná sada přímo na merge má stav NOT_RUN. Architektonický export zbývá. [Implementace](changes/210_publishProcessViewAtomically.md) · [Doklad sloučení](changes/212_recordProcessExportMerge.md). |
+| T038-AC06 | PARTIAL | [#194](https://github.com/p-rum/kgmaker/pull/194) je sloučeno jako `2e393c0`. Cílený běh T038 a T036 na tomtéž merge měl 39 PASS / 0 SKIP, raw exit 0, s připnutým Markdown parserem a Mermaid 11.4.1 s výstupem SVG a jsdom 26. Na schváleném headu `c536066` má úplná standardní sada 2 733 PASS / 1 409 SKIP / 1 očekávaný XFAIL, raw exit 0. Nezávislá revize přesné dvojice SHA je doložená. Úplná sada přímo na merge má stav NOT_RUN. Tento běh měří technický ProcessView. [Implementace](changes/210_publishProcessViewAtomically.md) · [Doklad sloučení](changes/212_recordProcessExportMerge.md). |
+
+Přípravný architektonický výřez T038 na Linuxu používá explicitní T016
+capture. AC01 ověřuje shodné formáty, hashe, opakování a starší generace.
+AC02–AC04 ověřují selhání rendereru, zrušení, časový limit, změnu
+vstupu, cestu, cizí manifest a dva souběžné zápisy. AC05 kontroluje
+skutečný výstup Mermaid se dvěma uzly a jednou hranou, Markdown a
+zachování `PARTIAL` a vynechané hranice ve veřejném výstupu.
+Původní přípravný běh má 113 PASS / 0 SKIP a oprava přenositelnosti 11 PASS / 0 SKIP. Úplné ověření T038-AC06
+a T041 průchod se skutečným workerem mají samostatný rozsah.
+[Příkazy a výsledky](changes/216_publishArchitectureTopology.md).
 
 
 ## T039 — porovnání dodaných ProcessView

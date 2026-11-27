@@ -136,6 +136,45 @@ The CLI keeps its usual strict partial exit 4 and publishes an explicit derived
 view cache only after a successful exit-0 render and output. [Topology model](service-topology.md#markdown-report-t022)
 and [test evidence](changes/195_renderTopologyMarkdown.md).
 
+## Atomic topology export (T038)
+
+```sh
+kgmaker architecture export --root /repo --capture-snapshot topology-inputs.json --output reports/topology
+kgmaker architecture export --root /repo --capture-snapshot topology-inputs.json --output reports/topology \
+  --scope production --focus service:orders --max-nodes 50 --timeout 30 --cancel-file cancel-export
+```
+
+Supply the explicit [T016 capture](service-topology.md) as one JSON input.
+The command validates and replays that capture, applies the existing topology
+filters and publishes the complete T017 envelope as `view.json`. The same
+generation contains `view.mmd` and `view.md`, which embeds the exact diagram.
+The output receipt on stdout is the stored `manifest.json`, which identifies
+one immutable generation. Read all three files through this manifest and
+their recorded SHA-256 hashes. The manifest's `view_fingerprint` is the same
+filtered document fingerprint used by the topology read command.
+
+The capture carries its selected contexts. `--scope` asserts the captured
+scope and `--filter-contexts` narrows the displayed selection. The command
+also accepts `--focus`, `--direction`, `--max-hops`, `--max-nodes` and
+`--relations`. A valid partial result may be published with exit 0. The
+JSON envelope, diagram and report retain captured scope, original IDs,
+provenance and omitted frontiers.
+
+The verified publication platform is Linux with POSIX descriptor operations.
+Choose a dedicated output directory inside the coordinator. Traversal,
+symlinks and incompatible existing manifests are rejected. The command
+reads the explicit input snapshot, checks its bytes and file identity through
+publication, and uses read-only captured data to compute the view. A competing
+write or changed input returns 3. A cancellation marker returns 130 before
+publication. The cooperative deadline defaults to 30 seconds and returns 1
+if exceeded before publication. Invalid paths, input or render errors return 2.
+These failures preserve an existing active generation. A confirmed manifest
+remains authoritative when its stdout receipt is interrupted. A repeated export
+of the same active artifacts returns the existing manifest. Older generations
+are retained for readers that already opened their manifests.
+
+[Reproduction and checks](changes/216_publishArchitectureTopology.md).
+
 ## Historical validation checkpoint
 
 Current1005b9f includes merged T014/T016/T017/T018/Common/T012/T013/W07/process

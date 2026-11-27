@@ -264,6 +264,17 @@ def render_topology_markdown(value):
         raise ValueError('Invalid topology Markdown input') from None
 
 
+def render_topology_artifacts(value):
+    """Prepare the three public artifacts from the same validated topology."""
+    view, filtering, envelope = _topology_snapshot(value)
+    diagram = _topology_diagram(view, filtering, envelope)
+    return view.content_fingerprint, {
+        'json': canonical(envelope) + '\n',
+        'markdown': _topology_markdown(view, filtering, diagram),
+        'mermaid': diagram,
+    }
+
+
 def _topology_markdown(view, filtering, diagram):
     lines = []
     size = 0

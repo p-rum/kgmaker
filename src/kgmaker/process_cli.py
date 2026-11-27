@@ -1,12 +1,10 @@
 """Current technical process catalog, rendering and explicit artifact publication."""
 import json
-import math
 from pathlib import Path
 import re
 import sys
-import time
 
-from .analysis_model import AnalysisError, canonical, decode_json
+from .analysis_model import AnalysisError, canonical
 from .architecture_cli import (
     ArchitectureCLIError, SafeParser, _MAX_INPUT_BYTES, _MAX_OUTPUT_CHARS, _fail, _preflight,
     _read, _readonly_git, _safe_output, _selectors,
@@ -15,9 +13,7 @@ from .process_model import ProcessView
 from .process_paths import ProcessPathError, build_local_process
 from .process_triggers import TriggerInventoryError, discover_process_triggers
 from .remote_mapping import SCOPES, _bounded
-from .view_store import (
-    ViewExportError, ViewPublication, export_path, export_snapshot_stamp, publish_view_artifacts, read_export_snapshot,
-)
+from .view_store import ViewExportError
 from .workspace import snapshot_workspace
 
 
@@ -159,71 +155,21 @@ def _render(args):
 
 
 def _export(args):
+    from ._view_export_cli import export_snapshot_artifacts
     from .process_render import ProcessMarkdownError, ProcessMermaidError, render_process_artifacts
 
-    if not math.isfinite(args.timeout) or args.timeout <= 0:
-        _fail('INVALID_EXPORT_TIMEOUT')
-    output = export_path(args.root, args.output)
-    snapshot = export_path(args.root, args.snapshot)
-    cancel = None if args.cancel_file is None else export_path(args.root, args.cancel_file)
-    if ((snapshot.parent == output and snapshot.name.casefold() == 'manifest.json')
-            or (cancel is not None and cancel.is_relative_to(output))):
-        _fail('INVALID_EXPORT_PATH')
-    deadline = time.monotonic() + args.timeout
+    def decode_snapshot(value):
+        _bounded(value)
+        return ProcessView.from_dict(value)
 
-    def checkpoint():
-        if cancel is not None and (args.root / export_path(args.root, cancel)).exists():
-            _fail('CANCELLED', 130)
-        if time.monotonic() >= deadline:
-            _fail('EXPORT_TIMEOUT', 1)
-
-    checkpoint()
-    raw, _ = read_export_snapshot(args.root, snapshot, _MAX_INPUT_BYTES)
-    value = decode_json(raw.decode('utf-8'), 'ProcessView snapshot')
-    _bounded(value)
-    view = ProcessView.from_dict(value)
-
-    def render():
+    def render(view):
         try:
-            fingerprint, files = render_process_artifacts(view)
+            return render_process_artifacts(view)
         except (ProcessMarkdownError, ProcessMermaidError) as error:
             _fail(error.code)
-        if args.expected_fingerprint is not None and args.expected_fingerprint != fingerprint:
-            _fail('EXPECTED_FINGERPRINT_MISMATCH', 3)
-        return fingerprint, files
 
-    def verify_input():
-        try:
-            current, stamp = read_export_snapshot(args.root, snapshot, _MAX_INPUT_BYTES)
-        except (OSError, ViewExportError):
-            _fail('EXPORT_INPUT_CHANGED', 3)
-        if current != raw:
-            _fail('EXPORT_INPUT_CHANGED', 3)
-        return stamp
-
-    def verify_input_stamp(stamp):
-        try:
-            current = export_snapshot_stamp(args.root, snapshot)
-        except (OSError, ViewExportError):
-            _fail('EXPORT_INPUT_CHANGED', 3)
-        if current != stamp:
-            _fail('EXPORT_INPUT_CHANGED', 3)
-
-    publication = ViewPublication()
-    try:
-        try:
-            publish_view_artifacts(args.root, output, 'process', render, checkpoint=checkpoint,
-                                   verify_input=verify_input, verify_input_stamp=verify_input_stamp,
-                                   publication=publication)
-        except OSError:
-            _fail('EXPORT_IO_ERROR', 1)
-        sys.stdout.write(canonical(publication.manifest) + '\n')
-        sys.stdout.flush()
-        return 0
-    except KeyboardInterrupt:
-        if publication.manifest is None:
-            raise
-        _fail('EXPORT_RECEIPT_INTERRUPTED', 1)
+    return export_snapshot_artifacts(args, args.snapshot, 'process', decode_snapshot, render,
+                                     max_input_bytes=_MAX_INPUT_BYTES)
 
 
 def run(argv):
