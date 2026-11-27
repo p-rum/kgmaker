@@ -116,9 +116,32 @@ units of flowchart text after removing the YAML header and metadata comments.
 The separate 4,000,000 UTF-8 byte output limit includes those comments. Exceeding
 any budget raises `ProcessMermaidError` with code `PROCESS_MERMAID_LIMIT` for the
 whole diagram. Invalid input and unsafe output also raise `ProcessMermaidError`.
-This is a pure API. Review overlays and business label authority are reserved for
-the T032-backed extension. The `process render` CLI still emits JSON.
-[Test evidence and deferred scope](changes/199_renderSuppliedProcessMermaid.md).
+
+To add reviewed presentation labels, call the separate read-only Python API:
+
+```python
+from kgmaker.process_render import render_reviewed_process_mermaid
+
+diagram = render_reviewed_process_mermaid(root, process, documents=documents, conflicts=conflicts)
+```
+
+Pass the existing review root and the explicit document and conflict captures
+from [the local T032 review](process-review-store.md). Both capture arguments
+default to empty. Effective approval adds label text to the exact process title,
+node or transition occurrence. Technical text, edge order and multiplicity,
+lanes and all mapping comments are preserved. The approval uses the T032 local
+identity assurance `LOCAL_DECLARATION_NOT_AUTHENTICATED`. A later rejection can
+leave an earlier approval active when its snapshot still matches.
+
+`ProcessMermaidError` reports `PROCESS_MERMAID_REVIEW_EMPTY`,
+`PROCESS_MERMAID_REVIEW_REJECTED` or `PROCESS_MERMAID_REVIEW_NEEDS_REVALIDATION`
+when the effective review does not permit rendering. Review input or store errors
+retain their `ProcessReviewError` codes. The same escaping and output budgets
+apply after adding labels. The reviewed API reads the selected local review.
+The caller handles any output file. `render_process_mermaid(view)` remains pure,
+and the `process render` CLI still emits JSON.
+[Technical renderer evidence](changes/199_renderSuppliedProcessMermaid.md) ·
+[Reviewed label evidence](changes/204_renderReviewedProcessMermaid.md).
 
 ## Input and evidence boundaries
 
