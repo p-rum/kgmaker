@@ -1,4 +1,4 @@
-"""Current technical process rendering and explicit snapshot artifact publication."""
+"""Current technical process catalog, rendering and explicit artifact publication."""
 import json
 import math
 from pathlib import Path
@@ -13,7 +13,7 @@ from .architecture_cli import (
 )
 from .process_model import ProcessView
 from .process_paths import ProcessPathError, build_local_process
-from .process_triggers import discover_process_triggers
+from .process_triggers import TriggerInventoryError, discover_process_triggers
 from .remote_mapping import SCOPES, _bounded
 from .view_store import (
     ViewExportError, ViewPublication, export_path, export_snapshot_stamp, publish_view_artifacts, read_export_snapshot,
@@ -21,13 +21,20 @@ from .view_store import (
 from .workspace import snapshot_workspace
 
 
+def _configure_workspace(parser):
+    parser.add_argument('--root', type=Path, default=Path.cwd(), help='coordinator and relative input path root')
+    parser.add_argument('--workspace', type=Path, required=True, help='explicit local workspace manifest')
+    parser.add_argument('--scope', choices=sorted(SCOPES), default='production')
+    parser.add_argument('--context-selection', type=Path, help='versioned capture pins shared with architecture')
+
+
 def _configure(parser):
     actions = parser.add_subparsers(dest='process_command', required=True, parser_class=SafeParser)
+    listing = actions.add_parser('list', help='list current local process candidates as JSON', allow_abbrev=False)
+    _configure_workspace(listing)
+    listing.add_argument('--format', choices=('json',), default='json')
     render = actions.add_parser('render', help='render one current local ProcessView as JSON', allow_abbrev=False)
-    render.add_argument('--root', type=Path, default=Path.cwd(), help='coordinator and relative input path root')
-    render.add_argument('--workspace', type=Path, required=True, help='explicit local workspace manifest')
-    render.add_argument('--scope', choices=sorted(SCOPES), default='production')
-    render.add_argument('--context-selection', type=Path, help='versioned capture pins shared with architecture')
+    _configure_workspace(render)
     selection = render.add_mutually_exclusive_group(required=True)
     selection.add_argument('--entry', help='exact T024 trigger ID for a new local view')
     selection.add_argument('--process', help='exact process ID in an explicitly supplied view')
@@ -47,33 +54,10 @@ def _configure(parser):
 
 
 def register(subparsers):
-    _configure(subparsers.add_parser('process', help='local technical process rendering and explicit artifact export'))
+    _configure(subparsers.add_parser('process', help='local technical process catalog, rendering and artifact export'))
 
 
-def _render(args):
-    stored = None
-    if args.process is None:
-        if args.process_view is not None:
-            _fail('PROCESS_VIEW_UNEXPECTED')
-        trigger_id = args.entry
-        process_id = 'process:' + trigger_id.removeprefix('trigger:')
-        revision = 1
-    else:
-        if args.process_view is None:
-            _fail('PROCESS_VIEW_REQUIRED')
-        stored = ProcessView.from_dict(_read(args, args.process_view))
-        definition = stored.definition
-        process_id, revision = definition.process_id, definition.revision
-        if process_id != args.process:
-            _fail('PROCESS_ID_MISMATCH')
-        if definition.scope != args.scope:
-            _fail('PROCESS_SCOPE_MISMATCH')
-        if len(definition.trigger_ids) != 1:
-            _fail('PROCESS_SINGLE_TRIGGER_REQUIRED')
-        trigger_id, = definition.trigger_ids
-    if re.fullmatch(r'trigger:[0-9a-f]{64}', trigger_id) is None:
-        _fail('INVALID_TRIGGER_ID')
-
+def _capture_current_triggers(args):
     selected = _selectors(args)
     with _readonly_git():
         workspace, manifest = _preflight(args)
@@ -92,7 +76,69 @@ def _render(args):
         }
         if any((*key, context_id) not in current_pins for key, context_id in selected.items()):
             _fail('INVALID_SELECTOR')
+    return graph, triggers
 
+
+def _entry_process_id(trigger_id):
+    return 'process:' + trigger_id.removeprefix('trigger:')
+
+
+def _output_payload(result):
+    _bounded(result)
+    _safe_output(result)
+    payload = canonical(result) + '\n'
+    if len(payload) > _MAX_OUTPUT_CHARS:
+        _fail('OUTPUT_LIMIT')
+    return payload
+
+
+def _list(args):
+    from .process_catalog import MAX_SNAPSHOTS, ProcessCatalogError, catalog_business_processes
+
+    try:
+        graph, triggers = _capture_current_triggers(args)
+    except TriggerInventoryError as error:
+        if error.diagnostic['code'] == 'TRIGGER_SOURCE_CHANGED':
+            _fail('CURRENT_CAPTURE_CONFLICT', 3)
+        raise
+    if len(triggers.nodes) > MAX_SNAPSHOTS:
+        _fail('SNAPSHOT_LIMIT')
+    try:
+        views = [build_local_process(graph, triggers, node.id, process_id=_entry_process_id(node.id))
+                 for node in triggers.nodes]
+        catalog = catalog_business_processes(args.root, triggers, current_processes=views)
+    except (ProcessPathError, ProcessCatalogError) as error:
+        _fail(error.diagnostic['code'])
+    sys.stdout.write(_output_payload(catalog))
+    sys.stdout.flush()
+    return 0
+
+
+def _render(args):
+    stored = None
+    if args.process is None:
+        if args.process_view is not None:
+            _fail('PROCESS_VIEW_UNEXPECTED')
+        trigger_id = args.entry
+        process_id = _entry_process_id(trigger_id)
+        revision = 1
+    else:
+        if args.process_view is None:
+            _fail('PROCESS_VIEW_REQUIRED')
+        stored = ProcessView.from_dict(_read(args, args.process_view))
+        definition = stored.definition
+        process_id, revision = definition.process_id, definition.revision
+        if process_id != args.process:
+            _fail('PROCESS_ID_MISMATCH')
+        if definition.scope != args.scope:
+            _fail('PROCESS_SCOPE_MISMATCH')
+        if len(definition.trigger_ids) != 1:
+            _fail('PROCESS_SINGLE_TRIGGER_REQUIRED')
+        trigger_id, = definition.trigger_ids
+    if re.fullmatch(r'trigger:[0-9a-f]{64}', trigger_id) is None:
+        _fail('INVALID_TRIGGER_ID')
+
+    graph, triggers = _capture_current_triggers(args)
     try:
         view = build_local_process(graph, triggers, trigger_id, process_id=process_id, revision=revision)
     except ProcessPathError as error:
@@ -101,12 +147,7 @@ def _render(args):
             _fail('PROCESS_VIEW_STALE', 3)
         _fail(code)
 
-    result = view.to_dict(include_generation_metadata=False)
-    _bounded(result)
-    _safe_output(result)
-    payload = canonical(result) + '\n'
-    if len(payload) > _MAX_OUTPUT_CHARS:
-        _fail('OUTPUT_LIMIT')
+    payload = _output_payload(view.to_dict(include_generation_metadata=False))
     if stored is not None and stored.to_json(include_generation_metadata=False) + '\n' != payload:
         _fail('PROCESS_VIEW_STALE', 3)
     if args.expected_fingerprint is not None and args.expected_fingerprint != view.content_fingerprint:
@@ -191,9 +232,10 @@ def run(argv):
         args.root = args.root.resolve()
         if not args.root.is_dir():
             _fail('INVALID_ROOT')
-        if args.expected_fingerprint is not None and re.fullmatch(r'[0-9a-f]{64}', args.expected_fingerprint) is None:
+        expected_fingerprint = getattr(args, 'expected_fingerprint', None)
+        if expected_fingerprint is not None and re.fullmatch(r'[0-9a-f]{64}', expected_fingerprint) is None:
             _fail('INVALID_EXPECTED_FINGERPRINT')
-        return {'render': _render, 'export': _export}[args.process_command](args)
+        return {'list': _list, 'render': _render, 'export': _export}[args.process_command](args)
     except (ArchitectureCLIError, ViewExportError) as error:
         code, exit_code = error.code, error.exit_code
     except KeyboardInterrupt:

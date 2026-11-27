@@ -35,6 +35,47 @@ Selection must handle an empty trigger inventory explicitly. The existing
 callee expansion. An oversized root becomes one explicit node-limit boundary;
 it is not copied in full or converted into a misleading linear prefix.
 
+## Read-only process list (T034)
+
+```bash
+kgmaker process list --workspace workspace.json --format json
+```
+
+The command emits a JSON schema 1 T033 catalog of local process candidates
+derived from the current T024 trigger inventory. It builds one T025 revision 1
+view per admitted trigger. Each group's process ID and the current member's
+`process_content_hash` match `process render --entry` for that trigger with the
+same scope and pins. The current record contains the exact trigger ID, context
+and evidence references. A compatible local T032 review can contribute its
+effective state to that record.
+
+`--workspace` is required. `--root` resolves relative input paths and selects
+the local coordinator, defaulting to the current directory. `--scope` defaults
+to `production`, with `test`, `test_fixture`, `development` and `unknown` also
+available. `--context-selection` uses the same schema 1 pins as
+[render](#read-only-process-render-t034). Every supplied pin must match a
+`CURRENT` row in the selected scope. Each checkout needs a valid original
+index. The shared workspace provider can parse local source in memory and read
+Git metadata. The command performs no writes, worker invocation, build or
+network request.
+
+Coverage `PARTIAL` or `UNKNOWN` applies to the selected T024 capture. A capture
+without admitted triggers returns exit 0, empty rows and `UNKNOWN`. A missing
+row carries no proof of deletion, registration, execution or data availability.
+The command derives only current local single-trigger views. Historical or
+stored view lookup, user aliases, composed cross-service views and the
+prepare, validate, apply and review lifecycle remain open.
+
+The catalog accepts at most 256 triggers. The count check runs before
+individual path projections. The T033 canonical catalog limit is 2 MiB.
+Oversized trigger inventories return `SNAPSHOT_LIMIT`, exit 2. Invalid inputs,
+an unavailable original index, a mismatched pin, an admitted trigger whose
+projection fails, and unsafe or oversized output return a typed error with
+empty stdout. A detected change to the manifest or to a bound source during
+capture returns `CURRENT_CAPTURE_CONFLICT`, exit 3.
+
+[Implementation and targeted validation](changes/214_listCurrentProcessCandidates.md).
+
 ## Read-only process render (T034)
 
 ```bash

@@ -1585,14 +1585,16 @@ See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
 
 ## T034 — lokální technický JSON render
 
+Rozsah zahrnuje také [čtecí katalog současných lokálních kandidátů](process-paths.md#read-only-process-list-t034).
+
 | Kritérium | Ověření | Důkaz |
 |---|---|---|
-| T034-AC01 | PARTIAL | `test_workspace_entry_and_stored_process_use_one_current_canonical_view` ověřuje shodné JSON bajty pro přesný trigger a explicitní ProcessView v reálném Javac workspace se dvěma službami. Interní vyhledání podle samotného ID zůstává otevřené. |
+| T034-AC01 | PARTIAL | `test_workspace_entry_and_stored_process_use_one_current_canonical_view` ověřuje shodné JSON bajty pro přesný trigger a explicitní ProcessView v reálném Javac workspace se dvěma službami. V témž workspace odpovídá ID a otisk záznamu v katalogu renderu z přesného triggeru. Interní vyhledání podle samotného ID zůstává otevřené. |
 | T034-AC02 | NOT_RUN | Mutující `apply` a `review` nejsou součástí čtecí dodávky. |
 | T034-AC03 | VERIFIED_IN_SCOPE | Stejný test ověřuje původní `flow render --view process` s Javac a CFG schema 1. |
-| T034-AC04 | VERIFIED_IN_SCOPE | Shoda bajtů vstupů, indexů a posledního validního JSON při chybném výběru, revizi, souboru, pinování a chybějícím původním indexu. Chybný výslovný pin druhé služby skončí u obou selektorů exit 2. Historický jinak platný ProcessView se stejným baseline skončí exit 3. |
-| T034-AC05 | VERIFIED_IN_SCOPE | Přesný kontext `orders`, scope, provenance a obě větve zůstávají v PARTIAL výsledku. Cizí scope nevydá JSON, `--strict` vydá stejný JSON s exit 4. |
-| T034-AC06 | PARTIAL | [PR #177](https://github.com/p-rum/kgmaker/pull/177) je sloučené do `main` na `a2adbe2e8666fbc76bf87b0aa2fd2be288bdf6bc`. Schválený head má 51 PASS / 0 SKIP a cílená sada na sloučeném stromu 16 PASS / 0 SKIP s Javac 21. Původní selhání při chybějícím příkazu a následných 237 PASS / 0 SKIP patří dřívějšímu výřezu. [Implementace](changes/193_renderLocalProcess.md) · [Přesný doklad](changes/196_recordProcessRenderMerge.md). |
+| T034-AC04 | VERIFIED_IN_SCOPE | Shoda bajtů vstupů, indexů a posledního validního JSON při chybném výběru, revizi, souboru, pinování a chybějícím původním indexu. Chybný výslovný pin druhé služby skončí u obou selektorů exit 2. Historický jinak platný ProcessView se stejným baseline skončí exit 3. Seznam zachoval vstupní bajty při úspěchu a při chybě pinu nebo indexu. Kontrola 256 spouštěčů odmítla nadlimitní výběr před sestavením pohledů. |
+| T034-AC05 | VERIFIED_IN_SCOPE | Přesný kontext `orders`, scope, provenance a obě větve zůstávají v PARTIAL výsledku. Render cizího scope nevydá JSON, `--strict` vydá stejný JSON s exit 4. Seznam zachoval `PARTIAL`, přesný kontext a důkazy. Prázdný test scope má nula řádků a `UNKNOWN`. |
+| T034-AC06 | PARTIAL | [PR #177](https://github.com/p-rum/kgmaker/pull/177) je sloučené do `main` na `a2adbe2e8666fbc76bf87b0aa2fd2be288bdf6bc`. Schválený head má 51 PASS / 0 SKIP a cílená sada na sloučeném stromu 16 PASS / 0 SKIP s Javac 21. Původní selhání při chybějícím příkazu a následných 237 PASS / 0 SKIP patří dřívějšímu výřezu. [Implementace](changes/193_renderLocalProcess.md) · [Přesný doklad](changes/196_recordProcessRenderMerge.md). Nový čtecí katalog má 44 cílených PASS, 0 SKIP a raw pytest exit 0 na zdrojovém kandidátovi po #194. Doklad pokrývá i dva T038 export testy a přímé veřejné CLI nad skutečným Javac workspace. Finální integrace a úplné ověření čekají. [Doklad seznamu](changes/214_listCurrentProcessCandidates.md). |
 
 ## T035 — Mermaid nad dodaným typovaným ProcessView
 

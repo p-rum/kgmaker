@@ -1034,6 +1034,17 @@ proof during scope projection. The process definition and technical view carry
 the selected trigger's current compiler context, including when the workspace
 inventory has several services. See [API, selected-snapshot proof and limits](docs/process-paths.md).
 
+List current local process candidates from an explicit workspace.
+
+```bash
+kgmaker process list --workspace workspace.json --format json
+```
+
+The catalog includes the trigger ID and its local process ID. Use that trigger
+with `process render --entry` and the same scope and context pins. Empty or
+partial coverage describes the selected capture. The command reads the
+workspace and preserves original indexes. [Process list options and limits](docs/process-paths.md#read-only-process-list-t034).
+
 Render one current local technical process as JSON from an exact T024 trigger
 and an existing workspace. The second command revalidates the caller-supplied
 view against the same workspace and selects its exact `process_id`.
