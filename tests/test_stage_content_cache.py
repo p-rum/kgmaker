@@ -130,6 +130,31 @@ def test_java_launch_capture_binds_non_utf8_locale(java_launch, monkeypatch):
     assert before['environment_sha256'] != after['environment_sha256']
 
 
+@pytest.mark.skipif(sys.platform != 'linux', reason='Linux launcher environment')
+@pytest.mark.parametrize('launcher', ['java', 'node'])
+def test_linux_launch_capture_binds_exact_library_search_path(java_launch, monkeypatch, launcher):
+    argv, _ = java_launch
+    if launcher == 'node':
+        executable = Path(argv[0]).with_name('node')
+        executable.write_bytes(b'inert launcher fixture')
+        argv = [str(executable)]
+
+    monkeypatch.delenv('LD_LIBRARY_PATH', raising=False)
+    absent = launch_inputs(argv)
+    monkeypatch.setenv('LD_LIBRARY_PATH', '')
+    empty = launch_inputs(argv)
+    monkeypatch.setitem(os.environb, b'LD_LIBRARY_PATH', b'kgmaker-inert-search-path-\xfe')
+    first = launch_inputs(argv)
+    monkeypatch.setitem(os.environb, b'LD_LIBRARY_PATH', b'kgmaker-inert-search-path-\xff')
+    second = launch_inputs(argv)
+
+    captures = (absent, empty, first, second)
+    assert len({capture['environment_sha256'] for capture in captures}) == 4
+    assert all(capture['files'] == absent['files'] for capture in captures)
+    assert all(set(capture) == {'argv', 'files', 'environment_sha256'} for capture in captures)
+    assert 'kgmaker-inert-search-path' not in json.dumps(captures)
+
+
 def test_java_launch_capture_binds_ct_sym_contents(java_launch):
     argv, platform_symbols = java_launch
     original = launch_inputs(argv)
@@ -171,6 +196,8 @@ def test_non_linux_java_launch_needs_no_linux_native_libraries(java_launch, monk
         str(Path(argv[0]).resolve()), str(jdk / 'release'),
         str(jdk / 'lib/modules'), str(platform_symbols),
     }
+    monkeypatch.setenv('LD_LIBRARY_PATH', 'kgmaker-inert-search-path')
+    assert launch_inputs(argv) == captured
 
 
 @pytest.mark.skipif(os.name != 'posix', reason='POSIX Java launcher alias')
@@ -275,6 +302,60 @@ def test_java_native_library_change_after_analysis_preserves_generation(transpor
         inspection.inspect_jvm(root)
     assert error.value.status == 'STALE'
     assert calls == {'analyze': 2, 'graph': 1, 'framework': 1}
+    assert snapshot(root / '.kgmaker') == before
+
+
+@pytest.mark.skipif(sys.platform != 'linux', reason='Linux launcher environment')
+@pytest.mark.parametrize('boundary', ['after-analysis', 'during-publication'])
+def test_linux_library_search_path_drift_preserves_generation(transport, java_launch, monkeypatch, boundary):
+    root, source, _, _, calls, _ = transport
+    argv, _ = java_launch
+    monkeypatch.setattr(inspection, 'command', lambda *args, **kwargs: argv)
+
+    def reject_process(*args, **kwargs):
+        pytest.fail('Capture-only environment test must not start a process')
+
+    monkeypatch.setattr(subprocess, 'Popen', reject_process)
+    monkeypatch.setenv('LD_LIBRARY_PATH', 'kgmaker-inert-search-path-one')
+    cold = inspection.inspect_jvm(root)
+    assert {(stage['status'], stage['reason']) for stage in cold['cache']['stages']} == {
+        ('BYPASS', 'UNVERIFIED_REPLAY'),
+    }
+    diagram = root / store.MERMAID_FILE
+    diagram.write_bytes(diagram.read_bytes() + b'\n%% previous diagram rollback witness\n')
+    before = snapshot(root / '.kgmaker')
+    generation = store.graph_revision(root)
+    assert b'kgmaker-inert-search-path' not in before['graph.json']
+    source.write_text('class Example { void changed() {} }\n', encoding='utf-8')
+    observed = []
+
+    if boundary == 'after-analysis':
+        request = inspection.request_worker
+
+        def drift_after_analysis(*args, **kwargs):
+            response = request(*args, **kwargs)
+            observed.append(boundary)
+            monkeypatch.setenv('LD_LIBRARY_PATH', 'kgmaker-inert-search-path-two')
+            return response
+
+        monkeypatch.setattr(inspection, 'request_worker', drift_after_analysis)
+    else:
+        replace = store.os.replace
+
+        def drift_during_publication(source_path, target):
+            replace(source_path, target)
+            if target == diagram and not observed:
+                assert target.read_bytes() != before[diagram.name]
+                observed.append(boundary)
+                monkeypatch.setenv('LD_LIBRARY_PATH', 'kgmaker-inert-search-path-two')
+
+        monkeypatch.setattr(store.os, 'replace', drift_during_publication)
+
+    with pytest.raises(WorkerError, match='launcher changed') as error:
+        inspection.inspect_jvm(root)
+    assert error.value.status == 'STALE'
+    assert observed == [boundary] and calls['analyze'] == 2
+    assert store.graph_revision(root) == generation
     assert snapshot(root / '.kgmaker') == before
 
 
