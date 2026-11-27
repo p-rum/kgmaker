@@ -1082,6 +1082,11 @@ kgmaker process export --snapshot process.json --output reports/process
 Read `reports/process/manifest.json` once and use the three paths in that
 manifest to read one generation. [Process export options and manifest](docs/process-paths.md#atomic-process-export-t038).
 
+Compare two supplied process snapshots with
+`kgmaker.view_diff.diff_process_views(before, after)`. It reports captured
+technical changes, presentation changes and evidence within a matching
+process and context. [Python example and comparison rules](docs/process-paths.md#compare-supplied-process-views-t039).
+
 ### Kafka interface catalogue
 
 The pure [Kafka catalogue](docs/kafka-interfaces.md) projects explicit upstream

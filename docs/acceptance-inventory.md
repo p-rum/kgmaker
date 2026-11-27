@@ -1630,6 +1630,17 @@ Rozsah zahrnuje také [čtecí katalog současných lokálních kandidátů](pro
 | T038-AC06 | PARTIAL | [#194](https://github.com/p-rum/kgmaker/pull/194) je sloučeno jako `2e393c0`. Cílený běh T038 a T036 na tomtéž merge měl 39 PASS / 0 SKIP, raw exit 0, s připnutým Markdown parserem a Mermaid 11.4.1 s výstupem SVG a jsdom 26. Na schváleném headu `c536066` má úplná standardní sada 2 733 PASS / 1 409 SKIP / 1 očekávaný XFAIL, raw exit 0. Nezávislá revize přesné dvojice SHA je doložená. Úplná sada přímo na merge má stav NOT_RUN. Architektonický export zbývá. [Implementace](changes/210_publishProcessViewAtomically.md) · [Doklad sloučení](changes/212_recordProcessExportMerge.md). |
 
 
+## T039 — porovnání dodaných ProcessView
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T039-AC01 | VERIFIED_IN_SCOPE | Přeuspořádání kanonických kolekcí, řádků výběru T025 a diagnostik vybraného kontextu i změna metadat generování dávají prázdný rozdíl. Samostatná kontrola ověřila 111 diagnostik skutečného snímku Javac. |
+| T039-AC02 | PARTIAL | Testy oddělují změnu popisku, změnu technického vztahu a odebrání jednoho paralelního výskytu hrany. Architektonické integrační vazby a změny kontraktů zbývají. |
+| T039-AC03 | PARTIAL | Neshoda scope, ID procesu, pravidel nebo kontextu dává `INCOMPARABLE` s prázdnými změnami. Nový otisk zachycení vyžaduje novou vazbu i při shodném klíči build varianty. Architektonické release párování zbývá. |
+| T039-AC04 | VERIFIED_IN_SCOPE | Neplatný vstup a překročení rozpočtu zachovávají bajty obou snímků i původního artefaktu. Změna vnořeného výsledku se do vstupu nepropíše. Kontrola běží bez otevření souborů, procesu nebo socketu. |
+| T039-AC05 | VERIFIED_IN_SCOPE | Procesní snímky zachovávají nevyřešené hranice, freshness, původní důkazy a ID místně zkrácených uzlů a hran. Neúplné, zkrácené nebo odlišné pokrytí kvalifikuje absenci v příslušném snímku. Obsah plně zachycených srovnatelných výřezů má potvrzený rozdíl záznamů. |
+| T039-AC06 | PARTIAL | Po opravách prošlo na vývojové dvojici 88 testů bez SKIP, raw exit 0, z toho 19 T039 a 69 T023. Obě nezávislé reprodukce mají dohromady pět úspěšných případů, obě raw exit 0. Doložené testy a příkazy jsou v [Change215](changes/215_compareCapturedProcessViews.md). |
+
 ## T014 — current-parent descendant-result transfer
 
 - AC01–03: public hand-labelled HTTP/Kafka mapping, same URL/no mapping, wrong
