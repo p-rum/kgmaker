@@ -363,6 +363,15 @@ See the [project workflow guide](docs/project-workflows.md),
 
 `memory capture` records one deterministic episode from a Git baseline, the stored pre-task graph, a fresh graph, changed file hashes, affected node IDs, and bounded validation statuses. It stores no source text, raw diff, prompt transcript, test output, or sensitive path content. Repeating capture for the same Git/worktree fingerprint is idempotent. Semantic schema v1 and v2 remain readable; the first capture writes schema v3 while preserving valid concepts and relationships.
 
+Use a pre-task `kgmaker scan` without an external Confluence overlay for the
+graph baseline. Capture compares it with the same local graph projection, so
+unchanged workbook and template nodes stay out of the delta. See the
+[completion workflow](docs/completion-orchestrator.md#záznam-implementační-epizody).
+The first capture and a repeat project the same v3 evidence after validating
+any legacy artifact. Capture and `semantic apply` share a checkout publication
+lock. If publication is busy, the command exits with status 3 and can be
+retried after the active command finishes.
+
 `memory recall` ranks current graph locations and prior episodes against the implementation request. It labels changed or removed episode evidence as historical, applies result and token bounds, and reports the estimated reduction from the broad legacy graph context.
 
 The `task` commands persist workflow state under ignored `.kgmaker/workflow/`. A task follows `intake → analyze → plan → implement → test → review → done`; bounded retries may return test or review to implementation. Architect, implementation, test-expert, review, and orchestrator artifacts have strict role-specific JSON contracts. `task context` assembles a bounded packet from current graph nodes, semantic hits, implementation memory, impact candidates, tests, and prior task artifacts without modifying the graph or semantic layer.
@@ -1299,9 +1308,7 @@ contract revisions and internal evidence links. Generated/unclassified rows,
 unknowns and diagnostics stay visible; no current source or runtime proof is added.
 JSON stays default. See [contract and parser checks](docs/interface-markdown.md);
 Merged in PR87 (`250e7c1`) with the first-call purity correction.
-Topology Mermaid is available as `--format mermaid` under T021; explain remains
-JSON-only and T022 topology Markdown remains separate. Historical checks and
-current verification limits are in the delivery inventory.
+Historical checks and current verification limits are in the delivery inventory.
 
 ### T021 topology Mermaid
 
@@ -1319,6 +1326,15 @@ UNKNOWN`; runtime/data availability and ordering are not inferred. The renderer
 creates no legend or truncation vertices and publishes no files itself. See the
 [topology CLI contract](docs/architecture-json-cli.md#architecture-topology-mermaid-t021)
 and [topology model](docs/service-topology.md#mermaid-rendering-t021).
+
+### T022 topology Markdown
+
+`kgmaker architecture topology --capture-snapshot topology-inputs.json --format markdown`
+reports the same filtered topology as JSON and Mermaid. It includes the Mermaid
+diagram, service and relation IDs, selected contexts, omitted boundaries and
+captured provenance. Source observation stays `NOT_CHECKED`. `--strict` returns
+exit 4 with a valid partial report. [Topology Markdown CLI](docs/architecture-json-cli.md#architecture-topology-markdown-t022)
+and [implementation evidence](docs/changes/195_renderTopologyMarkdown.md).
 
 The [T029 failure projection API](docs/process-paths.md#static-failure-projection-t029)
 retains catch/finally paths through business-step collapse and adds bounded static

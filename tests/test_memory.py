@@ -1,18 +1,28 @@
 import hashlib
 import json
+import os
+import shutil
 import subprocess
 import tempfile
 import unittest
 import io
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import redirect_stdout
 from pathlib import Path
+from threading import Event
 from unittest.mock import patch
 
-from kgmaker.cli import main, memory_capture, memory_recall
+from kgmaker.cli import main, memory_capture, memory_recall, scan, semantic_apply, semantic_update
 from kgmaker.memory import episode_id, episode_freshness, recall, validate_episode
 from kgmaker.scanner import scan_repository
-from kgmaker.semantic import SEMANTIC_FILE, apply_semantic_layer, build_semantic_input, concept_id
-from kgmaker.store import render_context, render_markdown, render_mermaid, save_graph
+from kgmaker.semantic import (
+    SEMANTIC_FILE, SEMANTIC_PATCH_FILE, SEMANTIC_UPDATE_FILE, apply_semantic_layer, apply_semantic_patch,
+    build_semantic_input, concept_id, graph_fingerprint,
+)
+from kgmaker.store import (
+    GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE, PUBLICATION_LOCK,
+    load_graph, render_context, render_markdown, render_mermaid, save_graph,
+)
 
 
 class MemoryContractTests(unittest.TestCase):
@@ -147,6 +157,247 @@ class MemoryContractTests(unittest.TestCase):
             before = semantic.read_bytes()
             self.assertEqual(memory_capture(root, base, ["other=failed"]), 0)
             self.assertEqual(semantic.read_bytes(), before)
+
+    def test_public_capture_uses_scan_projection_and_reports_real_workbook_removal(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workbook = root / "Rates.xlsx"
+            fixture = Path(__file__).resolve().parents[1] / "fixtures/excel-migration/Rates.xlsx"
+            shutil.copyfile(fixture, workbook)
+            workbook_bytes = workbook.read_bytes()
+            template = root / "src/main/resources/templates/view.html"
+            template.parent.mkdir(parents=True)
+            template.write_text('<p th:text="${account.balance}">Balance</p>', encoding="utf-8")
+            base = self._repository(root)
+
+            def run(*arguments):
+                with patch("sys.argv", ["kgmaker", *arguments, "--root", str(root)]):
+                    with self.assertRaises(SystemExit) as exit_info:
+                        main()
+                self.assertEqual(exit_info.exception.code, 0)
+
+            run("scan")
+            graph = load_graph(root)
+            workbook_ids = {node.id for node in graph.nodes if node.path == workbook.name}
+            template_ids = {node.id for node in graph.nodes if node.path == template.relative_to(root).as_posix()}
+            self.assertIn("workbook_cell:Rates.xlsx:Rates!B2", workbook_ids)
+            self.assertTrue(any(node.kind == "template_variable" and node.id in template_ids for node in graph.nodes))
+            outputs = (GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE)
+            stored_before = {path: (root / path).read_bytes() for path in outputs}
+            (root / "service.py").write_text("def greet():\n    return 'hello'\n", encoding="utf-8")
+
+            run("memory", "capture", "--base", base, "--validation", "unit-tests=passed")
+            semantic = root / SEMANTIC_FILE
+            preserved = semantic.read_bytes()
+            first, = json.loads(preserved)["episodes"]
+            self.assertEqual([row["path"] for row in first["changed_files"]], ["service.py"])
+            self.assertTrue(first["affected_node_ids"])
+            for nodes in first["graph_delta"].values():
+                self.assertTrue((workbook_ids | template_ids).isdisjoint(nodes), nodes)
+            self.assertEqual(workbook.read_bytes(), workbook_bytes)
+            run("memory", "capture", "--base", base, "--validation", "other=failed")
+            self.assertEqual(semantic.read_bytes(), preserved)
+
+            workbook.unlink()
+            run("memory", "capture", "--base", base)
+            history, deleted = json.loads(semantic.read_bytes())["episodes"]
+            self.assertEqual(history, first)
+            self.assertIn({"path": workbook.name, "status": "D", "sha256": None}, deleted["changed_files"])
+            self.assertEqual(set(deleted["graph_delta"]["removed"]), workbook_ids)
+            self.assertEqual({path: (root / path).read_bytes() for path in outputs}, stored_before)
+
+    def test_capture_preserves_legacy_structural_semantic_contract_with_workbook(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture = Path(__file__).resolve().parents[1] / "fixtures/excel-migration/Rates.xlsx"
+            shutil.copyfile(fixture, root / "Rates.xlsx")
+            base = self._repository(root)
+            self.assertEqual(scan(root), 0)
+            self.assertTrue(any(node.kind == "workbook_cell" for node in load_graph(root).nodes))
+            (root / "service.py").write_text("def greet():\n    return 'hello'\n", encoding="utf-8")
+            structural = scan_repository(root)
+            concept = {
+                "id": concept_id("service.py", "Greeting policy"), "name": "Greeting policy",
+                "source_file": "service.py", "source_line": 1, "summary": "Greeting policy.",
+            }
+            semantic = root / SEMANTIC_FILE
+            legacy = json.dumps({
+                "schema_version": 1, "graph_fingerprint": graph_fingerprint(structural),
+                "nodes": [concept], "edges": [],
+            }).encode("utf-8")
+            semantic.write_bytes(legacy)
+            self.assertEqual(memory_capture(root, base, []), 0)
+            migration = semantic.read_bytes()
+            migrated = json.loads(migration)
+            self.assertEqual(migrated["schema_version"], 3)
+            self.assertEqual(migrated["files"], structural.files)
+            self.assertEqual(migrated["nodes"], [concept])
+            self.assertEqual(memory_capture(root, base, []), 0)
+            self.assertEqual(semantic.read_bytes(), migration)
+            episode, = migrated["episodes"]
+            self.assertIn(concept["id"], episode["graph_delta"]["added"])
+            self.assertEqual(episode["graph_delta"]["removed"], [])
+
+            (root / "service.py").write_text("def greet():\n    return 'goodbye'\n", encoding="utf-8")
+            self.assertEqual(memory_capture(root, base, []), 2)
+            self.assertEqual(semantic.read_bytes(), migration)
+            semantic.write_bytes(legacy)
+            self.assertEqual(memory_capture(root, base, []), 2)
+            self.assertEqual(semantic.read_bytes(), legacy)
+
+    def test_competing_captures_preserve_both_episodes_after_retry(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first_base = self._repository(root)
+            subprocess.run(
+                ["git", "-C", str(root), "commit", "--allow-empty", "-qm", "same source"], check=True,
+            )
+            second_base = subprocess.check_output(
+                ["git", "-C", str(root), "rev-parse", "HEAD"], text=True,
+            ).strip()
+            self.assertNotEqual(first_base, second_base)
+            (root / "service.py").write_text("def greet():\n    return 'hello'\n", encoding="utf-8")
+            semantic = root / SEMANTIC_FILE
+            replacing = Event()
+            release = Event()
+            replace = os.replace
+
+            def pause_first_replace(source, target):
+                if target == semantic and not replacing.is_set():
+                    replacing.set()
+                    self.assertTrue(release.wait(5))
+                return replace(source, target)
+
+            with ThreadPoolExecutor(max_workers=1) as pool, patch(
+                "kgmaker.analysis_model.os.replace", side_effect=pause_first_replace,
+            ):
+                first = pool.submit(memory_capture, root, first_base, [])
+                try:
+                    self.assertTrue(replacing.wait(5))
+                    second_status = memory_capture(root, second_base, [])
+                finally:
+                    release.set()
+                self.assertEqual(first.result(timeout=5), 0)
+
+            first_episode, = json.loads(semantic.read_bytes())["episodes"]
+            self.assertEqual(second_status, 3)
+            self.assertEqual(first_episode["base_commit"], first_base)
+            self.assertEqual(memory_capture(root, second_base, []), 0)
+            preserved, second_episode = json.loads(semantic.read_bytes())["episodes"]
+            self.assertEqual(preserved, first_episode)
+            self.assertEqual(second_episode["base_commit"], second_base)
+            self.assertNotEqual(preserved["id"], second_episode["id"])
+            self.assertFalse((root / PUBLICATION_LOCK).exists())
+
+    def test_capture_respects_semantic_apply_read_and_publish_lock(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._repository(root)
+            (root / "service.py").write_text("def greet():\n    return 'hello'\n", encoding="utf-8")
+            self.assertEqual(semantic_update(root, base), 0)
+            update = json.loads((root / SEMANTIC_UPDATE_FILE).read_bytes())
+            concept = {"id": concept_id("service.py", "Greeting"), "name": "Greeting",
+                       "source_file": "service.py", "source_line": 1}
+            (root / SEMANTIC_PATCH_FILE).write_text(json.dumps({
+                "schema_version": 1, "update_id": update["update_id"], "nodes": [concept], "edges": [],
+            }), encoding="utf-8")
+            merged = Event()
+            release = Event()
+
+            def pause_after_artifact_read(*args, **kwargs):
+                candidate = apply_semantic_patch(*args, **kwargs)
+                merged.set()
+                self.assertTrue(release.wait(5))
+                return candidate
+
+            with ThreadPoolExecutor(max_workers=1) as pool, patch(
+                "kgmaker.cli.apply_semantic_patch", side_effect=pause_after_artifact_read,
+            ):
+                applying = pool.submit(semantic_apply, root)
+                try:
+                    self.assertTrue(merged.wait(5))
+                    capture_status = memory_capture(root, base, [])
+                finally:
+                    release.set()
+                self.assertEqual(applying.result(timeout=5), 0)
+
+            self.assertEqual(capture_status, 3)
+            self.assertEqual(memory_capture(root, base, []), 0)
+            artifact = json.loads((root / SEMANTIC_FILE).read_bytes())
+            self.assertEqual(artifact["nodes"], [concept])
+            episode, = artifact["episodes"]
+            self.assertEqual(episode["base_commit"], base)
+            self.assertFalse((root / PUBLICATION_LOCK).exists())
+
+    def test_capture_cannot_overwrite_semantic_artifact_changed_during_projection(self) -> None:
+        from kgmaker.feature import local_graph_from_scan
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._repository(root)
+            semantic = root / SEMANTIC_FILE
+            artifact = {"schema_version": 3, "files": scan_repository(root).files,
+                        "nodes": [], "edges": [], "episodes": []}
+            original = json.dumps(artifact).encode()
+            (root / "service.py").write_text("def greet():\n    return 'hello'\n", encoding="utf-8")
+
+            for replacement in (original + b"\n", b"malformed", None):
+                with self.subTest(replacement=replacement):
+                    semantic.write_bytes(original)
+
+                    def changed_snapshot(*args, **kwargs):
+                        projected = local_graph_from_scan(*args, **kwargs)
+                        if replacement is None:
+                            semantic.unlink()
+                        else:
+                            semantic.write_bytes(replacement)
+                        return projected
+
+                    with patch("kgmaker.feature.local_graph_from_scan", side_effect=changed_snapshot):
+                        self.assertEqual(memory_capture(root, base, []), 2)
+                    actual = semantic.read_bytes() if semantic.exists() else None
+                    self.assertEqual(actual, replacement)
+
+    def test_capture_rejects_semantic_artifact_unreadable_before_publish(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._repository(root)
+            semantic = root / SEMANTIC_FILE
+            original = json.dumps({"schema_version": 3, "files": scan_repository(root).files,
+                                   "nodes": [], "edges": [], "episodes": []}).encode()
+            semantic.write_bytes(original)
+            (root / "service.py").write_text("def greet():\n    return 'hello'\n", encoding="utf-8")
+            original_read = Path.read_bytes
+            reads = []
+
+            def becomes_unreadable(path):
+                if path == semantic:
+                    reads.append(path)
+                    if len(reads) == 2:
+                        raise PermissionError("artifact became unreadable before replacement")
+                return original_read(path)
+
+            before = {path.name for path in semantic.parent.iterdir()}
+            with patch.object(Path, "read_bytes", autospec=True, side_effect=becomes_unreadable):
+                self.assertEqual(memory_capture(root, base, []), 2)
+            self.assertEqual(reads, [semantic, semantic])
+            self.assertEqual(semantic.read_bytes(), original)
+            self.assertEqual({path.name for path in semantic.parent.iterdir()}, before)
+
+    def test_capture_rejects_unrelated_semantic_projection_diagnostic(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._repository(root)
+            (root / "service.py").write_text("def greet():\n    return 'hello'\n", encoding="utf-8")
+            structural = scan_repository(root)
+            semantic = root / SEMANTIC_FILE
+            original = json.dumps({"schema_version": 1, "graph_fingerprint": graph_fingerprint(structural),
+                                   "nodes": [], "edges": []}).encode()
+            semantic.write_bytes(original)
+            with patch("kgmaker.feature.local_graph_from_scan",
+                       return_value=(structural, (0, 0), "unexpected semantic projection error")):
+                self.assertEqual(memory_capture(root, base, []), 2)
+            self.assertEqual(semantic.read_bytes(), original)
 
     def test_capture_clean_sensitive_only_and_invalid_inputs_do_not_mutate_memory(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

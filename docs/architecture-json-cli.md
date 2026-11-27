@@ -28,6 +28,7 @@ kgmaker architecture interfaces --root /repo --catalog http-providers --interfac
 kgmaker architecture interfaces --catalog kafka --capture-local --workspace workspace.json
 kgmaker architecture topology --root /repo --capture-snapshot topology-inputs.json --max-nodes 50
 kgmaker architecture topology --root /repo --capture-snapshot topology-inputs.json --max-nodes 50 --format mermaid
+kgmaker architecture topology --root /repo --capture-snapshot topology-inputs.json --max-nodes 50 --format markdown
 kgmaker architecture explain --root /repo --snapshot filtered.json --capture-snapshot topology-inputs.json --element service:checkout
 kgmaker architecture topology --root /repo --capture-snapshot topology-inputs.json --view-cache .kgmaker/views/topology.json
 # Rejected context returns 2 and leaves the capture and last valid cache unchanged:
@@ -64,12 +65,11 @@ observes confined original source hashes through T018. Default pure explanation 
 NOT_CHECKED. A supplied `--source-status` replays that explicit sidecar rather than
 checking files now. Neither changes original view fingerprints or context freshness.
 
-Successful default stdout is one JSON document. T020 adds interfaces-only
-`--format markdown` over that same validated catalog. T021 adds topology-only
-`--format mermaid` over the same validated T017 envelope; JSON remains the default.
-Neither format performs another capture. The [interface Markdown contract](interface-markdown.md)
-and [topology Mermaid contract](#architecture-topology-mermaid-t021) preserve the
-same evidence and exit semantics. Explain remains JSON-only. Diagnostics use fixed JSON on stderr and
+Successful default stdout is one JSON document. [Interfaces](interface-markdown.md) accept `--format markdown`
+over the same validated catalog. Topology accepts `--format mermaid` and
+`--format markdown` over the same validated T017 envelope. Each format preserves
+the captured evidence and the command's exit semantics. Explain remains JSON-only.
+Diagnostics use fixed JSON on stderr and
 never echo raw argument values. Exits: 0 valid (including partial), 4 valid partial
 with `--strict`, 2 invalid input/original index, 3 typed baseline/capture conflict,
 130 cancellation, 141 broken pipe, 1 controlled unexpected internal error.
@@ -115,6 +115,26 @@ cite directly. Conflicts return `TOPOLOGY_MERMAID_FOREIGN_SCOPE` or
 `TOPOLOGY_MERMAID_FOREIGN_CONTEXT`. Unknown scope and absent context metadata
 stay eligible. Provenance cited only by an omitted frontier entry remains in
 the metadata. [Scope validation evidence](changes/138_rejectForeignTopologyEvidence.md).
+
+## Architecture topology Markdown (T022)
+
+```sh
+kgmaker architecture topology --root /repo --capture-snapshot topology-inputs.json --max-nodes 50 --format markdown
+```
+
+The report embeds the exact T021 Mermaid output and lists captured services,
+relationships, original IDs and evidence references. It shows the selected scope
+and contexts, coverage, limits, unresolved elements, each known omitted boundary
+and whether upstream truncation leaves the omission inventory incomplete.
+
+The pure `kgmaker.architecture_render.render_topology_markdown(document_or_t017_result)`
+API uses the same scope and visible-evidence validation as Mermaid. It operates
+on captured inputs. Source references remain in the captured provenance, while source
+locations report `SOURCE_LOCATOR_UNAVAILABLE` and current source observation is
+`NOT_CHECKED`. Use the explicit T018 explanation inputs for source observations.
+The CLI keeps its usual strict partial exit 4 and publishes an explicit derived
+view cache only after a successful exit-0 render and output. [Topology model](service-topology.md#markdown-report-t022)
+and [test evidence](changes/195_renderTopologyMarkdown.md).
 
 ## Historical validation checkpoint
 

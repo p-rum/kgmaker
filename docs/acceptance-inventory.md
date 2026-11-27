@@ -202,7 +202,7 @@ Dodání `MERGED` ([#120](https://github.com/p-rum/kgmaker/pull/120), [#133](htt
 | T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. Povinně ověřené přímé závislosti mají samostatný [doklad](changes/175_requireVerifiedDependencies.md). |
 | T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. Oprava dlouhého kontextu v [#133](https://github.com/p-rum/kgmaker/pull/133) má 99 zaměřených testů PASS / 0 SKIP a skutečný opakovaný handoff. Úplná sada NOT_RUN. [Regresní důkazy](changes/148_resumeCompletionPacketBudget.md). [Regrese T051-AC02](changes/167_useCanonicalPacketSourceSnapshot.md) ověřuje shodu hlášené čerstvosti se soubory zahrnutými do grafu. |
 | T052-AC03 | VERIFIED_IN_SCOPE | Oddělené correctness/steelman identity a společná revize. T045 ověřil aktuální pár, podmínky, skutečný merge a cílový ref pro [#125](https://github.com/p-rum/kgmaker/pull/125). Lokální identity mají trust LOCAL_DECLARED. |
-| T052-AC04 | VERIFIED_IN_SCOPE | Worktree/task checkpoint, kompletní 119položkový plán, W01 s doloženým blokem a dokončený #125. Širší backlog má vlastní PARTIAL/FAIL stavy. |
+| T052-AC04 | VERIFIED_IN_SCOPE | Worktree/task checkpoint, kompletní 119položkový plán, W01 s doloženým blokem a dokončený #125. Lokální regrese `memory capture` ověřuje shodnou projekci scanu, skutečné smazání workbooku, neměnnost historie, idempotentní migraci v1 a koordinaci se `semantic apply`. [Dílčí oprava evidence](changes/202_alignMemoryCaptureProjection.md). Širší backlog má vlastní PARTIAL/FAIL stavy. |
 
 ## T003-S13-W01 — synchronní JDK21/POSIX runtime capture, 2026-11-15
 
@@ -2045,6 +2045,24 @@ Příkazy a výsledky tohoto historického checkpointu jsou v [change132](change
 | T021-AC04 | Invalid/dangling input equality; CLI render failure preserves existing artifact and skips cache publish | PASS |
 | T021-AC05 | Cizí scope a explicitní kontext u přímé provenance viditelných uzlů/hran vyvolá chybu. Neznámé hodnoty, omitted-only provenance, PARTIAL/TRUNCATED/UNKNOWN a async delivery boundary jsou zachované. | PASS |
 | T021-AC06 | README, architecture, CLI, service topology, stavová a acceptance matice, [historická změna](changes/132_renderTopologyMermaid.md), [aktuální ověření](changes/138_rejectForeignTopologyEvidence.md), úplná sada a [T045 merge doklad](changes/146_recordTopologyMerge.md). | PASS |
+
+## T022 — Markdown report topologie
+
+Na referenční revizi `c5db937845a3a9f7296bc789b6eb57f6999675d1` nad
+`c4a1edb59f140faeafba0d5e979023bba185f3f1` mělo úplné standardní opakování
+**2 662 PASS / 1 396 SKIP / 1 očekávaný XFAIL**, exit 0. Samostatně prošlo
+**26 cílených testů bez přeskočení**, včetně skutečného Mermaid 11.4.1/jsdom 26.0.0,
+Markdown-it 3.0.0 a Javacu 21. Předchozí dvojici `44ea312` / `a2adbe2` a první
+pokus na `c5db937` dokládá change note. [Přesné historické výsledky](changes/195_renderTopologyMarkdown.md).
+
+| Acceptance | Cílený důkaz | Stav |
+|---|---|---|
+| T022-AC01 | `test_public_topology_three_formats_share_model_and_ids`; všech 13 původních JSON/Mermaid výstupů zachovává bytes. | PASS |
+| T022-AC02 | `test_public_partial_topology_exposes_all_frontiers_and_preserves_cache`; všechny frontier IDs a vynechané uzly/hrany jsou viditelné. | PASS |
+| T022-AC03 | `test_report_is_pure_deterministic_and_abstains_on_missing_source`; stejné bytes, vstup beze změny a zákaz I/O během renderu. | PASS |
+| T022-AC04 | `test_public_rejected_topology_markdown_keeps_last_artifact` a `test_markdown_render_failure_never_publishes_prepared_cache`; původní vstupy i artefakt zůstávají stejné. | PASS |
+| T022-AC05 | `test_foreign_visible_claim_or_proof_is_rejected_without_mutation`, `test_explicit_context_report_does_not_display_uncited_proof_as_selected` a nevyřešená vazba v deterministické fixture. | PASS |
+| T022-AC06 | [PR #179](https://github.com/p-rum/kgmaker/pull/179) je sloučené jako `fd8d5e958bf45b67775c04f78e817cc7d41ebfe9`. Nezávislé T045 na schváleném headu i přímý běh na merge daly 26 PASS / 0 SKIP. [Doklad sloučení](changes/201_recordTopologyMarkdownMerge.md) váže samostatné běhy na přesné revize. [Předchozí příklady a výsledky](changes/195_renderTopologyMarkdown.md) zůstávají historické. Širší provozní ověření má stav NOT_RUN. | PARTIAL |
 
 ## T003-S10-W06 — souběh publikace a poškozená cache
 

@@ -561,14 +561,15 @@ def apply_semantic_patch(patch: Any, update: Any, graph: KnowledgeGraph, root: P
     return candidate
 
 
-def apply_semantic_layer(graph: KnowledgeGraph, root: Path) -> tuple[KnowledgeGraph, tuple[int, int], str | None]:
-    """Merge a fresh semantic artifact; return the base graph unchanged if stale/invalid."""
+def apply_semantic_layer(graph: KnowledgeGraph, root: Path, *,
+                         artifact: dict[str, Any] | None = None) -> tuple[KnowledgeGraph, tuple[int, int], str | None]:
+    """Project a supplied or persisted artifact and report stale or invalid entries."""
     path = root / SEMANTIC_FILE
-    if not path.exists():
+    if artifact is None and not path.exists():
         return graph, (0, 0), None
     error: str | None = None
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = artifact if artifact is not None else json.loads(path.read_text(encoding="utf-8"))
         if isinstance(data, dict) and data.get("schema_version") in {LEGACY_SEMANTIC_SCHEMA_VERSION, SEMANTIC_SCHEMA_VERSION} \
                 and isinstance(data.get("files"), dict) and isinstance(data.get("nodes"), list) \
                 and isinstance(data.get("edges"), list):
