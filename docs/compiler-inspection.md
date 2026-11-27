@@ -1690,13 +1690,16 @@ na compiler symboly, místa volání a zdroje i dvojici `call_site` a `receiver_
 důkazu v3. Porušený tvar nebo vazba na vyřazovaný kontext v zachovávaném
 důkazu vrátí `STALE` před zápisem. Ověřené nezávislé odkazy se zachovají.
 
-Pokud jsou vybraný i vyřazovaný kontext ve scope `production`, stejná
-publikace může zachovat také dříve ověřený kontext ve scope `test`. Má vlastní
-modul a zdroje, které nesdílí s vyřazovanou ani s původní či novou vybranou
-vrstvou. Graf musí doložit i nezávislost typovaných compiler důkazů. Testovací
-kontext musí splňovat stejné požadavky na `project_model`, distribuci workeru,
-classpath a ověření vstupů. Neúplná identita, překryv důkazů nebo změna bajtů
-testovacího vstupu vrátí `STALE` se zachováním poslední platné generace.
+Vybraný a vyřazovaný kontext mají stejný scope. Při obnově produkčního
+kontextu a vyřazení druhého lze zachovat dříve ověřený kontext ve scope
+`test`. Při obnově testovacího kontextu a vyřazení druhého lze stejně
+zachovat kontext ve scope `production`. Tato vrstva má vlastní modul a
+zdroje i typované compiler důkazy oddělené od vyřazované a původní i nové
+vybrané vrstvy. Všechny kontexty mají stejný `project_model` a distribuci
+workeru. Každá classpath se ověřuje zvlášť a smí odkazovat jen na
+obsahově ověřené knihovny této distribuce. Při neúplné identitě,
+překryvu důkazů nebo změně vstupu vrátí inspekce `STALE` a zachová
+poslední platnou generaci.
 
 ```python
 from pathlib import Path
@@ -1718,12 +1721,40 @@ modelem. Modul `qa` zachyťte s `module="qa", scope="test", source_set="test"`.
 Po změně `Orders.java` aktualizuje uvedené volání `shipping` a může vyřadit
 starý kontext `orders` při zachování `qa`.
 
+Při obnově testovacího modulu použijte jeho deklarovaný scope i source set.
+Následující varianta předpokládá tři dříve zachycené kontexty se stejným
+modelem. Po úpravě `edited/src/test/java/Api.java` obnoví `selected`
+a může zachovat platný produkční kontext `control`.
+
+```python
+from pathlib import Path
+from kgmaker.inspection import inspect_jvm
+
+test_model = {"source_sets": [
+    {"module": "edited", "id": "test", "scope": "test",
+     "files": ["edited/src/test/java/Api.java", "edited/src/test/java/Caller.java"]},
+    {"module": "selected", "id": "test", "scope": "test",
+     "files": ["selected/src/test/java/Entry.java"]},
+    {"module": "control", "id": "main", "scope": "production",
+     "files": ["control/src/main/java/Control.java"]},
+]}
+inspect_jvm(
+    Path("./service"), module="selected", scope="test", source_set="test",
+    project_model=test_model,
+)
+```
+
+Při samostatné editaci uvádí vyřazený kontext obecný důvod `STALE_INDEX`.
+Čtecí report před inspekcí určí konkrétní soubor, dříve doloženého
+volajícího a jeho compiler kontext.
+
 Tento rozsah platí pro publikující volání bez `build_context`, explicitního
 výběru `sources` a bytecode výstupů. CLI s manifestem, frontend a sdílené
 moduly mají vlastní omezení. [Ověření změny bajtů](changes/185_publishIsolatedJvmContext.md) ·
 [Ověření odstranění vstupu](changes/194_retireDeletedCompilerPeer.md) ·
 [Ověření kombinované změny](changes/200_retireMixedOwnedCompilerInputs.md) ·
-[Ověření nezávislého testovacího kontextu](changes/205_retainFreshTestContext.md).
+[Ověření nezávislého testovacího kontextu](changes/205_retainFreshTestContext.md) ·
+[Ověření nezávislého produkčního kontextu](changes/209_retainFreshProductionContext.md).
 
 ## Pozorované hrany a statické cesty
 

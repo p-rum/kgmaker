@@ -1443,8 +1443,10 @@ vlastníka, i současnou úpravu jiného zachyceného vstupu téhož modulu.
 Při této kombinaci důvod `STALE` uvede smazané i změněné cesty. Platné důkazy
 dalších modulů se zachovají. Když jsou vybraný i vyřazovaný kontext produkční,
 může zůstat platný i dříve ověřený kontext se scope `test`, pokud má vlastní
-modul, oddělené zdroje a nezávislé compiler důkazy.
-[Podporovaný rozsah a příklad API](docs/compiler-inspection.md#obnova-izolovaného-jvm-kontextu).
+modul, oddělené zdroje a nezávislé compiler důkazy. Stejné podmínky umožňují
+při obnově a vyřazení dvou testovacích kontextů zachovat nezávislý produkční
+kontext. [Podporovaný rozsah a příklady API](docs/compiler-inspection.md#obnova-izolovaného-jvm-kontextu) ·
+[Nativní ověření](docs/changes/209_retainFreshProductionContext.md).
 
 ### Doklad skutečného testovacího běhu (T047-S10)
 

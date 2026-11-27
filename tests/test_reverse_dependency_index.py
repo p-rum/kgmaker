@@ -511,11 +511,12 @@ def test_actual_jvm_uncaptured_eol_drift_during_peer_publication(tmp_path, retir
     assert peer['freshness'] == ('STALE' if retire_peer else 'CONTENT_VERIFIED')
 
 
-def _native_javac_scope_fixture(root, control_scope='test', *, shared_module=False):
+def _native_javac_scope_fixture(root, control_scope='test', *, selected_scope='production', shared_module=False):
     _require_javac_worker()
-    api = 'edited/src/main/java/Api.java'
-    caller = 'edited/src/main/java/Caller.java'
-    selected = 'selected/src/main/java/Entry.java'
+    selected_set = 'test' if selected_scope == 'test' else 'main'
+    api = f'edited/src/{selected_set}/java/Api.java'
+    caller = f'edited/src/{selected_set}/java/Caller.java'
+    selected = f'selected/src/{selected_set}/java/Entry.java'
     control_module = 'selected' if shared_module else 'control'
     control_set = 'test' if control_scope == 'test' else 'main'
     control = f'{control_module}/src/{control_set}/java/Control.java'
@@ -525,8 +526,8 @@ def _native_javac_scope_fixture(root, control_scope='test', *, shared_module=Fal
                    'package selected; class Entry { static int old() { return 1; } int run() { return old(); } }\n')
     _write(root, control,
            'package control; class Control { static int stable() { return 1; } int run() { return stable(); } }\n')
-    selections = [('edited', 'production', 'main', [api, caller]),
-                  ('selected', 'production', 'main', [selected]),
+    selections = [('edited', selected_scope, selected_set, [api, caller]),
+                  ('selected', selected_scope, selected_set, [selected]),
                   (control_module, control_scope, control_set, [control])]
     options = {'repo_id': 'separate-scopes', 'project_model': {'source_sets': [
         {'module': module, 'scope': scope, 'id': source_set, 'files': files}
@@ -544,10 +545,10 @@ def _native_javac_scope_fixture(root, control_scope='test', *, shared_module=Fal
     return options, (api, caller, control), contexts, initial
 
 
-@pytest.mark.parametrize('control_scope', ['test', 'production'])
-def test_actual_javac_preserves_fresh_control_during_production_peer_retirement(tmp_path, control_scope):
+def _assert_javac_peer_retirement(tmp_path, selected_scope, control_scope):
     options, (api, caller, control), (edited, selected, retained), initial = _native_javac_scope_fixture(
-        tmp_path, control_scope)
+        tmp_path, control_scope, selected_scope=selected_scope)
+    selected_options = {**options, 'module': 'selected', 'scope': selected_scope, 'source_set': selected['source_set']}
     diagram = tmp_path / store.MERMAID_FILE
     diagram.write_bytes(diagram.read_bytes() + b'%% scoped rollback witness\n')
     before = _store_bytes(tmp_path)
@@ -558,11 +559,13 @@ def test_actual_javac_preserves_fresh_control_during_production_peer_retirement(
     assert impact['graph_sha256'] == hashlib.sha256(before[GRAPH_FILE]).hexdigest()
     assert [(row['kind'], row['path'], row['status']) for row in impact['affected']] == [
         ('COMPILER_CALLER', caller, 'RECHECK')]
-    dry = inspect_jvm(tmp_path, module='selected', publish=False, **options)
+    assert {(reason['dependency_path'], reason['context_id']) for reason in impact['affected'][0]['reasons']} == {
+        (api, edited['id'])}
+    dry = inspect_jvm(tmp_path, publish=False, **selected_options)
     assert dry['exit_code'] == 0 and dry['coverage']['calls_resolved'] == 1
     assert _store_bytes(tmp_path) == before and store.graph_revision(tmp_path) == revision
 
-    if control_scope == 'test':
+    if selected_scope != control_scope:
         control_file = tmp_path / control
         original = control_file.read_bytes()
         replace_file = store.os.replace
@@ -577,15 +580,16 @@ def test_actual_javac_preserves_fresh_control_during_production_peer_retirement(
 
         with patch.object(store.os, 'replace', control_drifts_after_first_replace), \
                 pytest.raises(WorkerError) as error:
-            inspect_jvm(tmp_path, module='selected', **options)
+            inspect_jvm(tmp_path, **selected_options)
         assert error.value.status == 'STALE' and replaced == [diagram]
         assert _store_bytes(tmp_path) == before and store.graph_revision(tmp_path) == revision
         control_file.write_bytes(original)
 
-    result = inspect_jvm(tmp_path, module='selected', **options)
+    result = inspect_jvm(tmp_path, **selected_options)
     graph = store.load_graph(tmp_path)
     retired, *old_layer = _compiler_layer(graph, edited['id'])
     assert retired[0]['freshness'] == 'STALE' and not any(old_layer)
+    assert 'source/config inputs changed' in retired[0]['stale_reason']
     assert not _compiler_layer(graph, selected['id'])[0]
     assert _compiler_layer(graph, retained['id']) == _compiler_layer(initial, retained['id'])
     assert [node for node in graph.nodes if node.path == control] == [
@@ -594,6 +598,27 @@ def test_actual_javac_preserves_fresh_control_during_production_peer_retirement(
     new_site, = [site for site in graph.call_sites if site['context_id'] == result['context']['id']]
     target = next(item for item in graph.symbols if item['id'] == new_site['declared_target'])
     assert target['name'] == 'newValue'
+
+
+@pytest.mark.parametrize('control_scope', ['test', 'production'])
+def test_actual_javac_preserves_fresh_control_during_production_peer_retirement(tmp_path, control_scope):
+    _assert_javac_peer_retirement(tmp_path, 'production', control_scope)
+
+
+def test_actual_javac_preserves_fresh_production_control_during_test_peer_retirement(tmp_path):
+    _assert_javac_peer_retirement(tmp_path, 'test', 'production')
+
+
+def test_actual_javac_rejects_drifting_production_control_during_test_peer_retirement(tmp_path):
+    options, (_, _, control), _, _ = _native_javac_scope_fixture(tmp_path, 'production', selected_scope='test')
+    control_file = tmp_path / control
+    control_file.write_bytes(control_file.read_bytes().replace(b'return 1;', b'return 2;'))
+    before = _store_bytes(tmp_path)
+    revision = store.graph_revision(tmp_path)
+    with pytest.raises(WorkerError, match='source/config inputs changed') as error:
+        inspect_jvm(tmp_path, module='selected', scope='test', source_set='test', **options)
+    assert error.value.status == 'STALE'
+    assert _store_bytes(tmp_path) == before and store.graph_revision(tmp_path) == revision
 
 
 @pytest.mark.parametrize('case', ['drifting-test', 'shared-module', 'shared-old-selected-proof',

@@ -625,10 +625,11 @@ def _isolated_jvm_peer(initial: KnowledgeGraph, fresh: KnowledgeGraph, stored: K
         return False
     other_scopes = [item for item in active if item.get('scope') != scope]
     if other_scopes:
-        # A retained test capture must also be independent of both versions of the selected layer.
+        # Other-scope control captures must be independent of both versions of the selected layer.
         control_paths = {path for item in other_scopes for path in item['source_files']}
-        if (scope != 'production' or selected['source_files'].keys() & control_paths or any(
-                item.get('scope') != 'test' or item['module'] == selected['module']
+        control_scope = {'production': 'test', 'test': 'production'}.get(scope)
+        if (control_scope is None or selected['source_files'].keys() & control_paths or any(
+                item.get('scope') != control_scope or item['module'] == selected['module']
                 or not _isolated_peer_evidence(fresh, item) for item in other_scopes)):
             return False
         stored_contexts = _compiler_contexts(stored)
