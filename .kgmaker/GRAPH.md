@@ -6,11 +6,11 @@
 - Scope: production; omitted files: 647
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `b27ba0eddbf5d6db6da285de0ac9a19753cf186011fd4db86f6820e3e3fca8d6`; content: `e9d4c7c77ad69fe94c0aadf0e1952bc0cc6028e0083495abe58284a0d3a482ed`; freshness: CONTENT_VERIFIED
+- Context: `332583e1f5c5d129b6ce3571a84c7f4a88761b57663cd6e910970a46849ca56c`; content: `464fe71cf370a61b091a3e782651bd08f2b95a0b64e8eff104752cc94ca84be1`; freshness: CONTENT_VERIFIED
 - Files indexed: 129
 - Symbols and sections: 1809
 - Internal imports: 552
-- Heuristic cross-file calls: 9429
+- Heuristic cross-file calls: 9430
 - PostgreSQL tables/columns: 0/0
 - Kafka topics: 0
 - API endpoints: 0
@@ -19,7 +19,7 @@
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
 - Implementation episodes: 521
-- Inferred/ambiguous relationships: 9429/0
+- Inferred/ambiguous relationships: 9430/0
 
 ## Architecture diagram
 
@@ -2375,17 +2375,17 @@ flowchart LR
 - **function** `_document` line 16 — `_document(view, side)`
 - **function** `_strings` line 30 — `_strings(values)`
 - **function** `_structured_selection` line 34 — `_structured_selection(services, scope, selected)`
-- **function** `_selection` line 66 — `_selection(definition)`
-- **function** `_binding` line 83 — `_binding(document)`
-- **function** `_incompatibilities` line 100 — `_incompatibilities(before, after)`
-- **function** `_complete_projection` line 117 — `_complete_projection(binding)`
-- **function** `_projection_limits` line 127 — `_projection_limits(binding)`
-- **function** `_changes` line 132 — `_changes(before, after)`
-- **function** `_record_fields` line 137 — `_record_fields(collection, row)`
-- **function** `_category` line 153 — `_category(collection, field)`
-- **function** `_record_delta` line 167 — `_record_delta(collection, before, after, complete)`
-- **function** `_boundaries` line 187 — `_boundaries(document)`
-- **function** `diff_process_views` line 192 — `diff_process_views(before: ProcessView, after: ProcessView)`
+- **function** `_selection` line 69 — `_selection(definition)`
+- **function** `_binding` line 86 — `_binding(document)`
+- **function** `_incompatibilities` line 103 — `_incompatibilities(before, after)`
+- **function** `_complete_projection` line 120 — `_complete_projection(binding)`
+- **function** `_projection_limits` line 130 — `_projection_limits(binding)`
+- **function** `_changes` line 135 — `_changes(before, after)`
+- **function** `_record_fields` line 140 — `_record_fields(collection, row)`
+- **function** `_category` line 156 — `_category(collection, field)`
+- **function** `_record_delta` line 170 — `_record_delta(collection, before, after, complete)`
+- **function** `_boundaries` line 190 — `_boundaries(document)`
+- **function** `diff_process_views` line 195 — `diff_process_views(before: ProcessView, after: ProcessView)`
 
 ### `src/kgmaker/view_explanation.py`
 - **class** `ViewExplanationError` line 29 — `ViewExplanationError(ValueError)`
@@ -2942,7 +2942,6 @@ flowchart LR
 - **Change 175 — Povinně ověřené závislosti při plánování, Akceptační kritéria, Aktualizace stavu** — removed; files: README.md, docs/acceptance-inventory.md, docs/changes/175_requireVerifiedDependencies.md, docs/changes/177_reduceLiveInspectionOverhead.md, docs/completion-orchestrator.md; validation: after160-native-focus-and-inventory=passed, parent-blob-preservation=passed, full-combined-standard-suite=unknown
 - **fix(ci): use native-verified user default ACL for restricted Windows smoke** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/40_supportWindowsUserInstall.md, docs/compiler-inspection.md; validation: actual-windows-installed-space=passed, actual-windows-nonadmin-protocol-cleanup=passed, all-seven-ci-on-d311=passed
 - **Integrate T045 code-review agent with feat/impl** — removed; files: .codex/agents/README.md, .codex/agents/code-review.toml, AGENTS.md, README.md, docs/changes/26_addCodeReviewAgent.md; validation: full221=passed, graph=passed, toml=passed
-- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/215_compareCapturedProcessViews.md, docs/process-paths.md, docs/production-analysis-progress.md; validation: planner=passed, source-diff=passed, semantic-before-capture=passed, exact-focus=unknown, exact-native=unknown
 - **Verify scoped Kotlin identity amid current compiler workflows** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/166_addKotlinLogicalSymbolKeys.md, docs/compiler-inspection.md, docs/kafka-interfaces.md; validation: focused-workbook-freshness-and-legacy-graphs=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-07, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/57_addArtifactTemplates.md, docs/production-analysis-progress.md, src/kgmaker/artifact_templates.py, tests/test_artifact_templates.py; validation: targeted-tests=passed, full-tests=passed, adversarial-paths=passed, transactional-install=passed, rollback-injection=passed
 - **merge: compose argument binding with factory and HTTP main** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/52_bindArgumentParameterFlow.md, docs/compiler-inspection.md; validation: parent-pure=passed, current-worker=unknown
@@ -3271,6 +3270,7 @@ flowchart LR
 - **Bound repeated edge scans in the control-flow projection** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/189_reduceBoundedCfgTraversal.md, docs/production-analysis-progress.md, docs/unified-flow-views.md; validation: bounded_cfg_focus=passed, output_equivalence=passed, edge_visit_probe=passed, semantic=passed, planner=passed
 - **Integrate dependency dispatch with Kotlin JPA metadata** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: pure-integration=passed, actual-compiler-receipt=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/145_buildReverseDependencyIndexes.md, docs/production-analysis-progress.md, docs/stage-content-cache.md; validation: targeted83=passed, semantic=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/215_compareCapturedProcessViews.md, docs/process-paths.md, docs/production-analysis-progress.md; validation: planner=passed, source-diff=passed, semantic-before-capture=passed, exact-focus=unknown, exact-native=unknown
 - **fix(queries): preserve snapshots and compiler contract authority** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/129_criteriaSpecificationQuerydsl.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: integration=passed, worker_source_identity=passed
 - **Integrate Windows main into approved XLSX boundaries** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/39_boundXlsxFormulaReferences.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: integration198=passed, sourceIdentity=passed, semantic=passed, graphCheck=passed, diffCheck=passed
 - **merge: refresh TypeScript references against bounded XLSX main** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/36_resolveTypeScriptProjectReferences.md, docs/compiler-inspection.md; validation: protocol=passed, semantic=passed
@@ -12074,10 +12074,12 @@ flowchart LR
 - `src/kgmaker/view_diff.py` may call `24 in `src/kgmaker/architecture_model.py`` (name match at line 20; src/kgmaker/view_diff.py:20; INFERRED 0.85)
 - `src/kgmaker/view_diff.py` may call `24 in `src/kgmaker/architecture_model.py`` (name match at line 25; src/kgmaker/view_diff.py:25; INFERRED 0.85)
 - `src/kgmaker/view_diff.py` may call `115 in `src/kgmaker/process_model.py`` (name match at line 28; src/kgmaker/view_diff.py:28; INFERRED 0.85)
-- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 121; src/kgmaker/view_diff.py:121; INFERRED 0.85)
-- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 123; src/kgmaker/view_diff.py:123; INFERRED 0.85)
-- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 125; src/kgmaker/view_diff.py:125; INFERRED 0.85)
-- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 149; src/kgmaker/view_diff.py:149; INFERRED 0.85)
+- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 100; src/kgmaker/view_diff.py:100; INFERRED 0.85)
+- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 101; src/kgmaker/view_diff.py:101; INFERRED 0.85)
+- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 124; src/kgmaker/view_diff.py:124; INFERRED 0.85)
+- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 126; src/kgmaker/view_diff.py:126; INFERRED 0.85)
+- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 128; src/kgmaker/view_diff.py:128; INFERRED 0.85)
+- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 152; src/kgmaker/view_diff.py:152; INFERRED 0.85)
 - `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 39; src/kgmaker/view_diff.py:39; INFERRED 0.85)
 - `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 40; src/kgmaker/view_diff.py:40; INFERRED 0.85)
 - `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 44; src/kgmaker/view_diff.py:44; INFERRED 0.85)
@@ -12086,14 +12088,13 @@ flowchart LR
 - `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 52; src/kgmaker/view_diff.py:52; INFERRED 0.85)
 - `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 53; src/kgmaker/view_diff.py:53; INFERRED 0.85)
 - `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 59; src/kgmaker/view_diff.py:59; INFERRED 0.85)
-- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 97; src/kgmaker/view_diff.py:97; INFERRED 0.85)
-- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 98; src/kgmaker/view_diff.py:98; INFERRED 0.85)
-- `src/kgmaker/view_diff.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 108; src/kgmaker/view_diff.py:108; INFERRED 0.85)
-- `src/kgmaker/view_diff.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 177; src/kgmaker/view_diff.py:177; INFERRED 0.85)
-- `src/kgmaker/view_diff.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 179; src/kgmaker/view_diff.py:179; INFERRED 0.85)
+- `src/kgmaker/view_diff.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 62; src/kgmaker/view_diff.py:62; INFERRED 0.85)
+- `src/kgmaker/view_diff.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 111; src/kgmaker/view_diff.py:111; INFERRED 0.85)
+- `src/kgmaker/view_diff.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 180; src/kgmaker/view_diff.py:180; INFERRED 0.85)
+- `src/kgmaker/view_diff.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 182; src/kgmaker/view_diff.py:182; INFERRED 0.85)
 - `src/kgmaker/view_diff.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 55; src/kgmaker/view_diff.py:55; INFERRED 0.85)
-- `src/kgmaker/view_diff.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 63; src/kgmaker/view_diff.py:63; INFERRED 0.85)
-- `src/kgmaker/view_diff.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 149; src/kgmaker/view_diff.py:149; INFERRED 0.85)
+- `src/kgmaker/view_diff.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 66; src/kgmaker/view_diff.py:66; INFERRED 0.85)
+- `src/kgmaker/view_diff.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 152; src/kgmaker/view_diff.py:152; INFERRED 0.85)
 - `src/kgmaker/view_diff.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 19; src/kgmaker/view_diff.py:19; INFERRED 0.85)
 - `src/kgmaker/view_explanation.py` may call `89 in `src/kgmaker/_windows_job.py`` (name match at line 395; src/kgmaker/view_explanation.py:395; INFERRED 0.85)
 - `src/kgmaker/view_explanation.py` may call `89 in `src/kgmaker/_windows_job.py`` (name match at line 410; src/kgmaker/view_explanation.py:410; INFERRED 0.85)

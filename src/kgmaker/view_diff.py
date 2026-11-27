@@ -56,6 +56,9 @@ def _structured_selection(services, scope, selected):
             normalized_row = dict(row)
             if 'candidate_context_ids' in row:
                 normalized_row['candidate_context_ids'] = sorted(candidates)
+            owners = row.get('candidate_owner_ids')
+            if _strings(owners):
+                normalized_row['candidate_owner_ids'] = sorted(owners)
             diagnostics = row.get('diagnostics')
             if (context is not None and isinstance(diagnostics, (list, tuple))
                     and all(isinstance(item, dict) for item in diagnostics)):

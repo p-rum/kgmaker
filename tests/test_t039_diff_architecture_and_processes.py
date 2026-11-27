@@ -276,6 +276,35 @@ def test_t025_selection_row_order_is_irrelevant_and_recapture_requires_exact_pro
     assert result['before']['context_ids'] == ['ctx-prod'] and result['after']['context_ids'] == ['ctx-recapped']
 
 
+def test_candidate_owner_order_is_irrelevant_but_membership_is_bound():
+    def captured(owner_ids):
+        data = structured_capture(checkout())
+        row = data['definition']['context_selection']['services']['orders']['contexts'][1]
+        row.update(module='ambiguous-module', status='AMBIGUOUS', candidate_context_ids=['ctx-ambiguous'],
+                   candidate_owner_ids=owner_ids)
+        return snapshot(data)
+
+    first_order = ['billing', 'orders']
+    second_order = ['orders', 'billing']
+    first, second = captured(first_order), captured(second_order)
+    original = (first.to_json(), second.to_json())
+
+    for before, after, owners in ((first, second, [first_order, second_order]),
+                                 (second, first, [second_order, first_order])):
+        result = compare(before, after)
+        assert result['status'] == 'COMPARABLE' and result['reasons'] == [] and result['changes'] == {}
+        witnessed = [result[side]['context_selection']['services']['orders']['contexts'][1]['candidate_owner_ids']
+                     for side in ('before', 'after')]
+        assert witnessed == owners
+        assert result['before']['context_ids'] == result['after']['context_ids'] == ['ctx-prod']
+    assert (first.to_json(), second.to_json()) == original
+
+    for owner_ids in (['billing', 'shipping'], ['billing', 'billing', 'orders']):
+        result = compare(first, captured(owner_ids))
+        assert result['status'] == 'INCOMPARABLE' and result['changes'] == {}
+        assert result['reasons'] == ['CONTEXT_SELECTION_MISMATCH']
+
+
 def test_selected_context_diagnostic_order_and_duplicate_evidence():
     original = structured_capture(checkout())
     active_rows = original['definition']['context_selection']['services']['orders']['contexts']

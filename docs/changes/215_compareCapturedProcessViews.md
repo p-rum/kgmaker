@@ -353,3 +353,48 @@ git diff "$BASE" -- .kgmaker/GRAPH.mmd
 
 Po přesném zachycení následují cílené testy kandidáta a samostatná
 úplná sada. Stav T039 zůstává `PARTIAL`.
+
+## Doplnění po nezávislém ověření #199
+
+T045 na veřejném kandidátovi
+[`0a2ea9bb749e72ba532dbddbaaf1630a8cf96ed9`](https://github.com/p-rum/kgmaker/commit/0a2ea9bb749e72ba532dbddbaaf1630a8cf96ed9)
+reprodukoval další případ T039-AC01. Přeházení `candidate_owner_ids`
+v nejednoznačném řádku bez přiřazeného kontextu dalo `INCOMPARABLE` v obou
+směrech. Ten samý řádek má podle T025 kandidáty z množiny známých vlastníků.
+Zdrojový `views.py` sestaví kandidáty z množiny a `process_paths.py` zachová
+tento řádek jako doklad v procesním snímku. Původní replay měl raw exit 1.
+SHA-256 jeho JSON
+`f3f9a0357a087fc4fa0185f37594686fd8413e88e611ca8cf6a1953f3fc7789d`.
+
+Navazující úkol T052 upravil pouze kopii těchto seznamů pro porovnání.
+Výstup zachovává původní pořadí každého snímku. Změna člena nebo četnosti
+záznamů stále mění vazbu. Výběrový klíč, ID kontextu a otisk zachycení
+zůstávají v porovnání. Test
+`test_candidate_owner_order_is_irrelevant_but_membership_is_bound` ověřuje
+oba směry, odlišné členství, opakovaný záznam a shodu bajtů vstupu.
+
+Na původním zdroji měl cílený běh 19 PASS a 1 FAIL, raw exit 1.
+SHA-256 jeho JUnit
+`ea70c6e94ce54b78fb6bf4c0946d2af112a22ef7a5ce69f4dd93676eb7e732b1`.
+Opravený pracovní strom má **102 PASS / 0 SKIP**, raw exit 0, z toho
+20 T039, 69 T023 a 13 plánovacích testů. SHA-256 JUnit
+`d81413daea3be362f532fef1d8d98cdc6c566948b44ccc1a7919640eadfc2d87`.
+Výše uvedené přímé volání pytestu pokryje tento běh po doplnění souboru
+`tests/test_t023_define_business_process_model.py`.
+
+Nezměněný T045 probe na soukromém stromu přesné dvojice zdroje a testu
+`b7f8b2f6387408ef9fbff04b59d773619c412b59` měl raw exit 0 a ověřil nulový
+rozdíl v obou směrech. Shoda členství s odlišným pořadím je `COMPARABLE`.
+Testovaná změna člena zůstala `INCOMPARABLE`. SHA-256 JSON
+`308b66be638962683fa1f15ab137d3dcde290da08743b16435c0dab0b4821d71`.
+Obě předchozí nezávislé kontroly s pěti případy stále mají raw exit 0
+a stejné výstupy.
+
+Kompozice navazujícího kandidáta používá uvedený čistý replay nad
+skutečným základem #198. Opravující snapshot zachovává 520 přijatých
+epizod a vytváří jednu vlastní epizodu z konečných běžných změn.
+Doklad původního kandidáta #199 zůstává uložený samostatně. Jeho standardní
+sada měla raw exit 1 se šesti chybami přípravy `ensurepip` ve společné
+fixture instalovaných workerů. SHA-256 tehdejšího JUnit
+`fee6d30a1d4e90a5f975ff5fdc0ad780a1f4f6ea1a72db8be897c415861b3dfc`.
+Doklady přesného opravujícího kandidáta následují na jeho vlastním SHA.
