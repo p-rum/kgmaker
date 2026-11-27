@@ -11,7 +11,7 @@ from unittest.mock import patch
 import pytest
 
 from kgmaker import feature, inspection, store, workspace
-from kgmaker.analysis_model import AnalysisError, digest, inventory_candidate, read_json, write_json
+from kgmaker.analysis_model import AnalysisError, INPUT_METADATA, digest, inventory_candidate, read_json, write_json
 from kgmaker.callgraph import callees
 from kgmaker.cli import main, scan
 from kgmaker.graph_provider import _compiler_input_absent, dependency_impact, validate_context_snapshot
@@ -970,6 +970,171 @@ def test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents(
     assert [item["kind"] for item in report["affected"]] == ["CONTRACT_DECLARATION"]
     assert {"code": "FEATURE_REVISION_UNAVAILABLE", "analysis_id": "contracts"} in report["diagnostics"]
     assert _store_bytes(tmp_path) == expected_store
+
+
+def _apply_openapi_inputs(root, analysis_id, *, balance_citations=()):
+    packet = feature.prepare(root, "requirement.md", analysis_id)
+    candidate = inventory_candidate(packet)
+    prefix = f"analysis:{analysis_id}"
+    for name, path in [("balance", "openapi.json"), ("health", "independent.openapi.json")]:
+        operation = "get" + name.capitalize()
+        candidate["evidence"].append({
+            "id": f"{prefix}:evidence:{name}", "source_id": path, "kind": "CONTRACT", "path": path,
+            "sha256": packet["source_manifest"][path]["sha256"],
+            "location": {"type": "json_pointer", "pointer": f"/paths/~1{name}/get/operationId"},
+            "value": operation, "supports": "The contract declares this operation name.",
+            "method": "EXTRACTED", "confidence": 1, "validity": "VALID",
+        })
+    for name, dependencies in [("balance", []), ("label", ["balance"]), ("style", ["balance"]),
+                               ("summary", ["label", "style"]), ("page", ["summary"]), ("health", [])]:
+        evidence_ids = []
+        if name in balance_citations:
+            evidence_ids.append(f"{prefix}:evidence:balance")
+        elif not dependencies:
+            evidence_ids.append(f"{prefix}:evidence:{name}")
+        candidate["input_requirements"].append({
+            **dict.fromkeys(INPUT_METADATA), "id": f"{prefix}:input:{name}", "name": name,
+            "requirement_ids": [candidate["requirements"][0]["id"]], "source_ids": [], "question_ids": [],
+            "evidence_ids": evidence_ids,
+            "dependency_ids": [f"{prefix}:input:{dependency}" for dependency in dependencies],
+            "availability": "UNKNOWN", "acquisition": "DERIVED" if dependencies else "UNRESOLVED",
+            "usability": "UNASSESSED", "verification_scope": "Only the cited local contracts.",
+            "next_step": "Verify the mapping on the implementation.", "owner_role": None,
+            "transformation": "Map the input operation into a display value." if dependencies else None,
+        })
+    result = feature.apply(root, analysis_id, candidate)
+    assert result["valid"], result
+    return packet
+
+
+@pytest.fixture
+def openapi_input_dependencies(tmp_path):
+    _write(tmp_path, "requirement.md", "Map the published operation to a display label.")
+    source = _write(tmp_path, "openapi.json",
+                    '{"openapi":"3.0.3","paths":{"/balance":{"get":{"operationId":"getBalance"}}}}')
+    _write(tmp_path, "independent.openapi.json",
+           '{"openapi":"3.0.3","paths":{"/health":{"get":{"operationId":"getHealth"}}}}')
+    assert scan(tmp_path, generate_docs=False) == 0
+    prior = _apply_openapi_inputs(tmp_path, "contracts")
+    return source, prior
+
+
+def test_openapi_impact_follows_applied_input_dependencies(tmp_path, openapi_input_dependencies, monkeypatch, capsys):
+    source, prior = openapi_input_dependencies
+    source.write_bytes(source.read_bytes().replace(b"getBalance", b"fetchBalance"))
+    assert feature.prepare(tmp_path, "requirement.md", "contracts")["revision"] == 2
+    expected_store = _store_bytes(tmp_path)
+    revision = store.graph_revision(tmp_path)
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["kgmaker", "impact", "--root", str(tmp_path), "--evidence-only",
+                                   "--format", "json", source.name])
+    with patch("subprocess.Popen", side_effect=AssertionError("implicit process")), pytest.raises(SystemExit) as exit:
+        main()
+    assert exit.value.code == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["coverage"] == "PARTIAL"
+    assert report["graph_sha256"] == hashlib.sha256(expected_store[GRAPH_FILE]).hexdigest()
+    assert _store_bytes(tmp_path) == expected_store and store.graph_revision(tmp_path) == revision
+    declaration, = [item for item in report["affected"] if item["kind"] == "CONTRACT_DECLARATION"]
+    assert (declaration["path"], declaration["status"]) == (source.name, "RECHECK")
+
+    prefix = "analysis:contracts:input:"
+    impacted = [item for item in report["affected"] if item["kind"] == "FEATURE_CONCLUSION"]
+    assert [item["id"] for item in impacted] == [prefix + name for name in (
+        "balance", "label", "page", "style", "summary",
+    )]
+    assert all(item["status"] == "STALE" and item["path"] is None for item in impacted)
+    direct, = impacted[0]["reasons"]
+    assert direct == {"analysis_id": "contracts", "collection": "input_requirements", "revision": 1,
+                      "conclusion_id": prefix + "balance", "evidence_id": "analysis:contracts:evidence:balance",
+                      "path": source.name, "before_sha256": prior["source_manifest"][source.name]["sha256"],
+                      "after_sha256": hashlib.sha256(source.read_bytes()).hexdigest()}
+    dependencies = {"label": ["balance"], "page": ["summary"], "style": ["balance"], "summary": ["label", "style"]}
+    for item in impacted[1:]:
+        assert [reason["dependency_id"] for reason in item["reasons"]] == [
+            prefix + dependency for dependency in dependencies[item["id"].removeprefix(prefix)]
+        ]
+        for reason in item["reasons"]:
+            assert reason == {**direct, "conclusion_id": item["id"], "dependency_id": reason["dependency_id"],
+                              "source_conclusion_id": prefix + "balance"}
+
+
+def test_openapi_impact_does_not_expand_unchanged_input_dependencies(tmp_path, openapi_input_dependencies):
+    source, _ = openapi_input_dependencies
+    expected_store = _store_bytes(tmp_path)
+    revision = store.graph_revision(tmp_path)
+    with (patch.object(feature, "_input_dependency_citations", create=True,
+                       side_effect=AssertionError("expanded dependencies for an unchanged source")),
+          patch.object(workspace, "_regular_file_hashes", wraps=workspace._regular_file_hashes) as read_hashes,
+          patch("subprocess.Popen", side_effect=AssertionError("implicit process"))):
+        report = dependency_impact(tmp_path, [source.name])
+    read_hashes.assert_called_once()
+    assert not report["affected"] and not report["changed_sources"]
+    assert _store_bytes(tmp_path) == expected_store and store.graph_revision(tmp_path) == revision
+
+
+def test_openapi_impact_coalesces_input_citations_for_same_source(tmp_path, openapi_input_dependencies):
+    source, _ = openapi_input_dependencies
+    _apply_openapi_inputs(tmp_path, "overlap", balance_citations=("label", "style"))
+    source.write_bytes(source.read_bytes().replace(b"getBalance", b"fetchBalance"))
+    with patch("subprocess.Popen", side_effect=AssertionError("implicit process")):
+        report = dependency_impact(tmp_path, [source.name])
+    prefix = "analysis:overlap:input:"
+    impacted = {item["id"].removeprefix(prefix): item for item in report["affected"] if item["id"].startswith(prefix)}
+    assert set(impacted) == {"balance", "label", "page", "style", "summary"}
+    assert [(reason["dependency_id"], reason["source_conclusion_id"]) for reason in impacted["summary"]["reasons"]] == [
+        (prefix + "label", prefix + "label"), (prefix + "style", prefix + "style"),
+    ]
+    page, = impacted["page"]["reasons"]
+    assert page["dependency_id"] == prefix + "summary" and page["source_conclusion_id"] == prefix + "label"
+    for name in ("label", "style"):
+        direct, = [reason for reason in impacted[name]["reasons"] if "dependency_id" not in reason]
+        assert direct["conclusion_id"] == prefix + name and direct["evidence_id"] == "analysis:overlap:evidence:balance"
+
+
+@pytest.mark.parametrize("malformed", [
+    pytest.param(["analysis:other:input:balance"], id="foreign-reference"),
+    pytest.param(["analysis:contracts:input:balance"] * 2, id="duplicate-reference"),
+    pytest.param(["analysis:contracts:input:summary"], id="cycle"),
+    pytest.param("analysis:contracts:input:balance", id="not-a-list"),
+])
+def test_openapi_impact_ignores_malformed_applied_input_dependencies(tmp_path, openapi_input_dependencies, malformed):
+    source, _ = openapi_input_dependencies
+    source.write_bytes(source.read_bytes().replace(b"getBalance", b"fetchBalance"))
+    analysis = tmp_path / ".kgmaker/analyses/contracts"
+    applied = read_json(analysis / "analysis.json")
+    label = next(item for item in applied["input_requirements"] if item["id"].endswith(":label"))
+    label["dependency_ids"] = malformed
+    write_json(analysis / "analysis.json", applied)
+    # Give the malformed historical record a matching receipt so the dependency guard is exercised.
+    receipt_path = analysis / "receipts/1.json"
+    write_json(receipt_path, {**read_json(receipt_path), "candidate_hash": digest(applied)})
+    expected_store = _store_bytes(tmp_path)
+    revision = store.graph_revision(tmp_path)
+    with patch("subprocess.Popen", side_effect=AssertionError("implicit process")):
+        report = dependency_impact(tmp_path, [source.name])
+    assert [item["id"] for item in report["affected"] if item["kind"] == "FEATURE_CONCLUSION"] == [
+        "analysis:contracts:input:balance",
+    ]
+    assert {"code": "FEATURE_INPUT_DEPENDENCIES_UNAVAILABLE", "analysis_id": "contracts", "revision": 1} in report["diagnostics"]
+    assert _store_bytes(tmp_path) == expected_store and store.graph_revision(tmp_path) == revision
+
+
+def test_openapi_impact_discards_input_dependencies_of_invalid_receipt(tmp_path, openapi_input_dependencies):
+    source, _ = openapi_input_dependencies
+    _apply_openapi_inputs(tmp_path, "other")
+    source.write_bytes(source.read_bytes().replace(b"getBalance", b"fetchBalance"))
+    receipt_path = tmp_path / ".kgmaker/analyses/contracts/receipts/1.json"
+    write_json(receipt_path, {**read_json(receipt_path), "candidate_hash": "0" * 64})
+    expected_store = _store_bytes(tmp_path)
+    revision = store.graph_revision(tmp_path)
+    with patch("subprocess.Popen", side_effect=AssertionError("implicit process")):
+        report = dependency_impact(tmp_path, [source.name])
+    assert {"code": "FEATURE_REVISION_UNAVAILABLE", "analysis_id": "contracts"} in report["diagnostics"]
+    assert [item["id"] for item in report["affected"] if item["kind"] == "FEATURE_CONCLUSION"] == [
+        "analysis:other:input:" + name for name in ("balance", "label", "page", "style", "summary")
+    ]
+    assert _store_bytes(tmp_path) == expected_store and store.graph_revision(tmp_path) == revision
 
 
 def test_schema_dependency_follows_prior_migration_operations(tmp_path):

@@ -191,7 +191,23 @@ cestu (u závěru feature `null`), stav a seznam `reasons`:
 | `COMPILER_CALLER` | `RECHECK` | Přímý lokální `declared_target` s dvojicí compiler důkazů ze stejného obsahově ověřeného kontextu. Report uvádí identitu kontextu, call site a obou důkazů. Přenos dopadu sleduje přesnou identitu zasaženého symbolu přes volání uvnitř souboru i mezi soubory. |
 | `SCHEMA_DEPENDENT` | `RECHECK` | Cizí klíč k tabulce nebo explicitní projekce view k jeho zdrojovému sloupci ve stejném deterministicky přehrávaném Flyway streamu. Uložená vazba `foreign_key_references_column` označí celý cizí klíč včetně důvodu pro každý doložený pojmenovaný sloupec. Report uvádí grafovou vazbu a identitu objektu. Pro uloženou vazbu `operation_targets` uvádí i identitu a řádek migrační operace, včetně zachycených operací před poslední změnou objektu. |
 | `CONTRACT_DECLARATION` | `RECHECK` | Doložená deklarace endpointu v zachycené OpenAPI JSON/YAML se zdrojovou grafovou vazbou, použitelnou variantou a jejím fingerprintem. Porovnává se hash původních bajtů z registrace. |
-| `FEATURE_CONCLUSION` | `STALE` | Přímá platná citace souboru z požadavku na vstup, capability match, impact path nebo test plan v použité lokální revizi. Report uvádí identitu citace, revizi a starý i aktuální hash původních bajtů. Použitá revize vyžaduje souhlas kandidáta, receipt a původního packetu. Lidské rozhodnutí odkazuje na odpověď v packetu. |
+| `FEATURE_CONCLUSION` | `STALE` | Přímá platná citace souboru z požadavku na vstup, capability match, impact path nebo test plan v použité lokální revizi. Report uvádí identitu citace, revizi a starý i aktuální hash původních bajtů. Použitá revize vyžaduje souhlas kandidáta, receipt a původního packetu. Lidské rozhodnutí odkazuje na odpověď v packetu. U vstupů se dopad šíří přes explicitní `dependency_ids` stejné aplikované revize. |
+
+Po změně kontraktu spusťte `kgmaker impact --evidence-only --format json
+openapi.json`. Přenesený důvod uvádí volitelná pole `dependency_id`
+pro bezprostřední závislost a `source_conclusion_id` pro vstup s původní
+citací. Původní `evidence_id`, revize a oba otisky zůstávají v důvodu.
+Přímé důvody mají dosavadní pole. Vyhodnocení použije jedno pozorování
+bajtového otisku zadané cesty a začne až při potvrzené změně či odstranění.
+Pro stejnou cestu a původní otisk zůstává nejvýše jeden přenesený důvod na
+dosaženého bezprostředního předchůdce. Přímé citace se zachovají.
+
+Při zjištěné změně a neplatné vazbě, cizím či duplicitním odkazu nebo cyklu
+report zachová ověřené přímé citace a přidá `FEATURE_INPUT_DEPENDENCIES_UNAVAILABLE`
+pro dotčenou revizi. Nesouhlas aplikovaného obsahu s receipt nebo packetem
+vynechá všechny citace dané analýzy s `FEATURE_REVISION_UNAVAILABLE`.
+Nově připravený packet ponechá vazby svázané s dosavadní aplikovanou
+revizí. [Příklad a kontroly](changes/211_followAppliedInputDependencies.md).
 
 Při úplném lokálním přehrání verzovaných migrací ukládá `kgmaker scan` vazby
 `REFERENCES parent(col)` i pro složené klíče se všemi přesně rozlišenými sloupci.

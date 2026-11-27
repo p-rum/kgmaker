@@ -920,7 +920,7 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
 def dependency_impact(root: Path, changed_files: list[str]) -> dict:
     """Plan revalidation of evidenced dependents, without modifying a store or running workers."""
     from .analysis_model import AnalysisError, canonical, safe_path
-    from .feature import applied_dependency_citations
+    from .feature import applied_dependency_citations, inherited_input_dependency_citations
     from .scanner import EXTENSIONS
     from .workspace import _regular_file_hashes
 
@@ -933,7 +933,7 @@ def dependency_impact(root: Path, changed_files: list[str]) -> dict:
         raise AnalysisError("No readable graph found. Run kgmaker scan before recording the changed files.", 1)
     graph, fingerprint = generation
     index = _reverse_dependency_index(graph)
-    citations, diagnostics = applied_dependency_citations(root, targets)
+    citations, diagnostics, input_revisions = applied_dependency_citations(root, targets)
     citation_paths = {item["path"] for item in citations}
     diagnostics.append({"code": "POSITIVE_HISTORICAL_EVIDENCE_ONLY",
                         "reason": "Negative lookups, uncaptured relationships and cross-workspace bindings are outside this index."})
@@ -1001,11 +1001,14 @@ def dependency_impact(root: Path, changed_files: list[str]) -> dict:
             reason = item["reason"]
             if item["kind"] == "CONTRACT_DECLARATION" and reason["before_sha256"] != current_hash:
                 add(item["kind"], path, item["id"], "RECHECK", reason)
-    for item in citations:
-        path = item["path"]
-        if path in observed and item["before_sha256"] != observed[path]:
-            add("FEATURE_CONCLUSION", None, item["conclusion_id"], "STALE",
-                {**item, "after_sha256": observed[path]})
+    changed_citations = [item for item in citations
+                         if item["path"] in observed and item["before_sha256"] != observed[item["path"]]]
+    inherited, dependency_diagnostics = inherited_input_dependency_citations(changed_citations, input_revisions)
+    diagnostics.extend(dependency_diagnostics)
+    changed_citations.extend(inherited)
+    for item in changed_citations:
+        add("FEATURE_CONCLUSION", None, item["conclusion_id"], "STALE",
+            {**item, "after_sha256": observed[item["path"]]})
     values = []
     for _, record in sorted(affected.items()):
         record["reasons"] = [value for _, value in sorted(record["reasons"].items())]

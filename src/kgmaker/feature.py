@@ -6,6 +6,8 @@ import hashlib
 import os
 import re
 import subprocess
+from collections import defaultdict
+from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 
 from .analysis_model import (
@@ -461,17 +463,72 @@ def status(root: Path, analysis_id: str) -> dict:
             "applied": path.exists(), "coverage": packet["coverage"], "answers": packet["answers"]}
 
 
-def applied_dependency_citations(root: Path, paths: set[str]) -> tuple[list[dict], list[dict]]:
-    """Return file-bound conclusion citations from recorded, prior local revisions."""
+def _input_dependency_citations(analysis_id: str, inputs: list[dict], direct: list[dict]) -> list[dict]:
+    """Follow declared input dependencies within one receipt-bound candidate."""
+    prefix = f"analysis:{analysis_id}:"
+    dependencies = {}
+    for item in inputs:
+        identity = item.get("id")
+        if not isinstance(identity, str) or not identity.startswith(prefix) or identity == prefix or identity in dependencies:
+            raise AnalysisError("Invalid or duplicate input ID")
+        references = item.get("dependency_ids")
+        if (not isinstance(references, list) or any(not isinstance(ref, str) for ref in references)
+                or len(references) != len(set(references))):
+            raise AnalysisError("Invalid or duplicate input dependency")
+        transformation = item.get("transformation")
+        if item.get("acquisition") == "DERIVED" and (
+                not references or not isinstance(transformation, str) or not transformation.strip()):
+            raise AnalysisError("Derived input lacks dependencies or a transformation")
+        dependencies[identity] = sorted(references)
+
+    if any(dependency not in dependencies for references in dependencies.values() for dependency in references):
+        raise AnalysisError("Input dependency is outside the applied revision")
+    order = tuple(TopologicalSorter(dependencies).static_order())
+
+    by_input = defaultdict(dict)
+    for citation in sorted(direct, key=lambda item: (item["conclusion_id"], item["evidence_id"])):
+        source = citation["path"], citation["before_sha256"]
+        by_input[citation["conclusion_id"]].setdefault(source, citation)
+
+    inherited = []
+    # For each changed file and historical hash, one witness per predecessor proves the edge.
+    for identity in order:
+        witnesses = by_input[identity]
+        for dependency in dependencies[identity]:
+            for source, citation in by_input[dependency].items():
+                inherited.append({**citation, "conclusion_id": identity, "dependency_id": dependency,
+                                  "source_conclusion_id": citation["conclusion_id"]})
+                witnesses.setdefault(source, citation)
+    return inherited
+
+
+def inherited_input_dependency_citations(changed: list[dict], revisions: dict[tuple[str, int], list[dict]]) -> tuple[list[dict], list[dict]]:
+    """Expand input dependencies from citations whose source-byte change was observed."""
+    by_revision = defaultdict(list)
+    for item in changed:
+        if item["collection"] == "input_requirements":
+            by_revision[item["analysis_id"], item["revision"]].append(item)
+    inherited, diagnostics = [], []
+    for (analysis_id, revision), direct in by_revision.items():
+        try:
+            inherited.extend(_input_dependency_citations(analysis_id, revisions[analysis_id, revision], direct))
+        except (AnalysisError, CycleError):
+            diagnostics.append({"code": "FEATURE_INPUT_DEPENDENCIES_UNAVAILABLE",
+                                "analysis_id": analysis_id, "revision": revision})
+    return inherited, diagnostics
+
+
+def applied_dependency_citations(root: Path, paths: set[str]) -> tuple[list[dict], list[dict], dict[tuple[str, int], list[dict]]]:
+    """Read direct file citations and snapshot input declarations for later propagation."""
     from .analysis_model import FeatureAnalysis, ID_PATTERN
     from .analysis_validation import FILE_EVIDENCE_KINDS
 
-    citations, diagnostics = [], []
+    citations, diagnostics, input_revisions = [], [], {}
     try:
         analyses = safe_path(root, ".kgmaker/analyses")
         known = sorted(analyses.iterdir()) if analyses.exists() else []
     except (AnalysisError, OSError):
-        return [], [{"code": "FEATURE_STORE_UNAVAILABLE"}]
+        return [], [{"code": "FEATURE_STORE_UNAVAILABLE"}], {}
     for analysis_dir_path in known:
         analysis_id = analysis_dir_path.name
         if not ID_PATTERN.fullmatch(analysis_id):
@@ -529,10 +586,12 @@ def applied_dependency_citations(root: Path, paths: set[str]) -> tuple[list[dict
                             selected.append({"path": path, "before_sha256": checksum, "analysis_id": analysis_id,
                                              "revision": revision, "collection": collection,
                                              "conclusion_id": conclusion["id"], "evidence_id": identity})
+            if any(item["collection"] == "input_requirements" for item in selected):
+                input_revisions[analysis_id, revision] = candidate["input_requirements"]
             citations.extend(selected)
         except (KeyError, AttributeError, OSError, TypeError, ValueError):
             diagnostics.append({"code": "FEATURE_REVISION_UNAVAILABLE", "analysis_id": analysis_id})
-    return citations, diagnostics
+    return citations, diagnostics, input_revisions
 
 
 def revise(root: Path, analysis_id: str, answers: dict) -> dict:
