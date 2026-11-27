@@ -1,4 +1,4 @@
-"""Bounded Mermaid rendering of an explicitly supplied technical ProcessView."""
+"""Bounded Mermaid rendering of a supplied ProcessView and optional local review."""
 from collections import defaultdict
 from hashlib import sha256
 import json
@@ -7,6 +7,7 @@ from .architecture_cli import _safe_output
 from .architecture_render import _MAX_OUTPUT_BYTES, _mermaid_json, _mermaid_text
 from .architecture_render_common import InterfaceMarkdownError, _bounded
 from .process_model import ProcessView, validate_process_view
+from .process_store import read_process_reviews
 
 
 _MERMAID_MAX_EDGES = 500
@@ -23,16 +24,19 @@ def _diagram_id(prefix, identity):
     return prefix + sha256(identity.encode('utf-8')).hexdigest()
 
 
-def _label(item, *parts):
+def _label(item, *parts, approved_label=None):
     attrs = item['attributes']
     details = [attrs.get(key) for key in ('condition', 'boundary_reason', 'async_role',
                                          'failure_role', 'failure_transition', 'execution', 'delivery')]
     if attrs.get('loop_back') is True:
         details.append('loop back')
-    return _mermaid_text(' · '.join([
+    label_parts = [
         *parts, *(value for value in details if isinstance(value, str) and value),
         item['resolution_status'], item['freshness'],
-    ]))
+    ]
+    if approved_label is not None:
+        label_parts.append(approved_label)
+    return _mermaid_text(' · '.join(label_parts))
 
 
 def _normalized(view):
@@ -52,14 +56,29 @@ def _normalized(view):
 
 def render_process_mermaid(view: ProcessView) -> str:
     """Render technical occurrences; comments map the diagram back to the supplied view."""
+    return _render(_normalized(view), {})
+
+
+def render_reviewed_process_mermaid(root, view: ProcessView, *, documents=(), conflicts=()) -> str:
+    """Add labels from effective, locally declared approval of these explicit inputs."""
     document = _normalized(view)
+    review = read_process_reviews(root, document, documents=documents, conflicts=conflicts)
+    status = review['effective_status']
+    if status != 'APPROVED':
+        raise ProcessMermaidError(f'PROCESS_MERMAID_REVIEW_{status}')
+    labels = {row['target_id']: row['label'] for row in review['active_annotations'] if 'label' in row}
+    return _render(document, labels)
+
+
+def _render(document, labels):
     technical = document['technical_view']
     metadata = {field: document[field] for field in ('schema_version', 'process_id', 'revision',
         'technical_status', 'entry_ids', 'exit_ids', 'outcome_ids')}
     metadata['context_ids'] = document['definition']['context_ids']
     metadata['technical_view'] = {key: value for key, value in technical.items() if key not in {'nodes', 'edges'}}
     try:
-        _safe_output({'metadata': metadata, 'nodes': technical['nodes'], 'edges': technical['edges']})
+        _safe_output({'metadata': metadata, 'nodes': technical['nodes'], 'edges': technical['edges'],
+                      'approved_labels': list(labels.values())})
     except ValueError:
         raise ProcessMermaidError('UNSAFE_PROCESS_MERMAID') from None
     if len(technical['edges']) > _MERMAID_MAX_EDGES:
@@ -69,6 +88,8 @@ def render_process_mermaid(view: ProcessView) -> str:
     title = f"Technical process | Scope: {scope} | Coverage: {document['technical_status']}"
     if technical['coverage'].get('truncated') is True:
         title += ' | TRUNCATED'
+    if document['process_id'] in labels:
+        title += ' | ' + _mermaid_text(labels[document['process_id']])
     header = ['---', 'title: ' + json.dumps(title), '---']
     lines = ['flowchart LR', '  %% process-meta ' + _mermaid_json(metadata)]
     node_ids = {}
@@ -77,7 +98,7 @@ def render_process_mermaid(view: ProcessView) -> str:
         identity = node_ids[node['id']] = _diagram_id('n', node['id'])
         owner = node['owner_id']
         lane = owner if owner and owner.startswith('service:') and owner.removeprefix('service:') else None
-        label = _label(node, node['kind'], node['label'])
+        label = _label(node, node['kind'], node['label'], approved_label=labels.get(node['id']))
         if node['kind'] in {'decision', 'condition', 'loop_header'}:
             declaration = f'{identity}{{"{label}"}}'
         else:
@@ -98,7 +119,7 @@ def render_process_mermaid(view: ProcessView) -> str:
             'diagram_id': _diagram_id('e', edge['id']), 'index': index, 'edge': edge,
         }))
         arrow = '-.->' if edge['relation'] == 'async' else '-->'
-        label = _label(edge, edge['relation'])
+        label = _label(edge, edge['relation'], approved_label=labels.get(edge['id']))
         lines.append(f'  {node_ids[edge["source"]]} {arrow}|"{label}"| {node_ids[edge["target"]]}')
 
     # Mermaid 11.4.1 strips the header and metadata comments before counting

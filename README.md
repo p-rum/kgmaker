@@ -1044,6 +1044,9 @@ explicit service lanes and technical evidence from that view. It uses the
 Mermaid 11.4.1 default limits of 500 edges and 50,000 UTF-16 code units for the
 flowchart. The `process render` CLI keeps its JSON contract.
 [Python diagram example and limits](docs/process-paths.md#mermaid-for-a-supplied-processview-t035).
+Use `kgmaker.process_render.render_reviewed_process_mermaid(root, view, documents=..., conflicts=...)`
+to add labels from effective local T032 approval for the same supplied view and
+captures. Technical occurrences and evidence records stay the same.
 
 ### Kafka interface catalogue
 

@@ -1562,7 +1562,7 @@ See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
 | Kritérium | Ověření místního výřezu | Důkaz |
 |---|---|---|
 | T035-AC01 | VERIFIED_IN_SCOPE | T023 `checkout` zachovává větve a cyklus. Projekce T028 zachovává dvě výslovné service lanes a vějíř dvou konzumentů bez pořadí mezi nimi. Javac fixture T029 zachovává statickou cestu výjimka → retry → DLT. |
-| T035-AC02 | NOT_RUN | Schválené popisky vyžadují autoritu T032. Součástí diagramu jsou technické popisky. |
+| T035-AC02 | VERIFIED_IN_SCOPE | Aktivní lokální schválení T032 doplňuje titulek a popisky přesných výskytů. Připnutý Mermaid parser a SVG ověřují stejné vrcholy, pořadí a násobnost orientovaných hran a lanes. Popisek patří právě vybranému z dvojice paralelních výskytů. Chybějící, odmítnuté nebo zastaralé schválení výstup odmítne. [Cílené ověření výřezu](changes/204_renderReviewedProcessMermaid.md). |
 | T035-AC03 | VERIFIED_IN_SCOPE | Golden a skutečný parser Mermaid 11.4.1 se SVG ověřují přesné vrcholy, orientované hrany a jejich násobnost, lanes a vazby na původní výskyty. Platný vstup s 501 hranami nebo tělem nad 50 000 jednotek UTF-16 se odmítne celý. Rozsáhlejší metadata v komentářích mají vlastní kladnou kontrolu. |
 | T035-AC04 | VERIFIED_IN_SCOPE | Neplatný typ, cizí scope/kontext, nebezpečný obsah a překročený rozpočet odmítne čisté API. Vstup a poslední uložený artefakt zůstávají beze změny. |
 | T035-AC05 | VERIFIED_IN_SCOPE | Diagramy s technickým stavem `PARTIAL`, včetně omezení `TRUNCATED`, zachovávají původní důkazy, hranice a hlášená vynechání. Výslovné hodnoty `UNKNOWN` zůstávají v metadatech dotčených hranic. |

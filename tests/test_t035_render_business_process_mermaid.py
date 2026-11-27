@@ -11,6 +11,7 @@ import pytest
 
 from kgmaker.process_model import ProcessDefinition, ProcessView
 from test_t029_project_process_failures import actual_pipeline  # pytest fixture for the real Javac case
+from test_t030_prepare_process_label_packet import document as captured_document
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,14 +39,19 @@ def check_records(view, diagram):
     assert [record['edge'] for record in records(diagram, 'edge')] == sorted(technical['edges'], key=lambda row: row['id'])
 
 
-def parse_and_render(diagram, tmp_path):
+def parse_and_render(diagram, tmp_path, *, expected_labels=None):
     harness = ROOT / 'tests/rendering/validate_t035_process.mjs'
     node = shutil.which('node')
     if node is None or not (harness.parent / 'node_modules/mermaid/package.json').is_file():
         pytest.skip('Pinned Mermaid 11.4.1/jsdom 26.0.0 test runtime unavailable')
     path = tmp_path / 'process.mmd'
     path.write_text(diagram, encoding='utf-8')
-    run = subprocess.run([node, str(harness), str(path)], check=False, capture_output=True, text=True, timeout=30)
+    command = [node, str(harness), str(path)]
+    if expected_labels is not None:
+        labels = tmp_path / 'approved-labels.json'
+        labels.write_text(json.dumps(expected_labels), encoding='utf-8')
+        command.append(str(labels))
+    run = subprocess.run(command, check=False, capture_output=True, text=True, timeout=30)
     assert run.returncode == 0, run.stderr[-4000:]
     return json.loads(run.stdout)
 
@@ -234,3 +240,135 @@ def test_mermaid_host_text_budget_excludes_evidence_comments(tmp_path):
     check_records(view, diagram)
     assert parse_and_render(diagram, tmp_path) == {'vertices': 7, 'edges': 8, 'lanes': 0}
     assert view.to_json() == snapshot
+
+
+def render_reviewed(root, view, **captures):
+    from kgmaker.process_render import render_reviewed_process_mermaid
+    return render_reviewed_process_mermaid(root, view, **captures)
+
+
+def record_review(root, view, labels, *, documents=(), action='APPROVE', head=None):
+    from kgmaker.process_semantics import prepare_process_label_packet
+    from kgmaker.process_store import prepare_process_review, persist_process_review
+
+    packet = prepare_process_label_packet(view, documents=documents)['packet']
+    candidate = {'schema_version': 1, 'packet_hash': packet['packet_hash'], 'annotations': [
+        {'id': f'candidate:{index}', 'target_id': target, 'label': label,
+         'source_refs': ['doc:guide'] if documents else [target], 'semantic_review_status': 'PROPOSED'}
+        for index, (target, label) in enumerate(labels)
+    ]}
+    prepared = prepare_process_review(view, packet, candidate, documents=documents)
+    receipt = persist_process_review(root, view, packet, candidate, documents=documents, action=action,
+                                     reviewer='local:reviewer', operation_id=f'diagram:{action}:{head or "first"}',
+                                     expected_head=head, expected_payload_hash=prepared['payload_hash'],
+                                     expected_baseline_hash=prepared['baseline_hash'])
+    assert receipt['status'] == 'COMMITTED'
+    return receipt['head']
+
+
+def file_snapshot(root):
+    return {path: (path.read_bytes(), path.stat().st_mtime_ns) for path in root.rglob('*') if path.is_file()}
+
+
+def test_effective_reviewed_labels_bind_to_exact_title_node_and_parallel_edge(tmp_path):
+    root = tmp_path / 'repo'
+    root.mkdir()
+    source = json.loads(FIXTURE.read_bytes())
+    technical = source['technical_view']
+    parallel = deepcopy(next(edge for edge in technical['edges'] if edge['id'] == 'pay-card'))
+    parallel.update(id='pay-card-alternative', original_ids=['alternative-card-branch'])
+    technical['edges'].append(parallel)
+    for node in technical['nodes'][:2]:
+        node['owner_id'] = 'service:orders'
+    view = ProcessView.from_dict(source)
+    snapshot = view.to_json()
+    original = render(view)
+    documents = [captured_document(text='Captured source for reviewed labels.')]
+    labels = {'title': 'Reviewed checkout', 'node': {'card': 'Reviewed card'},
+              'edge': {'pay-card-alternative': 'Reviewed alternative'}}
+    card = ('card', 'Reviewed card "quoted" <script>sample</script> & detail')
+    approved = record_review(root, view, [('process:checkout', labels['title']), card, card,
+                                         *labels['edge'].items()], documents=documents)
+    record_review(root, view, [('card', 'Rejected proposal')], documents=documents, action='REJECT', head=approved)
+    (root / 'kept.mmd').write_text(original, encoding='utf-8')
+    before = file_snapshot(root)
+
+    with patch('subprocess.Popen', side_effect=AssertionError('renderer started a process')), \
+            patch('socket.socket', side_effect=AssertionError('renderer opened a socket')):
+        diagram = render_reviewed(root, view, documents=documents)
+        assert diagram == render_reviewed(root, view, documents=documents)
+    assert render(view) == original
+    assert [line for line in diagram.splitlines() if line.startswith('  %% process-')] == [
+        line for line in original.splitlines() if line.startswith('  %% process-')]
+    original_title = json.loads(original.splitlines()[1].removeprefix('title: '))
+    assert json.loads(diagram.splitlines()[1].removeprefix('title: ')).startswith(original_title)
+    assert 'Rejected proposal' not in diagram and 'Reviewed card #quot;quoted#quot;' in diagram
+    check_records(view, diagram)
+    assert parse_and_render(diagram, tmp_path, expected_labels=labels) == {'vertices': 7, 'edges': 9, 'lanes': 1}
+    assert view.to_json() == snapshot and file_snapshot(root) == before
+
+
+def test_reviewed_diagram_requires_current_local_approval_and_original_captures(tmp_path):
+    from kgmaker.process_render import ProcessMermaidError
+
+    source = json.loads(FIXTURE.read_bytes())
+    source['semantic_annotations'] = [{'id': 'unverified', 'target_id': 'card', 'label': 'Unverified label',
+        'source_refs': ['card'], 'semantic_review_status': 'APPROVED'}]
+    view = ProcessView.from_dict(source)
+    snapshot = view.to_json()
+    documents = [captured_document(text='Original captured note.')]
+    labels = [('card', 'Approved local label')]
+    with pytest.raises(ProcessMermaidError, match='^PROCESS_MERMAID_REVIEW_EMPTY$'):
+        render_reviewed(tmp_path, view, documents=documents)
+    assert not list(tmp_path.iterdir())
+    rejected = record_review(tmp_path, view, labels, documents=documents, action='REJECT')
+    before = file_snapshot(tmp_path)
+    with pytest.raises(ProcessMermaidError, match='^PROCESS_MERMAID_REVIEW_REJECTED$'):
+        render_reviewed(tmp_path, view, documents=documents)
+    assert file_snapshot(tmp_path) == before
+    approved = record_review(tmp_path, view, labels, documents=documents, head=rejected)
+    (tmp_path / 'kept.mmd').write_text(render(view), encoding='utf-8')
+    before = file_snapshot(tmp_path)
+    changed = deepcopy(source)
+    changed['technical_view']['nodes'][0]['label'] = 'Changed current technical label'
+    new_view = ProcessView.from_dict(changed)
+    conflict = {'document_ref': 'doc:guide', 'target_id': 'card', 'status': 'CONFLICT', 'source_refs': ['origin:card']}
+    for current, captures in [
+        (view, {}),
+        (view, {'documents': [captured_document(text='Changed captured note.')]}),
+        (view, {'documents': documents, 'conflicts': [conflict]}),
+        (new_view, {'documents': documents}),
+    ]:
+        with pytest.raises(ProcessMermaidError, match='^PROCESS_MERMAID_REVIEW_NEEDS_REVALIDATION$'):
+            render_reviewed(tmp_path, current, **captures)
+    assert 'Unverified label' not in render_reviewed(tmp_path, view, documents=documents)
+    assert file_snapshot(tmp_path) == before
+
+    record_review(tmp_path, new_view, labels, documents=documents, head=approved)
+    before = file_snapshot(tmp_path)
+    with pytest.raises(ProcessMermaidError, match='^PROCESS_MERMAID_REVIEW_NEEDS_REVALIDATION$'):
+        render_reviewed(tmp_path, view, documents=documents)
+    assert 'Approved local label' in render_reviewed(tmp_path, new_view, documents=documents)
+    assert view.to_json() == snapshot and file_snapshot(tmp_path) == before
+
+
+@pytest.mark.parametrize(('failure', 'code'), [('unsafe', 'UNSAFE_PROCESS_MERMAID'),
+                                               ('text', 'PROCESS_MERMAID_LIMIT')])
+def test_approved_label_obeys_diagram_safety_and_host_budget(tmp_path, failure, code):
+    from kgmaker.process_render import ProcessMermaidError
+
+    source = json.loads(FIXTURE.read_bytes())
+    if failure == 'text':
+        for node in source['technical_view']['nodes'][:4]:
+            node['label'] = '\U0001f535' * 5950
+    view = ProcessView.from_dict(source)
+    snapshot = view.to_json()
+    original = render(view)
+    (tmp_path / 'kept.mmd').write_text(original, encoding='utf-8')
+    label = 'repo:unqualified' if failure == 'unsafe' else '\U0001f535' * 200
+    record_review(tmp_path, view, [('card', label)])
+    before = file_snapshot(tmp_path)
+    with pytest.raises(ProcessMermaidError, match=f'^{code}$'):
+        render_reviewed(tmp_path, view)
+    assert render(view) == original and view.to_json() == snapshot
+    assert file_snapshot(tmp_path) == before

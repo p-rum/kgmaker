@@ -45,6 +45,24 @@ const { svg } = await mermaid.render('t035Process', source);
 const output = new JSDOM(svg, { contentType: 'image/svg+xml' }).window.document.documentElement;
 assert.equal(output.querySelectorAll('g.node').length, nodes.length);
 assert.equal(output.querySelectorAll('path.flowchart-link').length, edges.length);
+if (process.argv[3]) {
+  const labels = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
+  const checkLabel = (text, label) => {
+    assert.equal(text.split(label).length, 2);
+    assert(output.textContent.includes(label));
+  };
+  checkLabel(db.getDiagramTitle(), labels.title);
+  for (const [target, label] of Object.entries(labels.node)) {
+    const matches = nodes.filter(({ diagram_id }) => db.getVertices().get(diagram_id).text.includes(label));
+    assert.deepEqual(matches.map(record => record.node.id), [target]);
+    checkLabel(db.getVertices().get(matches[0].diagram_id).text, label);
+  }
+  for (const [target, label] of Object.entries(labels.edge)) {
+    const matches = edges.filter(({ index }) => db.getEdges()[index].text.includes(label));
+    assert.deepEqual(matches.map(record => record.edge.id), [target]);
+    checkLabel(db.getEdges()[matches[0].index].text, label);
+  }
+}
 assert.equal(output.querySelectorAll('script,iframe,object,embed,image,a,foreignObject').length, 0);
 assert.equal(output.querySelectorAll('[href],[xlink\\:href]').length, 0);
 for (const element of output.querySelectorAll('*')) {
