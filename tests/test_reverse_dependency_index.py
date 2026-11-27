@@ -1176,6 +1176,108 @@ def test_schema_dependency_follows_prior_migration_operations(tmp_path):
     assert _store_bytes(tmp_path) == store
 
 
+@pytest.mark.parametrize('invalid_witness', [
+    None, 'valid-multistatement', 'snapshot', 'ownership', 'hash', 'operation', 'legacy',
+    'constraint-proof', 'constraint-hash', 'constraint-name', 'constraint-statement', 'constraint-normalized-bytes',
+])
+def test_public_impact_requires_proven_owned_flyway_constraint(tmp_path, monkeypatch, capsys, invalid_witness):
+    migrations = 'src/main/resources/db/migration/'
+    origin = migrations + 'V1__customer.sql'
+    declaration = migrations + 'V2__customer_constraint.sql'
+    independent = migrations + 'V5__supplier_column.sql'
+    _write(tmp_path, origin, 'CREATE TABLE customer (id INTEGER);\n')
+    constraint_sql = 'ALTER TABLE customer ADD CONSTRAINT unique_id UNIQUE(id);'
+    if invalid_witness in {'valid-multistatement', 'constraint-statement'}:
+        constraint_sql += (' ALTER TABLE customer RENAME TO customer_alias;'
+                           ' ALTER TABLE customer_alias RENAME TO customer;')
+    line_ending = '\r\n' if invalid_witness == 'constraint-normalized-bytes' else '\n'
+    _write(tmp_path, declaration, constraint_sql + line_ending)
+    _write(tmp_path, migrations + 'V3__supplier.sql', 'CREATE TABLE supplier (id INTEGER);\n')
+    _write(tmp_path, migrations + 'V4__supplier_constraint.sql',
+           'ALTER TABLE supplier ADD CONSTRAINT unique_id UNIQUE(id);\n')
+    _write(tmp_path, independent, 'ALTER TABLE supplier ALTER COLUMN id SET DEFAULT 1;\n')
+    _write(tmp_path, migrations + 'R__customer_view.sql', 'CREATE VIEW customer_ids AS SELECT id FROM customer;\n')
+
+    with patch('subprocess.Popen', side_effect=AssertionError('implicit process')):
+        assert scan(tmp_path, generate_docs=False) == 0
+    graph_path = tmp_path / GRAPH_FILE
+    graph = read_json(graph_path)
+    table = next(node for node in graph['nodes'] if node['name'] == 'public.customer')
+    owned = next(node for node in graph['nodes'] if node['name'] == 'public.customer.unique_id')
+    supplier = next(node for node in graph['nodes'] if node['name'] == 'public.supplier.unique_id')
+    view = next(node for node in graph['nodes'] if node['kind'] == 'db_view_field')
+    ownership, = [edge for edge in graph['edges'] if (edge['source'], edge['target'], edge['kind'])
+                  == (table['id'], owned['id'], 'contains_constraint')]
+    create, = [edge for edge in graph['edges'] if (edge['target'], edge['kind'], edge['source_file'])
+               == (table['id'], 'operation_targets', origin)]
+    if invalid_witness in {'valid-multistatement', 'constraint-statement'}:
+        declarations = [edge for edge in graph['edges'] if (edge['target'], edge['kind'], edge['source_file'])
+                        == (owned['id'], 'operation_targets', declaration)]
+        assert len(declarations) == 3 and all(edge['source_line'] == 1 for edge in declarations)
+    history = table['metadata']['schema_identity']['origin']
+    assert (history['path'], history['line'], history['sha256']) == (origin, 1, graph['files'][origin])
+    assert (ownership['source_file'], ownership['source_line']) == (declaration, 1)
+    declaration_hash = owned['metadata']['schema_identity']['origin']['sha256']
+    assert (declaration_hash == graph['files'][declaration]) == (invalid_witness != 'constraint-normalized-bytes')
+
+    if invalid_witness == 'snapshot':
+        owned['metadata']['schema_snapshot_fingerprint'] = 'f' * 64
+    elif invalid_witness == 'ownership':
+        ownership.update(target=supplier['id'], source_file=supplier['path'])
+    elif invalid_witness == 'hash':
+        identity = table['metadata']['schema_identity']
+        history['sha256'] = 'f' * 64
+        identity['proof_hash'] = digest({key: value for key, value in identity.items() if key != 'proof_hash'})
+    elif invalid_witness == 'operation':
+        next(node for node in graph['nodes'] if node['id'] == create['source'])['name'] = 'ALTER'
+    elif invalid_witness == 'legacy':
+        table['metadata'].pop('schema_identity')
+    elif invalid_witness == 'constraint-proof':
+        owned['metadata']['schema_identity']['proof_hash'] = 'f' * 64
+    elif invalid_witness in {'constraint-hash', 'constraint-name', 'constraint-statement'}:
+        identity = owned['metadata']['schema_identity']
+        if invalid_witness == 'constraint-hash':
+            identity['origin']['sha256'] = 'f' * 64
+        elif invalid_witness == 'constraint-name':
+            identity['name'][-1] = 'wrong_name'
+        else:
+            identity['origin']['statement'] = 2
+        identity['proof_hash'] = digest({key: value for key, value in identity.items() if key != 'proof_hash'})
+    valid_witness = invalid_witness in {None, 'valid-multistatement'}
+    if not valid_witness and invalid_witness != 'constraint-normalized-bytes':
+        write_json(graph_path, graph)
+
+    _write(tmp_path, origin, 'CREATE TABLE customer_v2 (id INTEGER);\n')
+    _write(tmp_path, independent, 'ALTER TABLE supplier ALTER COLUMN id SET DEFAULT 2;\n')
+    before = _store_bytes(tmp_path)
+    capsys.readouterr()
+    monkeypatch.setattr('sys.argv', ['kgmaker', 'impact', '--root', str(tmp_path), '--evidence-only',
+                                   '--format', 'json', origin, independent])
+    with patch('subprocess.Popen', side_effect=AssertionError('implicit process')), \
+            patch('kgmaker.scanner.scan_repository', side_effect=AssertionError('implicit scan')), \
+            patch('kgmaker.schema_replay.reconstruct', side_effect=AssertionError('implicit replay')), \
+            pytest.raises(SystemExit) as result:
+        main()
+    assert result.value.code == 0
+    output = capsys.readouterr()
+    assert not output.err
+    report = json.loads(output.out)
+    assert report['coverage'] == 'PARTIAL'
+    assert [row['path'] for row in report['changed_sources']] == [origin, independent]
+    assert report['graph_sha256'] == hashlib.sha256(before[Path(GRAPH_FILE)]).hexdigest()
+    assert _store_bytes(tmp_path) == before
+    affected = {row['id']: row for row in report['affected']}
+    expected = {view['id'], owned['id']} if valid_witness else {view['id']}
+    assert set(affected) == expected
+    if valid_witness:
+        assert affected[owned['id']] == {
+            'kind': 'SCHEMA_DEPENDENT', 'id': owned['id'], 'path': declaration, 'status': 'RECHECK',
+            'reasons': [{'dependency_path': origin, 'before_sha256': history['sha256'],
+                         'relation': 'contains_constraint', 'source_line': 1, 'evidence_kind': 'MIGRATION_DERIVED',
+                         'dependency_id': table['id'], 'operation_id': create['source'], 'operation_line': 1}],
+        }
+
+
 def test_explicit_composite_fk_columns_join_historical_migration_operations(tmp_path):
     migrations = 'src/main/resources/db/migration/'
     _write(tmp_path, migrations + 'V1__tables.sql',

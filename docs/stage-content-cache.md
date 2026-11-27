@@ -191,7 +191,7 @@ cestu (u závěru feature `null`), stav a seznam `reasons`:
 | Druh | Stav | Důvod |
 |---|---|---|
 | `COMPILER_CALLER` | `RECHECK` | Přímý lokální `declared_target` s dvojicí compiler důkazů ze stejného obsahově ověřeného kontextu. Report uvádí identitu kontextu, call site a obou důkazů. Přenos dopadu sleduje přesnou identitu zasaženého symbolu přes volání uvnitř souboru i mezi soubory. |
-| `SCHEMA_DEPENDENT` | `RECHECK` | Cizí klíč k tabulce nebo explicitní projekce view k jeho zdrojovému sloupci ve stejném deterministicky přehrávaném Flyway streamu. Uložená vazba `foreign_key_references_column` označí celý cizí klíč včetně důvodu pro každý doložený pojmenovaný sloupec. Report uvádí grafovou vazbu a identitu objektu. Pro uloženou vazbu `operation_targets` uvádí i identitu a řádek migrační operace, včetně zachycených operací před poslední změnou objektu. |
+| `SCHEMA_DEPENDENT` | `RECHECK` | Cizí klíč k tabulce, explicitní projekce view k jeho zdrojovému sloupci nebo omezení z jiné migrace k původnímu `CREATE TABLE` jeho vlastní tabulky ve stejném deterministicky přehrávaném Flyway streamu. Uložená vazba `foreign_key_references_column` označí celý cizí klíč včetně důvodu pro každý doložený pojmenovaný sloupec. Report uvádí grafovou vazbu a identitu objektu. Pro uloženou vazbu `operation_targets` uvádí i identitu a řádek migrační operace, včetně zachycených operací před poslední změnou objektu. |
 | `CONTRACT_DECLARATION` | `RECHECK` | Doložená deklarace endpointu v zachycené OpenAPI JSON/YAML se zdrojovou grafovou vazbou, použitelnou variantou a jejím fingerprintem. Porovnává se hash původních bajtů z registrace. |
 | `FEATURE_CONCLUSION` | `STALE` | Přímá platná citace souboru z požadavku na vstup, capability match, impact path nebo test plan v použité lokální revizi. Report uvádí identitu citace, revizi a starý i aktuální hash původních bajtů. Použitá revize vyžaduje souhlas kandidáta, receipt a původního packetu. Lidské rozhodnutí odkazuje na odpověď v packetu. U vstupů se dopad šíří přes explicitní `dependency_ids` stejné aplikované revize. |
 
@@ -222,6 +222,23 @@ změně dříve uložené operace `ALTER COLUMN` spusťte
 `kgmaker impact --evidence-only --format json src/main/resources/db/migration/V3__alter.sql`.
 Neúplné přehrání, dodaný snapshot nebo implicitní `REFERENCES parent`
 mohou používat původní vazbu na tabulku. [Ověření](changes/191_indexNamedForeignKeyColumns.md).
+
+Po změně uloženého `CREATE TABLE` předejte cestu původní migrace ještě
+před dalším scanem.
+
+```bash
+kgmaker impact --root ./service --evidence-only --format json \
+  src/main/resources/db/migration/V1__customer.sql
+```
+
+Omezení deklarované v jiném souboru úplného lokálního replaye má ve
+výstupu `SCHEMA_DEPENDENT / RECHECK`, když report ověří uložené vlastnictví
+`contains_constraint` a přesnou první operaci pro každý objekt v jeho
+migračním souboru. Původní bajtový otisk replaye a grafový otisk se musí
+shodovat u obou souborů. Výstup nese identitu tabulky a původní CREATE
+operace, její řádek a dřívější hash. Rozsah příkladu pokrývá
+`CREATE TABLE` a samostatné `ALTER TABLE ... ADD CONSTRAINT`.
+Report používá uloženou generaci a migrace nespouští. [Příkazy a kontroly](changes/218_recheckOwnedFlywayConstraints.md).
 
 `changed_sources` porovnává soubory stejným způsobem jako uložený graf.
 U textových zdrojů scanneru je to hash textu s normalizovanými konci řádků.

@@ -1459,8 +1459,10 @@ uloženou generaci grafu a uvádí důvody pro opětovné ověření doloženýc
 callers, migračních vazeb a OpenAPI deklarací. U Flyway sleduje zachycené
 migrační operace pro stejný objekt. Úplný lokální replay ukládá i explicitní
 vazby cizích klíčů na pojmenované sloupce a report uvádí jejich uloženou
-migrační operaci. OpenAPI a citace použité revize feature
-porovnává podle původních bajtů. Změna LF↔CRLF může označit i tranzitivní
+migrační operaci. Po změně původního `CREATE TABLE` může označit také
+omezení deklarované v jiné migraci. Uložený replay musí doložit vlastnící
+tabulku, původní operaci i samostatnou deklaraci s jejich otisky. OpenAPI a citace použité revize
+feature porovnává podle původních bajtů. Změna LF↔CRLF může označit i tranzitivní
 callery dříve doloženého compiler cíle s přesným lokátorem původních bajtů.
 `changed_sources` dál porovnává normalizovaný text. Report vynechá compiler
 důkazy raw JVM kontextu s neplatným uloženým otiskem a zachová výsledky
