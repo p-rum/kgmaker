@@ -1576,6 +1576,17 @@ See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
 | T035-AC05 | VERIFIED_IN_SCOPE | Diagramy s technickým stavem `PARTIAL`, včetně omezení `TRUNCATED`, zachovávají původní důkazy, hranice a hlášená vynechání. Výslovné hodnoty `UNKNOWN` zůstávají v metadatech dotčených hranic. |
 | T035-AC06 | PARTIAL | První čisté Python API je v [PR #183](https://github.com/p-rum/kgmaker/pull/183). Otevírací strom má 109 cílených PASS / 0 SKIP. Schválené popisky a širší napojení CLI zůstávají samostatným rozsahem. [Přesný doklad](changes/199_renderSuppliedProcessMermaid.md). |
 
+## T036 — Markdown výkaz dodaného procesu
+
+| Kritérium | Ověření místního výřezu | Důkaz |
+|---|---|---|
+| T036-AC01 | VERIFIED_IN_SCOPE | Markdown parser rozlišuje každý krok, orientovaný paralelní výskyt, nevyřešené ruční předání i přesná ID s mezerami a s doslovnými escape sekvencemi. |
+| T036-AC02 | NOT_RUN | Schválené popisky a přehled konfliktních či zastaralých schválení mají vlastní rozsah. |
+| T036-AC03 | VERIFIED_IN_SCOPE | Jediná normalizace váže Markdown a bajtově shodný blok Mermaid na stejnou revizi. Připnuté parsery a SVG ověřují strukturu a technické výskyty. |
+| T036-AC04 | VERIFIED_IN_SCOPE | Neplatný typ, scope, kontext důkazu či reference, nebezpečný obsah a překročený rozpočet vyvolají `ProcessMarkdownError` bez změny vstupu či posledního uloženého výkazu. |
+| T036-AC05 | VERIFIED_IN_SCOPE | Fixture zachovávají `PARTIAL`, vynechání, samostatné lokální truncation, důvod nevyřešeného ručního předání a `STALE` zachyceného důkazu. Neznámý důkaz a stav `NOT_CHECKED` zůstávají výslovné. |
+| T036-AC06 | PARTIAL | Čisté Python API a konkrétní fixture mají na připravených zdrojích 122 PASS / 0 SKIP včetně připnutých parserů, SVG a Javacu. [Dokumentace, doklady a oddělený rozsah](changes/206_renderBusinessProcessReport.md). |
+
 
 ## T014 — current-parent descendant-result transfer
 

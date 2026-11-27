@@ -143,6 +143,42 @@ and the `process render` CLI still emits JSON.
 [Technical renderer evidence](changes/199_renderSuppliedProcessMermaid.md) ·
 [Reviewed label evidence](changes/204_renderReviewedProcessMermaid.md).
 
+## Markdown report for a supplied ProcessView (T036)
+
+```python
+import json
+from pathlib import Path
+from kgmaker.process_model import ProcessView
+from kgmaker.process_render import render_process_markdown
+
+view = ProcessView.from_dict(json.loads(Path("process.json").read_text(encoding="utf-8")))
+print(render_process_markdown(view), end="")
+```
+
+The pure Python function returns one technical report for an explicit schema-1
+`ProcessView`. The report and its byte-identical technical Mermaid fence share
+one normalized snapshot. Tables retain the selected scope and contexts,
+revision and fingerprints, triggers, entries, exits, outcomes, steps and every
+directed transition occurrence. Identifiers and reference lists use reversible
+JSON spelling so that whitespace and literal escapes stay distinguishable.
+Rows follow ID order. They preserve boundary reasons and each occurrence's known
+boolean truncation independently of overall coverage. Coverage, diagnostics and
+limits stay visible. Unsupported purpose and data availability are `UNKNOWN`.
+Source and runtime observation are `NOT_CHECKED`.
+
+Cited evidence retains its captured kind, polarity, freshness and context. A
+locator is shown as text when the evidence supplies an explicit path in the same
+repository as its qualified source ID, a content hash and a selected context.
+The same record can supply a valid range or line. Missing binding yields
+`SOURCE_LOCATOR_UNAVAILABLE`. Source freshness is carried from the capture.
+Current checkout inspection and the reviewed report extension are separate.
+The `process render` CLI still emits JSON.
+
+The embedded diagram uses the technical Mermaid limits above. The 4,000,000
+UTF-8 byte budget includes the entire report. `ProcessMarkdownError` carries
+`INVALID_PROCESS_MARKDOWN`, `UNSAFE_PROCESS_MARKDOWN` or `PROCESS_MARKDOWN_LIMIT`.
+The caller handles any output file. [Report evidence](changes/206_renderBusinessProcessReport.md).
+
 ## Input and evidence boundaries
 
 Pass the matching T024 inventory and provider graph. The function validates the
