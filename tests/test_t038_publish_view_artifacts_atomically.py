@@ -7,7 +7,7 @@ import os
 
 import pytest
 
-from kgmaker import process_cli, process_render, view_store
+from kgmaker import _view_export_cli, process_render, view_store
 from kgmaker.process_cli import run
 from test_t035_render_business_process_mermaid import FIXTURE, file_snapshot, parse_and_render
 from test_t036_render_business_process_report import inspect_report, partial_view
@@ -215,7 +215,7 @@ def test_failures_preserve_previous_generation(tmp_path, monkeypatch, capsys, fa
     candidate = tmp_path / 'candidate.json'
     expected = candidate.read_bytes()
     now = [0.0]
-    monkeypatch.setattr('kgmaker.process_cli.time.monotonic', lambda: now[0])
+    monkeypatch.setattr('kgmaker._view_export_cli.time.monotonic', lambda: now[0])
 
     def fail_report(*args):
         raise process_render.ProcessMarkdownError('PROCESS_MARKDOWN_LIMIT')
@@ -341,7 +341,7 @@ def test_interrupt_after_publication_handoff_preserves_replacement(tmp_path, cap
     root, previous = published(tmp_path)
     previous_bytes = artifacts(root, previous)
     module, name = ((view_store, '_stage_and_switch') if handoff == 'publisher'
-                    else (process_cli, 'publish_view_artifacts'))
+                    else (_view_export_cli, 'publish_view_artifacts'))
     publish = getattr(module, name)
     interrupted = []
 
@@ -374,7 +374,7 @@ def test_interrupt_during_receipt_leaves_committed_manifest(tmp_path, capsys, mo
         raise KeyboardInterrupt
 
     with monkeypatch.context() as interrupted:
-        interrupted.setattr(process_cli.sys.stdout, 'write', interrupt_receipt)
+        interrupted.setattr(_view_export_cli.sys.stdout, 'write', interrupt_receipt)
         assert export(tmp_path) == 1
 
     root, manifest = published(tmp_path)
@@ -387,7 +387,7 @@ def test_confirmed_holder_cannot_authorize_a_second_export(tmp_path, capsys, mon
     inputs(tmp_path)
     variant(tmp_path, 'revision')
     holder = view_store.ViewPublication()
-    monkeypatch.setattr(process_cli, 'ViewPublication', lambda: holder)
+    monkeypatch.setattr(_view_export_cli, 'ViewPublication', lambda: holder)
     assert export(tmp_path) == 0
     capsys.readouterr()
     root, active = published(tmp_path)
@@ -494,7 +494,7 @@ def test_staged_artifact_change_during_final_input_read_preserves_active(tmp_pat
     root, manifest = published(tmp_path)
     before = file_snapshot(root)
     active = root / manifest['artifacts']['mermaid']['path']
-    read_snapshot = process_cli.read_export_snapshot
+    read_snapshot = _view_export_cli.read_export_snapshot
     changed = []
 
     def change_staged_artifact(*args):
@@ -506,7 +506,7 @@ def test_staged_artifact_change_during_final_input_read_preserves_active(tmp_pat
             changed.append(path)
         return result
 
-    monkeypatch.setattr(process_cli, 'read_export_snapshot', change_staged_artifact)
+    monkeypatch.setattr(_view_export_cli, 'read_export_snapshot', change_staged_artifact)
     assert export(tmp_path, snapshot='other.json') == 3
     assert changed and json.loads(capsys.readouterr().err)['code'] == 'EXPORT_CONFLICT'
     assert file_snapshot(root) == before

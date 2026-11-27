@@ -1385,6 +1385,13 @@ captured provenance. Source observation stays `NOT_CHECKED`. `--strict` returns
 exit 4 with a valid partial report. [Topology Markdown CLI](docs/architecture-json-cli.md#architecture-topology-markdown-t022)
 and [implementation evidence](docs/changes/195_renderTopologyMarkdown.md).
 
+On Linux, `kgmaker architecture export --capture-snapshot topology-inputs.json --output reports/topology`
+publishes the filtered topology as JSON, Markdown and Mermaid in one generation.
+Read the files named by the single `manifest.json`. An unchanged export reuses
+the active generation. Scope, captured evidence and omissions are preserved.
+[Export options and errors](docs/architecture-json-cli.md#atomic-topology-export-t038) ·
+[Verification](docs/changes/216_publishArchitectureTopology.md).
+
 The [T029 failure projection API](docs/process-paths.md#static-failure-projection-t029)
 retains catch/finally paths through business-step collapse and adds bounded static
 retry/DLT policy boundaries from explicit snapshots. A canonical Kafka entry or
