@@ -114,7 +114,7 @@
     "docs/changes/203_recordRendererExporterEvidence.md": "3861b43921995767e74cdf2fa5e08a5e6f53aa38cbd6cca51b4e247ba4509bdc",
     "docs/changes/204_renderReviewedProcessMermaid.md": "22dd8e4c596821ef90a9862304867c668a428fe3fe91b9ac744f64331c8e40bc",
     "docs/changes/205_retainFreshTestContext.md": "55d8b49f763b6adc827ae7d87d5cbdc99380e977dd505034a8afa085a0ca125b",
-    "docs/changes/206_renderBusinessProcessReport.md": "fc108b7720c2b67f84ae1276f784a936808e54a6874adfbfcefecccca57168da",
+    "docs/changes/206_renderBusinessProcessReport.md": "e192649832ea541943e04cb8ef37ab4d165d80a3bece4c82f7796cb98e064641",
     "docs/changes/26_addCodeReviewAgent.md": "b3daa09ab9ec31c301fbaa1afe2101becde926ea5db35260c4ab7582f49a023d",
     "docs/changes/28_captureKotlinCompilerOptions.md": "ad0d6c0340c82d47d0998631d768170217ea36a8a1b167f865b178bc11fd4d5f",
     "docs/changes/29_mapCrossRepoArtifacts.md": "ac0f9bcbe744f806d1bdb4c708b21312e73576899de870096609c7ee68acd685",
@@ -316756,9 +316756,9 @@
     },
     {
       "base_commit": "0e0c49120281e73ae131777e6f342f39407644e6",
-      "head_commit": "27619782d2856d9aa16c9ae3c9379cb73f56edaa",
-      "worktree_fingerprint": "f3c89aa35acd183202f5827dda26d08767d82ca4ff055a1e22d788662531a5a6",
-      "title": "feat(t036): render business process report",
+      "head_commit": "bd9bf038651f7fd4be7f36229ed263815b1d6502",
+      "worktree_fingerprint": "8bc931cd09b13903709e1fa3b89000fb64e67699b971c2ca86b537c10cb2ca29",
+      "title": "merge: integrate current main for T036",
       "changed_files": [
         {
           "path": "README.md",
@@ -316773,7 +316773,7 @@
         {
           "path": "docs/changes/206_renderBusinessProcessReport.md",
           "status": "A",
-          "sha256": "fc108b7720c2b67f84ae1276f784a936808e54a6874adfbfcefecccca57168da"
+          "sha256": "e192649832ea541943e04cb8ef37ab4d165d80a3bece4c82f7796cb98e064641"
         },
         {
           "path": "docs/process-paths.md",
@@ -317069,13 +317069,16 @@
         "section:docs/acceptance-inventory.md:T056 — Funkce a toky dat v Excelu, 2026-11-25::3",
         "section:docs/acceptance-inventory.md:W07/T014 cold invocation correction (note108)::1652",
         "section:docs/acceptance-inventory.md:W07/T014 cold invocation correction (note108)::1663",
-        "section:docs/changes/206_renderBusinessProcessReport.md:Integrace po #165 — T036-S05 a T036-AC06::94",
+        "section:docs/changes/206_renderBusinessProcessReport.md:Integrace po #165 — T036-S05 a T036-AC06::141",
+        "section:docs/changes/206_renderBusinessProcessReport.md:Plánovač, sémantika a graf pro T036-S05 a T036-AC06::158",
+        "section:docs/changes/206_renderBusinessProcessReport.md:Připravit omezenou záplatu pro právě vytvořený packet.::198",
         "section:docs/changes/206_renderBusinessProcessReport.md:T036-S01 a T036-AC01/03 — výkaz a diagram z jediného pohledu::8",
-        "section:docs/changes/206_renderBusinessProcessReport.md:T036-S01, T036-S02 a T036-S04 · AC01/05 — přesná ID a lokální truncation::59",
+        "section:docs/changes/206_renderBusinessProcessReport.md:T036-S01, T036-S02 a T036-S04 · AC01/05 — přesná ID a lokální truncation::103",
         "section:docs/changes/206_renderBusinessProcessReport.md:T036-S02 a T036-AC05 — technické hranice::18",
         "section:docs/changes/206_renderBusinessProcessReport.md:T036-S03 a T036-AC04/05 — původ a meze čtení::26",
         "section:docs/changes/206_renderBusinessProcessReport.md:T036-S04 a T036-AC01/03/04/05 — cílené ověření::39",
-        "section:docs/changes/206_renderBusinessProcessReport.md:T036-S05 a T036-AC06 — rozsah předání::78",
+        "section:docs/changes/206_renderBusinessProcessReport.md:T036-S05 a T036-AC06 — rozsah předání::125",
+        "section:docs/changes/206_renderBusinessProcessReport.md:Úplná standardní sada a výsledky pro T036-S04 a T036-AC06::219",
         "section:docs/changes/206_renderBusinessProcessReport.md:Čtecí Markdown výkaz dodaného procesu::1",
         "section:docs/process-paths.md:Compiler-bound local operations::209",
         "section:docs/process-paths.md:Compiler-bound local operations::245",
@@ -317290,13 +317293,16 @@
           "section:docs/acceptance-inventory.md:T047-S11 — Aktuální lokální ověření před dokončením::2141",
           "section:docs/acceptance-inventory.md:T049 — oddělení cílových agentů (2026-11-11)::1786",
           "section:docs/acceptance-inventory.md:W07/T014 cold invocation correction (note108)::1663",
-          "section:docs/changes/206_renderBusinessProcessReport.md:Integrace po #165 — T036-S05 a T036-AC06::94",
+          "section:docs/changes/206_renderBusinessProcessReport.md:Integrace po #165 — T036-S05 a T036-AC06::141",
+          "section:docs/changes/206_renderBusinessProcessReport.md:Plánovač, sémantika a graf pro T036-S05 a T036-AC06::158",
+          "section:docs/changes/206_renderBusinessProcessReport.md:Připravit omezenou záplatu pro právě vytvořený packet.::198",
           "section:docs/changes/206_renderBusinessProcessReport.md:T036-S01 a T036-AC01/03 — výkaz a diagram z jediného pohledu::8",
-          "section:docs/changes/206_renderBusinessProcessReport.md:T036-S01, T036-S02 a T036-S04 · AC01/05 — přesná ID a lokální truncation::59",
+          "section:docs/changes/206_renderBusinessProcessReport.md:T036-S01, T036-S02 a T036-S04 · AC01/05 — přesná ID a lokální truncation::103",
           "section:docs/changes/206_renderBusinessProcessReport.md:T036-S02 a T036-AC05 — technické hranice::18",
           "section:docs/changes/206_renderBusinessProcessReport.md:T036-S03 a T036-AC04/05 — původ a meze čtení::26",
           "section:docs/changes/206_renderBusinessProcessReport.md:T036-S04 a T036-AC01/03/04/05 — cílené ověření::39",
-          "section:docs/changes/206_renderBusinessProcessReport.md:T036-S05 a T036-AC06 — rozsah předání::78",
+          "section:docs/changes/206_renderBusinessProcessReport.md:T036-S05 a T036-AC06 — rozsah předání::125",
+          "section:docs/changes/206_renderBusinessProcessReport.md:Úplná standardní sada a výsledky pro T036-S04 a T036-AC06::219",
           "section:docs/changes/206_renderBusinessProcessReport.md:Čtecí Markdown výkaz dodaného procesu::1",
           "section:docs/process-paths.md:Compiler-bound local operations::245",
           "section:docs/process-paths.md:Explicit HTTP process boundary (T027)::333",
@@ -317412,7 +317418,7 @@
           "status": "passed"
         }
       ],
-      "id": "episode:2671c6ab7b64fbb13772d399dc7c5de679856b5dc4f2a661f34abf44d54ffcea"
+      "id": "episode:6bb11d03bb9c1accbd87c0e788f57a745b772d26cd1a148305aeeb62e400edba"
     }
   ]
 }
