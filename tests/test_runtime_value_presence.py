@@ -20,7 +20,7 @@ from kgmaker.data_check import data_check
 from kgmaker.dataflow import field_mapping_bindings, impact_paths
 from kgmaker.feature_cli import run as run_feature
 from kgmaker.runtime_evidence import import_manifest, produce_manifest
-from kgmaker.runtime_value import FACT, PROOF, resolve_capture
+from kgmaker.runtime_value import FACT, PROOF, RELATION, resolve_capture
 from kgmaker.store import GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE, load_graph
 from tests.test_runtime_trace_producer import compile_runtime_fixture, inspect_runtime_fixture
 
@@ -131,16 +131,39 @@ def test_actual_java_value_presence_affects_only_matching_live_data_check(applic
         assert import_manifest(root, call)['observations_imported'] == 1
     call_graph = load_graph(root)
     call_record, = [row for row in call_graph.evidence if row.get('runtime_id') == 'value-call']
+    caller, copy, plain = (symbols[name]['id'] for name in ('main', 'copy', 'plain'))
     assertions = {}
     present = None
-    for run, expected in [('present', 'PRESENT'), ('absent', 'ABSENT')]:
-        manifest = produce(application, run)
+    for run, expected in [('combined-present', 'PRESENT'), ('combined-absent', 'ABSENT'),
+                          ('present', 'PRESENT'), ('absent', 'ABSENT')]:
+        combined = run.startswith('combined-')
+        arguments = (caller, copy, plain) if combined else ()
+        before_capture = outputs(root)
+        if combined:
+            raw = subprocess.run([*argv, run, *arguments], cwd=root, capture_output=True, check=True,
+                                 env={**os.environ, 'KGMAKER_RUNTIME_TRACE': '1'}).stdout
+            assert VALUE.encode() not in raw and sha256(VALUE.encode()).hexdigest().encode() not in raw
+            capture = json.loads(raw)
+            assert capture['status'] == 'PARTIAL' and capture['diagnostics'] == ['INSTRUMENTED_SCOPE_ONLY']
+            earlier, presence, later = capture['facts']
+            assert earlier == {'kind': 'call', 'caller': caller, 'target': plain, 'outcome': 'RETURNED'}
+            assert later == {'kind': 'call', 'caller': caller, 'target': copy, 'outcome': 'RETURNED'}
+            assert presence['kind'] == FACT
+        manifest = produce(application, run, *arguments)
         assert manifest['schema_version'] == 4 and manifest['observations'] == []
-        fact, = manifest['facts']
+        assert all((root / path).read_bytes() == before_capture[path] for path in (GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE))
+        assert json.loads((root / ARTIFACT).read_bytes()) == manifest
+        if combined:
+            assert {key: manifest[key] for key in capture} == capture
+            fact = manifest['facts'][1]
+        else:
+            fact, = manifest['facts']
         assert fact['presence'] == expected and fact['kind'] == FACT
         assert fact['source_line'] == mapping['source_range']['end_line'] + line_delta
         with patch('subprocess.Popen', side_effect=AssertionError('Offline import spawned a process')):
-            assertions[run], = import_manifest(root, manifest)['value_evidence_ids']
+            imported = import_manifest(root, manifest)
+        assert imported['observations_imported'] == 1
+        assertions[run], = imported['value_evidence_ids']
         if run == 'present':
             present = manifest
     before_replay = outputs(root)
@@ -154,6 +177,10 @@ def test_actual_java_value_presence_affects_only_matching_live_data_check(applic
     assert field_mapping_bindings(after) == bindings
     assert impact_paths(after, source) == impact_paths(call_graph, source)
     assert adjacency(after) == adjacency(call_graph)
+    assert [edge for edge in after.edges if edge.kind != RELATION] == call_graph.edges
+    for run in ('combined-present', 'combined-absent'):
+        record, = [row for row in after.evidence if row.get('runtime_id') == 'value-' + run]
+        assert record['id'] == assertions[run] and record['relation'] == RELATION
     packet = feature.prepare(root, 'requirement.md', 'w03', scope='production', context_id=context['id'])
     input_id, question_id = 'analysis:w03:input:status', 'analysis:w03:question:mapping'
     candidate = inventory_candidate(packet)
@@ -187,7 +214,14 @@ def test_actual_java_value_presence_affects_only_matching_live_data_check(applic
         assert 'value-present' in item['verification_scope'] and assertions['present'] in item['verification_scope']
         check_projected_hook_authority(root, packet, live['candidate'], item)
         assert not feature.apply(root, 'w03', live['candidate'])['valid']
-        for evidence_id in (assertions['absent'], assertions['expired'], call_record['id'], 'evidence:arbitrary'):
+        combined = deepcopy(specification)
+        combined['inputs'][0]['availability_proof']['runtime_evidence_id'] = assertions['combined-present']
+        combined_result = data_check(root, 'w03', combined)
+        combined_item, = combined_result['candidate']['input_requirements']
+        assert combined_result['valid'] and (combined_item['availability'], combined_item['usability']) == ('PARTIAL', 'UNASSESSED')
+        assert 'value-combined-present' in combined_item['verification_scope']
+        for evidence_id in (assertions['absent'], assertions['combined-absent'], assertions['expired'],
+                            call_record['id'], 'evidence:arbitrary'):
             rejected = deepcopy(specification)
             rejected['inputs'][0]['availability_proof']['runtime_evidence_id'] = evidence_id
             result = data_check(root, 'w03', rejected)
@@ -237,6 +271,48 @@ def test_actual_java_value_capture_and_import_reject_unbound_evidence(applicatio
                 produce(application, 'present')
         finally:
             java.write_bytes(original)
+    assert outputs(root) == before
+
+
+def test_actual_java_value_capture_rejects_invalid_companions(application, monkeypatch):
+    root, _, _ = application
+    monkeypatch.setenv('FIXTURE_ONLY_VALUE', VALUE)
+    symbols = {item['name']: item['id'] for item in load_graph(root).symbols if item.get('kind') == 'method'
+               and item.get('owner') == 'fixture.ValuePresenceApplication'}
+    caller, copy, plain = (symbols[name] for name in ('main', 'copy', 'plain'))
+    valid = produce(application, 'combined-present', caller, copy, plain)
+    before = outputs(root)
+    earlier, presence, later = valid['facts']
+    with pytest.raises(AnalysisError, match='out-of-context symbol'):
+        produce(application, 'combined-present', 'unbound-caller', copy, plain)
+    assert outputs(root) == before
+
+    with patch('subprocess.Popen', side_effect=AssertionError('Offline import spawned a process')):
+        for facts, reason in (
+            ([earlier, later], 'RUNTIME_VALUE_FACT'),
+            ([earlier, presence, presence, later], 'RUNTIME_VALUE_FACT'),
+            ([earlier, presence, {'kind': 'interface_dispatch'}], 'RUNTIME_VALUE_FACT'),
+            ([earlier, presence, {'kind': 'condition', 'owner': caller, 'predicate': copy, 'matched': True}],
+             'RUNTIME_VALUE_FACT'),
+            ([earlier, presence, {**later, 'target': 'unbound-target'}], 'out-of-context symbol'),
+            ([earlier, presence, {**later, 'outcome': 'UNKNOWN'}], 'call outcome'),
+            ([earlier, presence, {**later, 'raw_value': VALUE}], 'missing or unsupported fields'),
+        ):
+            with pytest.raises(AnalysisError, match=reason) as failure:
+                import_manifest(root, {**valid, 'facts': facts})
+            assert VALUE not in str(failure.value) and outputs(root) == before
+
+    java = root / 'src/main/java/ValuePresenceApplication.java'
+    original = java.read_bytes()
+    try:
+        java.write_bytes(original + b'\n// source change\n')
+        with pytest.raises(AnalysisError, match='STALE_RUNTIME'):
+            produce(application, 'combined-present', caller, copy, plain)
+        with patch('subprocess.Popen', side_effect=AssertionError('Offline import spawned a process')):
+            with pytest.raises(AnalysisError, match='STALE_RUNTIME'):
+                import_manifest(root, valid)
+    finally:
+        java.write_bytes(original)
     assert outputs(root) == before
 
 

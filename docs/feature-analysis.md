@@ -389,6 +389,12 @@ expired proof, missing bytecode proof or mismatched mapping leaves availability
 rejects candidates carrying a runtime-presence proof before
 writing any analysis files. [Runtime capture and import](runtime-trace.md#přítomnost-hodnoty-po-přímém-přiřazení-v-javě).
 
+For a v4 capture that also contains ordinary `call` facts, use the one
+value evidence ID that `runtime import` returns in `value_evidence_ids`.
+The calls stay in the capture. The live check applies the same mapping,
+freshness and physical proof requirements to the value ID.
+[Verification](changes/207_allowRuntimeValueCallCompanions.md).
+
 Each input contains `id`, `name`, non-empty `requirement_ids`, and every metadata
 field from InputRequirement: `definition`, `data_type`, `unit`, `currency`,
 `granularity`, `keys`, `as_of`, `validity_interval`, `horizon`, `freshness`,

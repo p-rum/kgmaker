@@ -150,14 +150,18 @@ def _validate_capture(graph: KnowledgeGraph, context: dict, capture: dict, *, in
         raise AnalysisError("Runtime COMPLETE requires facts and no incomplete-scope diagnostics")
     if capture["status"] != "COMPLETE" and not diagnostics:
         raise AnalysisError("Runtime PARTIAL/UNKNOWN requires a diagnostic code")
+    observations = []
     if value_presence:
-        if (len(facts) != 1 or capture["status"] != "PARTIAL" or diagnostics != ["INSTRUMENTED_SCOPE_ONLY"]):
+        kinds = [fact.get("kind") if isinstance(fact, dict) else None for fact in facts]
+        if (kinds.count(runtime_value.FACT) != 1 or any(kind not in (runtime_value.FACT, "call") for kind in kinds)
+                or capture["status"] != "PARTIAL" or diagnostics != ["INSTRUMENTED_SCOPE_ONLY"]):
             raise AnalysisError("RUNTIME_VALUE_FACT: expected one complete presence sample within the instrumented scope", 3)
-        return [runtime_value.resolve_capture(graph, context, facts[0])]
+        observations.append(runtime_value.resolve_capture(graph, context, facts[kinds.index(runtime_value.FACT)]))
+        if len(facts) == 1:
+            return observations
     nodes = {n.id: n for n in graph.nodes}
     symbols = {s["id"]: s for s in graph.symbols if s.get("context_id") == context["id"]}
     dispatch = None
-    observations = []
 
     def symbol(value, kinds):
         # Node existence alone does not prove membership in the selected compiler context.
@@ -168,6 +172,8 @@ def _validate_capture(graph: KnowledgeGraph, context: dict, capture: dict, *, in
 
     for index, fact in enumerate(facts):
         kind = fact.get("kind") if isinstance(fact, dict) else None
+        if value_presence and kind == runtime_value.FACT:
+            continue  # Only the presence sample becomes a typed observation.
         if interface_dispatch and kind == "interface_dispatch":
             fact = dict(fact)
             if (set(fact) != _INTERFACE_DISPATCH_FIELDS or type(fact["kind"]) is not str

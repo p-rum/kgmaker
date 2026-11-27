@@ -606,10 +606,14 @@ na obou koncích. U ověřeného v3 dispatch zobrazí navigace také `call_site`
 Pro přímočaré přiřazení mezi dvěma statickými `String` poli v Javě lze po ověření
 instrukcí ve zvoleném bytecode uložit stav `PRESENT` nebo `ABSENT`.
 Volání SDK může být bezprostředně za přiřazením na stejném nebo následujícím řádku.
+RuntimeManifest v4 přijme jeden záznam `value_presence` společně s běžnými
+záznamy `call`. Import vytvoří hodnotový doklad pro vzorek a volání ponechá
+v exportu.
 `feature data-check` může z čerstvého pozorování
 a schváleného mapování doložit dostupnost `PARTIAL` v rozsahu daného běhu.
 [Runtime capture](docs/runtime-trace.md#přítomnost-hodnoty-po-přímém-přiřazení-v-javě)
-· [Živá kontrola](docs/feature-analysis.md#runtime-presence-in-data-check).
+· [Živá kontrola](docs/feature-analysis.md#runtime-presence-in-data-check)
+· [Doprovodná volání](docs/changes/207_allowRuntimeValueCallCompanions.md).
 
 Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,
 SHA-256 `java` a `javac` a fingerprint volby, při spuštění nastaví `JAVA_HOME`

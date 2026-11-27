@@ -48,12 +48,17 @@ public final class ValuePresenceApplication {
             TRACE.writeTo(System.out);
             return;
         }
-        if (!"absent".equals(args[0])) Source.status = System.getenv("FIXTURE_ONLY_VALUE");
+        if (!"absent".equals(args[0]) && !"combined-absent".equals(args[0]))
+            Source.status = System.getenv("FIXTURE_ONLY_VALUE");
         Source.reversed = Source.repeated = Source.callOnly = Source.status;
         String actual = switch (args[0]) {
             case "reversed" -> { reversed(); yield Target.reversed; }
             case "ambiguous" -> { ambiguous(); yield Target.repeated; }
             case "call" -> TRACE.call(args[1], args[2], () -> { plain(); return Target.callOnly; });
+            case "combined-present", "combined-absent" -> {
+                TRACE.call(args[1], args[3], () -> { plain(); return Target.callOnly; });
+                yield TRACE.call(args[1], args[2], () -> { copy(); return Target.status; });
+            }
             default -> { copy(); yield Target.status; }
         };
         if (Source.status != actual) throw new IllegalStateException("Field transfer failed");
