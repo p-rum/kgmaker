@@ -16,7 +16,7 @@ from .process_paths import ProcessPathError, build_local_process
 from .process_triggers import discover_process_triggers
 from .remote_mapping import SCOPES, _bounded
 from .view_store import (
-    ViewExportError, export_path, export_snapshot_stamp, publish_view_artifacts, read_export_snapshot,
+    ViewExportError, ViewPublication, export_path, export_snapshot_stamp, publish_view_artifacts, read_export_snapshot,
 )
 from .workspace import snapshot_workspace
 
@@ -168,18 +168,21 @@ def _export(args):
         if current != stamp:
             _fail('EXPORT_INPUT_CHANGED', 3)
 
+    publication = ViewPublication()
     try:
-        manifest = publish_view_artifacts(args.root, output, 'process', render,
-                                         checkpoint=checkpoint, verify_input=verify_input,
-                                         verify_input_stamp=verify_input_stamp)
-    except OSError:
-        _fail('EXPORT_IO_ERROR', 1)
-    try:
-        sys.stdout.write(canonical(manifest) + '\n')
+        try:
+            publish_view_artifacts(args.root, output, 'process', render, checkpoint=checkpoint,
+                                   verify_input=verify_input, verify_input_stamp=verify_input_stamp,
+                                   publication=publication)
+        except OSError:
+            _fail('EXPORT_IO_ERROR', 1)
+        sys.stdout.write(canonical(publication.manifest) + '\n')
         sys.stdout.flush()
+        return 0
     except KeyboardInterrupt:
+        if publication.manifest is None:
+            raise
         _fail('EXPORT_RECEIPT_INTERRUPTED', 1)
-    return 0
 
 
 def run(argv):

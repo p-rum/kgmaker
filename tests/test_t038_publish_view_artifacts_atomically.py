@@ -330,6 +330,43 @@ def test_post_commit_cleanup_does_not_cancel_published_export(tmp_path, capsys, 
     assert interrupted == ([True] if cleanup == 'destination' else [])
 
 
+@pytest.mark.parametrize('handoff', ['publisher', 'cli'])
+def test_interrupt_after_publication_handoff_preserves_replacement(tmp_path, capsys, monkeypatch, handoff):
+    source = inputs(tmp_path)
+    variant(tmp_path, 'revision')
+    revised = tmp_path / 'revision.json'
+    source_bytes, revised_bytes = source.read_bytes(), revised.read_bytes()
+    assert export(tmp_path) == 0
+    capsys.readouterr()
+    root, previous = published(tmp_path)
+    previous_bytes = artifacts(root, previous)
+    module, name = ((view_store, '_stage_and_switch') if handoff == 'publisher'
+                    else (process_cli, 'publish_view_artifacts'))
+    publish = getattr(module, name)
+    interrupted = []
+
+    def interrupt_handoff(*args, **kwargs):
+        publish(*args, **kwargs)
+        _, manifest = published(tmp_path)
+        interrupted.append(manifest)
+        assert manifest['generation'] != previous['generation']
+        assert artifacts(root, manifest) != previous_bytes
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(module, name, interrupt_handoff)
+    status = export(tmp_path, snapshot='revision.json')
+    _, current = published(tmp_path)
+    assert interrupted == [current]
+    assert artifacts(root, previous) == previous_bytes
+    assert source.read_bytes() == source_bytes and revised.read_bytes() == revised_bytes
+    output = capsys.readouterr()
+    if handoff == 'publisher':
+        assert status == 0, output.err
+        assert json.loads(output.out) == current and not output.err
+    else:
+        assert status == 1, output.err
+        assert not output.out and json.loads(output.err) == {'code': 'EXPORT_RECEIPT_INTERRUPTED', 'exit_code': 1}
+
 def test_interrupt_during_receipt_leaves_committed_manifest(tmp_path, capsys, monkeypatch):
     inputs(tmp_path)
 
@@ -344,6 +381,30 @@ def test_interrupt_during_receipt_leaves_committed_manifest(tmp_path, capsys, mo
     out, err = capsys.readouterr()
     assert not out and json.loads(err)['code'] == 'EXPORT_RECEIPT_INTERRUPTED'
     assert len(artifacts(root, manifest)) == 3
+
+
+def test_confirmed_holder_cannot_authorize_a_second_export(tmp_path, capsys, monkeypatch):
+    inputs(tmp_path)
+    variant(tmp_path, 'revision')
+    holder = view_store.ViewPublication()
+    monkeypatch.setattr(process_cli, 'ViewPublication', lambda: holder)
+    assert export(tmp_path) == 0
+    capsys.readouterr()
+    root, active = published(tmp_path)
+    prior = file_snapshot(root)
+    paths = sorted(root.iterdir())
+    writes = []
+
+    def fail_write(parent, name, raw, owned):
+        writes.append(name)
+        raise OSError('injected before a second publication')
+
+    monkeypatch.setattr(view_store, '_write_file', fail_write)
+    assert export(tmp_path, snapshot='revision.json') == 2
+    out, err = capsys.readouterr()
+    assert not out and json.loads(err)['code'] == 'EXPORT_RECEIPT_ALREADY_SET'
+    assert not writes and holder.manifest == published(tmp_path)[1] == active
+    assert file_snapshot(root) == prior and sorted(root.iterdir()) == paths
 
 
 def test_invalid_scope_and_untrusted_output_paths_fail_before_writes(tmp_path, capsys):

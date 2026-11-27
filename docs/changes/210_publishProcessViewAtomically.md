@@ -251,3 +251,118 @@ sha256sum -c "$PROOF/first-capture.sha256"
 "$KGMAKER" status --root "$PWD"
 "$KGMAKER" check --root "$PWD"
 ```
+
+## T038-S03 a S04 — předání potvrzené publikace po nezávislé kontrole
+
+Na původním headu [#194](https://github.com/p-rum/kgmaker/pull/194)
+`378e8d53e24276d1dda0a28ffa55e373543b4504` odhalila kontrola T045 dva
+případy pro T038-AC02 a T038-AC04. Přerušení mezi atomickým pomocníkem
+a příkazem i přerušení před stdout vrátilo `CANCELLED` s exit 130.
+V obou případech už nový manifest odkazoval na tři platné soubory.
+Doklad nezávislé kontroly řádkových událostí má SHA-256
+`0b6446624bcbdb3a2699d7796134ac7b614395125f25c28dbd972b45247b185e`.
+Archiv přesného původního headu se stejným novým regresním testem měl
+**2 FAIL / 0 SKIP**, raw 1, JUnit SHA-256
+`e37a9d8d1515157dcb4cd4813c8068a5ed698ff14131e4e21709f7433b1e5195`.
+
+`src/kgmaker/view_store.py` předává potvrzený manifest přímo v okamžiku
+výměny nebo po ověření inode po výjimce. Tentýž stav čte úklid a
+`src/kgmaker/process_cli.py`. Přerušení při předání z atomického
+pomocníka může zachovat běžný výpis a exit 0. Při zachyceném přerušení
+na hranici CLI se zachová publikovaný manifest a příkaz vrátí
+`EXPORT_RECEIPT_INTERRUPTED` s exit 1. Před potvrzením výměny zůstávají
+v platnosti dřívější kontroly chyb a zrušení.
+
+`test_interrupt_after_publication_handoff_preserves_replacement` ověřuje
+obě cesty po výměně dřívější generace. Ověřil hashe obou sad souborů
+a shodu bajtů obou vstupů. Přímá injekce na řádcích před vrácením
+potvrzeného výsledku a před stdout na opraveném zdroji zopakovala exit 0
+a exit 1 v uvedeném pořadí. Její ověřovací příkaz měl raw 0.
+SHA-256 dokladu `4c53f0255172ae27d4221ef97d9f540fa68826fbced0ad90f2da069325540b39`.
+
+Cílená sada stejného opraveného zdroje měla **38 PASS / 0 SKIP**, raw 0
+(26 T038 a 12 T036). JUnit SHA-256
+`b2081fd9b3dc881ea1f81e5d5a82822988d7b2cd8cf432fac9b85edc330c84a6`.
+Prošly připnutý markdown-it-py 3.0.0 a Mermaid 11.4.1 se SVG a jsdom 26.0.0
+pod CPythonem 3.13.18. Samostatné `python -m kgmaker.cli process export`
+vrátilo raw 0 se shodným stdout a manifestem, třemi ověřenými hashi
+a nezměněným vstupem. Původní úplný běh (2 730 PASS, 1 409 SKIP,
+1 očekávaný XFAIL, raw 0) patří k headu `378e8d5`. Úplný běh
+a formální T045 review nového headu mají při přípravě stav NOT_RUN.
+
+Pro reprodukci použijte `CANDIDATE` s opravenými testy, `PYTHON`
+ze stejného místního prostředí a `PROOF` mimo checkout. Selhání
+má být ve dvou asercích návratového kódu až po ověření manifestu a souborů.
+
+```bash
+set -euo pipefail
+original=378e8d53e24276d1dda0a28ffa55e373543b4504
+test_path=tests/test_t038_publish_view_artifacts_atomically.py
+mkdir "$PROOF/retry-red"
+git archive "$original" src tests fixtures pyproject.toml | tar -x -C "$PROOF/retry-red"
+git show "$CANDIDATE:$test_path" > "$PROOF/retry-red/$test_path"
+(
+  cd "$PROOF/retry-red"
+  raw=0
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src "$PYTHON" -m pytest -q -p no:cacheprovider \
+    --tb=short --basetemp "$PROOF/retry-red-pytest" --junitxml "$PROOF/archive-red.xml" \
+    "$test_path" -k interrupt_after_publication_handoff || raw=$?
+  test "$raw" = 1
+)
+KGMAKER_REQUIRE_MARKDOWN_PARSER=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src \
+  "$PYTHON" -m pytest -q -p no:cacheprovider --tb=short \
+  --basetemp "$PROOF/retry-focused-pytest" --junitxml "$PROOF/retry-focused.xml" \
+  "$test_path" tests/test_t036_render_business_process_report.py
+```
+
+### Graf a plán po opravě předání
+
+Základem nového zachycení zůstal přijatý [#193](https://github.com/p-rum/kgmaker/pull/193)
+`be63bc34b6f766761c39d5b9e8cde0d2389e3962` v samostatné pracovní kopii.
+Původní head `378e8d5` a jeho grafový doklad zůstávají v historii tohoto PR.
+Obnova před zachycením ověřila obsah strojového grafu a sémantiky #193.
+Postup a otisky pro přijatý archiv jsou v oddílu
+[Reprodukce přenosu a grafových kontrol](#reprodukce-přenosu-a-grafových-kontrol).
+Recept opět přeložil původní lokátor `process_cli.py:84` na `97`
+a ověřil stejných sedm lokátorů celkem.
+
+Na přípravném stromu `e1148f2e59bc9dc431f5aef2e20038c467292114` měly
+plán, sémantické příkazy, opakované zachycení, `scan`, `status`
+a `check` raw 0. Plán zůstal bajtově shodný s přípravným přenosem po #193.
+Testy plánovače měly **13 PASS / 0 SKIP**, raw 0, JUnit SHA-256
+`5b31d0ca407a20e68dfe5419d024a49f8c47e814afd2f5113f514fe9d64ec427`.
+Přípravná epizoda
+`episode:595d54ba0a737d7dc3e0bc5223aa4bd4f1bd4566f9ba0408a9ccbfdc9dcf45a5`
+a graf stromu `1a74ed26780bc0632343289bfbbca5206751ee11` s SHA-256
+`787920b0691fc24b3afcb17fd77c33ef6cdef50fe0fd15364e87c1ab0c1512c9`
+jsou v odděleném dokladu. Čistý zdrojový replay základu měl raw 0 a SHA-256
+`4a4e8738413abd2374906c8b014297cb30e5006028eee181f355ab8bd685481e`.
+
+Kontrola zdrojových cest ověřila 466 dotčených uzlů z devíti souborů T038.
+Shodné zůstaly 515 dříve přijatých epizod, 60 konceptů a 222 vztahů
+kurátorované sémantiky s ověřenými přesuny lokátorů, uzly a vztahy Rates
+i původní topologie Mermaid. Základ finálního zachycení opět tvoří
+přijatých 515 epizod a obsah tohoto doplněného záznamu. Finální otisk
+je v dokladu mimo zachycované soubory.
+
+### T038-AC02 a AC04 — potvrzení patří jedné publikaci
+
+Další kontrola ověřila předání stejného objektu s již potvrzeným
+manifestem do druhého exportu. Před opravou mohl záznam první publikace
+překrýt skutečnou chybu zápisu druhého exportu a vrátit exit 0.
+`test_confirmed_holder_cannot_authorize_a_second_export` selhal s raw 1.
+SHA-256 JUnit `1ab647e7347eaaa0050360ca0d431e9db341a8ba2f0161ac9c5fe43676046e06`.
+Kontrola na vstupu do store nyní přijímá prázdný stav pro novou publikaci.
+Stav s potvrzeným manifestem odmítne před přípravou výstupu jako
+`EXPORT_RECEIPT_ALREADY_SET` s exit 2. Test ověřuje nulový počet zápisů
+a shodu manifestu, souborů i seznamu cest po odmítnutí.
+
+Na opraveném zdroji proběhlo **39 PASS / 0 SKIP**, raw 0 při stejném
+výběru a pinech z předchozího příkladu, z toho 27 případů T038 a 12 T036.
+SHA-256 JUnit `387e1824ee4d779bd09fd9379023ab0ddf2d32afa203bf1f34dd2d601b8ec428`.
+Obě přímé zkoušky přerušení po publikaci i samostatný CLI běh prošly
+znovu. Doklad řádkových událostí má SHA-256
+`cfc49e5be3fb318fba8b9df3e372a26f2bf3fc976ea87f59d6d53a0538ed4b6e`.
+Graf průběžného kandidáta `f852f98ec008b0e7551e72aeaed748fbf2facf18`
+zůstal v samostatném archivu. Pro finální zachycení se znovu načetl
+přijatý základ #193 a ověřil se zde uvedený sémantický postup.

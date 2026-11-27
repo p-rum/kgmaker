@@ -1,5 +1,6 @@
 """Atomic publication of immutable sets of derived view artifacts."""
 from contextlib import contextmanager, suppress
+from dataclasses import dataclass, field
 import errno
 from hashlib import sha256
 import os
@@ -22,6 +23,13 @@ class ViewExportError(ValueError):
         self.code = code
         self.exit_code = exit_code
         super().__init__(code)
+
+
+@dataclass
+class ViewPublication:
+    """The confirmed manifest shared across the switch and receipt writer."""
+
+    manifest: dict | None = field(init=False, default=None)
 
 
 def export_path(root, path):
@@ -189,14 +197,13 @@ def _unlink_owned(parent, files):
                 os.unlink(name, dir_fd=parent)
 
 
-def _stage_and_switch(parent, generation, files, manifest, check_current, guard):
+def _stage_and_switch(parent, generation, files, manifest, check_current, guard, publication):
     directory = 'generation-' + generation
     temporary = '.manifest-' + generation
     raw = (canonical(manifest) + '\n').encode('utf-8')
     temporary_files = {}
     artifact_files = {}
     staging_identity = None
-    switched = False
     try:
         os.mkdir(directory, 0o700, dir_fd=parent)
         staging_identity = os.stat(directory, dir_fd=parent, follow_symlinks=False)
@@ -217,35 +224,39 @@ def _stage_and_switch(parent, generation, files, manifest, check_current, guard)
                 guard(source_stamp)
                 try:
                     os.replace(temporary, _MANIFEST, src_dir_fd=parent, dst_dir_fd=parent)
-                    switched = True
+                    publication.manifest = manifest
                 except (KeyboardInterrupt, OSError):
                     # A signal can arrive after the rename has committed but
                     # before the call returns. The manifest inode proves it.
                     if not _same_entry(parent, _MANIFEST, temporary_files[temporary]):
                         raise
-                    switched = True
+                    publication.manifest = manifest
             finally:
-                if not switched:
+                if publication.manifest is None:
                     _unlink_owned(staging, artifact_files)
     except (KeyboardInterrupt, OSError):
-        if not switched:
+        if publication.manifest is None:
             raise
     finally:
-        if not switched:
+        if publication.manifest is None:
             _unlink_owned(parent, temporary_files)
             with suppress(OSError):
                 if staging_identity is not None and _same_entry(parent, directory, staging_identity):
                     os.rmdir(directory, dir_fd=parent)
 
 
-def publish_view_artifacts(root: Path, output: Path, kind, render, *, checkpoint, verify_input, verify_input_stamp):
-    """Render then switch one manifest under an optimistic, destination-local CAS."""
+def publish_view_artifacts(root: Path, output: Path, kind, render, *, checkpoint, verify_input, verify_input_stamp,
+                           publication: ViewPublication | None = None):
+    """Publish under a destination-local CAS, with an empty holder for this export."""
+    if publication is None:
+        publication = ViewPublication()
+    elif publication.manifest is not None:
+        raise ViewExportError('EXPORT_RECEIPT_ALREADY_SET')
     output = export_path(root, output)
     if any(part.casefold() in {'.git', '.kgmaker'} for part in output.parts):
         raise ViewExportError('INVALID_EXPORT_PATH')
     created = []
     keep_output = False
-    receipt = None
     try:
         with _root_directory(root) as base:
             from fcntl import LOCK_EX, LOCK_NB, flock
@@ -302,8 +313,8 @@ def publish_view_artifacts(root: Path, output: Path, kind, render, *, checkpoint
                     guard(source_stamp)
                     if (active is not None and active['view_fingerprint'] == fingerprint
                             and {key: item['sha256'] for key, item in active['artifacts'].items()} == hashes):
-                        receipt = active
-                        return receipt
+                        publication.manifest = active
+                        return active
                     generation = uuid4().hex
                     manifest = {
                         'schema_version': 1,
@@ -315,20 +326,19 @@ def publish_view_artifacts(root: Path, output: Path, kind, render, *, checkpoint
                             for format, filename in _FILENAMES.items()
                         },
                     }
-                    _stage_and_switch(target, generation, files, manifest, check_current, guard)
-                    receipt = manifest
-                    return receipt
+                    _stage_and_switch(target, generation, files, manifest, check_current, guard, publication)
+                    return publication.manifest
             finally:
                 for parent, name, identity in reversed(created):
                     try:
-                        if receipt is None and not keep_output and _same_entry(parent, name, identity):
+                        if publication.manifest is None and not keep_output and _same_entry(parent, name, identity):
                             os.rmdir(name, dir_fd=parent)
                     except OSError:
                         pass
                     finally:
                         os.close(parent)
     except KeyboardInterrupt:
-        # Once published, an interrupted descriptor close cannot cancel it.
-        if receipt is None:
+        # The switch records its outcome before returning through cleanup.
+        if publication.manifest is None:
             raise
-        return receipt
+        return publication.manifest
