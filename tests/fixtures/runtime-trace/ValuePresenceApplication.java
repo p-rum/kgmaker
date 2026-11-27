@@ -26,6 +26,10 @@ public final class ValuePresenceApplication {
         Target.callOnly = Source.callOnly;
     }
 
+    static String throwingCompanion() {
+        throw new UnsupportedOperationException();
+    }
+
     static void misleading(InstanceSource source, InstanceTarget target, InstanceSource otherSource, InstanceTarget otherTarget) {
         target.status = source.status; TRACE.observeValuePresence(otherSource.status, otherTarget.status);
     }
@@ -55,8 +59,16 @@ public final class ValuePresenceApplication {
             case "reversed" -> { reversed(); yield Target.reversed; }
             case "ambiguous" -> { ambiguous(); yield Target.repeated; }
             case "call" -> TRACE.call(args[1], args[2], () -> { plain(); return Target.callOnly; });
-            case "combined-present", "combined-absent" -> {
-                TRACE.call(args[1], args[3], () -> { plain(); return Target.callOnly; });
+            case "combined-present", "combined-absent", "combined-threw" -> {
+                if ("combined-threw".equals(args[0])) {
+                    try {
+                        TRACE.call(args[1], args[3], ValuePresenceApplication::throwingCompanion);
+                    } catch (UnsupportedOperationException expected) {
+                        // The companion exception is handled outside the value transfer.
+                    }
+                } else {
+                    TRACE.call(args[1], args[3], () -> { plain(); return Target.callOnly; });
+                }
                 yield TRACE.call(args[1], args[2], () -> { copy(); return Target.status; });
             }
             default -> { copy(); yield Target.status; }

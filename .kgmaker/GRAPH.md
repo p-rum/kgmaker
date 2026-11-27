@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 649
+- Scope: production; omitted files: 650
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `8b1113a229c2dde921d71d86fdba9e07752417f5e0d88a8ec1a42acc774d8a76`; content: `984df767752a0b846f933551cae4b72b511cdcb175f612f8a947de0010ff1299`; freshness: CONTENT_VERIFIED
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 522
+- Implementation episodes: 523
 - Inferred/ambiguous relationships: 9445/0
 
 ## Architecture diagram
@@ -2868,6 +2868,7 @@ flowchart LR
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest191=passed
 - **Change Advanced, Advanced.consume(value: String), Advanced.consume(value: String):value** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/57_verifyJvmGoldenCorpus.md, docs/compiler-inspection.md; validation: corpus_21_in_full=passed, full_setup_disk_failure=failed, installed_repair_9=passed, semantic=passed, remote_ci=unknown
 - **fix(t006): bind external cache classpath evidence** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/32_selectServiceContexts.md, docs/production-analysis-progress.md; validation: focused=passed, exporter_negative=passed, live_exporter_builds=skipped
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: docs/acceptance-inventory.md, docs/changes/217_verifyRuntimeThrewCompanion.md, docs/production-analysis-progress.md, tests/fixtures/runtime-trace/ValuePresenceApplication.java, tests/test_runtime_value_presence.py; validation: planner=passed, source-diff=passed, semantic-before-capture=passed, historical-same-line=passed, historical-controls=passed
 - **Configure deferred Confluence connection without live execution** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/38_configureDeferredConfluence.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: full297=passed, configuration28=passed, live=skipped
 - **Change Acceptance criteria, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/79_certifyLocalOperations.md, docs/process-paths.md; validation: protocol11=passed, legacy120=passed, baseline_actual_red=failed, complete_workers=unknown
 - **Implement next steps from implementation plan** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker-implementation.agent.md; validation: pytest197=passed, focused53=passed, derived-query-paths=passed, derived-query-intents=passed
@@ -2928,7 +2929,7 @@ flowchart LR
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/5_preserveCompilerRefresh.md, docs/compiler-inspection.md, docs/feature-analysis.md; validation: pytest190=passed
 - **Reconcile inventory with the merged verification gate** — changed; files: docs/acceptance-inventory.md, docs/changes/174_reconcileMergedDelivery.md, docs/production-analysis-progress.md, docs/production-scope.md; validation: completion-plan-gates=passed, pr150-pr157-pr162-merge-receipts=passed, completion-focused-tests=passed
 - **chore(T005): include refreshed semantic index** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/11_addViewModel.md, docs/production-analysis-progress.md; validation: t005=passed, pytest242=passed, toolchain21=skipped
-- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/changes/216_publishArchitectureTopology.md, docs/production-analysis-progress.md; validation: planner=passed, source-diff=passed, semantic-before-capture=passed, exact-focus=unknown, exact-native=unknown
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/changes/216_publishArchitectureTopology.md, docs/production-analysis-progress.md; validation: planner=passed, source-diff=passed, semantic-before-capture=passed, exact-focus=unknown, exact-native=unknown
 - **merge: integrate current Criteria main into complete report** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/131_completeAnalysisReport.md, docs/complete-analysis-report.md, docs/feature-analysis.md; validation: scoped-report-integration=passed, actual-javac-typescript=passed, full-suite=unknown
 - **fix(T003-S06-W02): require proven query return owner** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/changes/49_projectJpaInheritedAttributes.md, docs/compiler-inspection.md; validation: jpa-focused=passed, t009-parent=passed, semantic=passed, source-identities=passed
 - **Change Aktualizace stavu, Aktuální oddělený T020 checkpoint — 2026-11-06, Aktuální pracovní inventář T048-S01 — 2026-11-07** — changed; files: docs/production-analysis-progress.md; validation: t022-draft-179-open-source=passed, t022-pr179-planner-parity=passed, t022-pr179-exact-product=passed, full-standard=unknown
