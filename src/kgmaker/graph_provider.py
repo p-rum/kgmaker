@@ -736,7 +736,8 @@ def _fk_operation_owns_column(operation: Node, column_id: str) -> bool:
 
 def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
     """Derive positive relationships from one already-published generation."""
-    from .schema_replay import FK_COLUMN_RELATION, persistence_pair
+    from .analysis_model import digest
+    from .schema_replay import FK_COLUMN_RELATION, Replay, persistence_pair, realm_prefix
 
     index = defaultdict(list)
     if graph.schema_version == 1:
@@ -800,7 +801,7 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
             if (source.kind == 'db_constraint' and target.kind == 'db_table'
                     and edge.source_line == source.line and schema_relation(edge, source, target)):
                 foreign_key_tables[source.id].append(target)
-        if edge.kind != "operation_targets" or nodes[edge.target].kind not in {"db_table", "db_column"}:
+        if edge.kind != "operation_targets" or nodes[edge.target].kind not in {"db_table", "db_column", "db_constraint"}:
             continue
         operations = migration_operations[edge.target]
         operation = nodes[edge.source]
@@ -811,6 +812,58 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
                 and type(edge.source_line) is int and edge.source_line > 0
                 and edge.confidence == "EXTRACTED" and edge.evidence_kind == "SYNTAX_CANDIDATE"):
             operations.append(operation)
+
+    @cache
+    def creation_operation(node_id, command, scope):
+        node = nodes[node_id]
+        pair, config, horizon, _ = scope
+        creation = node.metadata.get('schema_identity')
+        origin = creation.get('origin') if isinstance(creation, dict) else None
+        if not isinstance(origin, dict):
+            return None
+        kind = node.kind[3:]
+        name = creation.get('name')
+        path, line, statement = (origin.get(key) for key in ('path', 'line', 'statement'))
+        # Flyway captured raw bytes. A normalized hash cannot establish a different raw history.
+        if (type(creation.get('schema_version')) is not int or creation['schema_version'] != 1
+                or creation.get('kind') != kind or 'incarnation' not in creation
+                or (creation.get('database_id'), creation.get('stream_id')) != pair
+                or not _reference_ids(name) or len(name) != len(node.metadata['schema_object'])
+                or not isinstance(path, str) or path not in files or origin.get('sha256') != files[path]
+                or type(line) is not int or line < 1 or type(statement) is not int or statement < 1):
+            return None
+        prefix = realm_prefix({'database_id': pair[0], 'stream_id': pair[1]})
+        identity = 'schema:' + prefix + ':' + Replay.key(kind, tuple(name))
+        incarnation = creation['incarnation']
+        try:
+            if incarnation is not None:
+                if incarnation != digest(origin)[:12]:
+                    return None
+                identity += ':incarnation:' + incarnation
+            if (node_id != identity or creation.get('proof_hash') != digest({
+                    key: value for key, value in creation.items() if key != 'proof_hash'})):
+                return None
+        except (TypeError, ValueError, RecursionError):
+            return None
+        operation_prefix = f'migration-operation:{prefix}:{path}:'
+        prior = []
+        for operation in migration_operations.get(node_id, ()):
+            persisted = operation.metadata['persistence_realm']
+            if (operation.path != path or persisted.get('config_fingerprint') != config
+                    or persisted.get('target') != horizon):
+                continue
+            ordinal = operation.id[len(operation_prefix):]
+            if not operation.id.startswith(operation_prefix) or not re.fullmatch(r'[1-9][0-9]*', ordinal):
+                return None
+            prior.append((len(ordinal), ordinal, operation))
+        if not prior:
+            return None
+        # A later operation on the same object can share the original SQL line.
+        _, ordinal, operation = min(prior, key=lambda item: item[:2])
+        if (ordinal != str(statement) or operation.name != command
+                or type(operation.line) is not int or operation.line != line):
+            return None
+        return operation
 
     for edge in graph.edges:
         source, target = nodes[edge.source], nodes[edge.target]
@@ -850,6 +903,27 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
                     add(operation.path, source.path, source.id, 'SCHEMA_DEPENDENT', relation=edge.kind,
                         source_line=edge.source_line, evidence_kind='MIGRATION_DERIVED', dependency_id=target.id,
                         operation_id=operation.id, operation_line=operation.line)
+        elif (edge.kind, source.kind, target.kind) == ('contains_constraint', 'db_table', 'db_constraint'):
+            table, constraint = source, target
+            scope = replay_scope(table.id)
+            if (scope is None or replay_scope(constraint.id) != scope
+                    or table.summary != 'MIGRATION_DERIVED; COMPLETE' or constraint.summary != table.summary
+                    or edge.source_line != constraint.line or not schema_relation(edge, constraint, table)):
+                continue
+            table_name = table.metadata.get('schema_object')
+            constraint_name = constraint.metadata.get('schema_object')
+            if (not _reference_ids(table_name) or len(table_name) != 2 or table.name != '.'.join(table_name)
+                    or not _reference_ids(constraint_name) or constraint_name[:-1] != table_name
+                    or constraint.name != '.'.join(constraint_name)):
+                continue
+            declaration = creation_operation(constraint.id, 'ALTER', scope)
+            if declaration is None or (declaration.path, declaration.line) != (constraint.path, constraint.line):
+                continue
+            operation = creation_operation(table.id, 'CREATE', scope)
+            if operation is not None and operation.path != declaration.path:
+                add(operation.path, constraint.path, constraint.id, 'SCHEMA_DEPENDENT', relation=edge.kind,
+                    source_line=edge.source_line, evidence_kind='MIGRATION_DERIVED', dependency_id=table.id,
+                    operation_id=operation.id, operation_line=operation.line)
         elif (edge.kind, source.kind, target.kind) in {
             ("foreign_key_to", "db_constraint", "db_table"),
             ("derived_from", "db_view_field", "db_column"),
