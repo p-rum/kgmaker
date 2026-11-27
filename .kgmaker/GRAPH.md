@@ -3,14 +3,14 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 644
+- Scope: production; omitted files: 645
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `c15ac4f1fd1f7c16fa1c3776c2abaf065a80fc663c82be2d08eea6ed593722b4`; content: `e4a15d99d3fa938ef24843c189ecfff7daecf58bf13d8f6a78ffdf4d89b91f43`; freshness: CONTENT_VERIFIED
+- Context: `9489accfe771df2630f2e24e90d11325698f1c4f8a84a6d549097c2a19ac6170`; content: `8cd4b3ae7892ae637b7545cc2ca900a4029793843aba9c83ea9abd3f6ddcf8ea`; freshness: CONTENT_VERIFIED
 - Files indexed: 128
-- Symbols and sections: 1790
-- Internal imports: 547
-- Heuristic cross-file calls: 9402
+- Symbols and sections: 1795
+- Internal imports: 548
+- Heuristic cross-file calls: 9405
 - PostgreSQL tables/columns: 0/0
 - Kafka topics: 0
 - API endpoints: 0
@@ -18,8 +18,8 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 519
-- Inferred/ambiguous relationships: 9402/0
+- Implementation episodes: 520
+- Inferred/ambiguous relationships: 9405/0
 
 ## Architecture diagram
 
@@ -516,6 +516,7 @@ flowchart LR
   n72 -->|imports| n79
   n73 -->|imports| n5
   n73 -->|imports| n8
+  n73 -->|imports| n72
   n73 -->|imports| n74
   n73 -->|imports| n75
   n73 -->|uses| n75
@@ -1837,15 +1838,20 @@ flowchart LR
 - **function** `catalog_business_processes` line 178 — `catalog_business_processes(root,trigger_inventory,*,current_processes=(),historical_processes=()`
 
 ### `src/kgmaker/process_cli.py`
-- **function** `_configure` line 22 — `_configure(parser)`
-- **function** `register` line 47 — `register(subparsers)`
-- **function** `_render` line 51 — `_render(args)`
-- **function** `_export` line 118 — `_export(args)`
-- **function** `checkpoint` line 132 — `checkpoint`
-- **function** `render` line 144 — `render`
-- **function** `verify_input` line 153 — `verify_input`
-- **function** `verify_input_stamp` line 162 — `verify_input_stamp(stamp)`
-- **function** `run` line 186 — `run(argv)`
+- **function** `_configure_workspace` line 22 — `_configure_workspace(parser)`
+- **function** `_configure` line 29 — `_configure(parser)`
+- **function** `register` line 54 — `register(subparsers)`
+- **function** `_capture_current_triggers` line 58 — `_capture_current_triggers(args)`
+- **function** `_entry_process_id` line 80 — `_entry_process_id(trigger_id)`
+- **function** `_output_payload` line 84 — `_output_payload(result)`
+- **function** `_list` line 93 — `_list(args)`
+- **function** `_render` line 115 — `_render(args)`
+- **function** `_export` line 159 — `_export(args)`
+- **function** `checkpoint` line 173 — `checkpoint`
+- **function** `render` line 185 — `render`
+- **function** `verify_input` line 194 — `verify_input`
+- **function** `verify_input_stamp` line 203 — `verify_input_stamp(stamp)`
+- **function** `run` line 227 — `run(argv)`
 
 ### `src/kgmaker/process_model.py`
 - **function** `_canonical` line 32 — `_canonical(value)`
@@ -2887,7 +2893,7 @@ flowchart LR
 - **merge: integrate current Criteria main into complete report** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/131_completeAnalysisReport.md, docs/complete-analysis-report.md, docs/feature-analysis.md; validation: scoped-report-integration=passed, actual-javac-typescript=passed, full-suite=unknown
 - **fix(T003-S06-W02): require proven query return owner** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/changes/49_projectJpaInheritedAttributes.md, docs/compiler-inspection.md; validation: jpa-focused=passed, t009-parent=passed, semantic=passed, source-identities=passed
 - **Change Aktualizace stavu, Aktuální oddělený T020 checkpoint — 2026-11-06, Aktuální pracovní inventář T048-S01 — 2026-11-07** — changed; files: docs/production-analysis-progress.md; validation: t022-draft-179-open-source=passed, t022-pr179-planner-parity=passed, t022-pr179-exact-product=passed, full-standard=unknown
-- **Change Akceptační kritéria, Aktualizace stavu, Aktuální audit dodání — 2026-11-14** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/213_bindObservedJdkLibraries.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: planner=passed, source-diff=passed, semantic-before-capture=passed, exact-focus=unknown, exact-native=unknown
+- **Change Akceptační kritéria, Aktualizace stavu, Aktuální audit dodání — 2026-11-14** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/213_bindObservedJdkLibraries.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: planner=passed, source-diff=passed, semantic-before-capture=passed, exact-focus=unknown, exact-native=unknown
 - **Verify reverse dependency reports after workbook freshness integration** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/145_buildReverseDependencyIndexes.md, docs/production-analysis-progress.md, docs/stage-content-cache.md; validation: actual_combined_124=passed, standard_python313_full=passed, excel_worker_setup=skipped, semantic_reconcile=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/9_bindMethodologyApproval.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: pytest203=passed, methodology27=passed, semantic=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/183_reconcileExcelCompletionInventory.md, docs/production-analysis-progress.md, docs/tasks/54_addExcelMigration.md, docs/tasks/55_automateExcelMigration.md; validation: planner_red_green=passed, completion_focused=passed, semantic=passed
@@ -3121,6 +3127,7 @@ flowchart LR
 - **Change 164 — Doplnění otisku spuštění Javac, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/164_bindJavaLaunchInputs.md, docs/stage-content-cache.md, src/kgmaker/extraction_cache.py, tests/test_stage_content_cache_actual.py; validation: actual-javac-cyclic-red-green=passed, python313-javac-cyclic=passed, prior-launcher-guards=passed, semantic=passed
 - **Record strict registrar validation and corrected producer boundaries** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/47_declareSpringRegistrations.md, docs/compiler-inspection.md; validation: strict-full-558=passed, actual-focused-57=passed, optional-10=skipped
 - **Bind a sanitized runtime presence sample to one Java transfer** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/187_bindRuntimeValuePresence.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: actual-jdk21-presence-with-current-hook=passed, approved-live-and-legacy-scope=passed, planner-134-unrelated-rows=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/214_listCurrentProcessCandidates.md, docs/process-paths.md, docs/production-analysis-progress.md; validation: planner=passed, source-diff=passed, semantic-before-capture=passed, exact-focus=unknown, exact-native=unknown
 - **Integrate merged callback main into Kotlin JPA access** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: parent_T015_integration124=passed, unchanged_JPA_source_actual35=passed, current_remote_ci=unknown
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/145_buildReverseDependencyIndexes.md, docs/production-analysis-progress.md, docs/stage-content-cache.md; validation: malformed_digest_reproduction=failed, actual_javac_k1_k2=passed, semantic_layer=passed, github_ci=unknown, full_suite=unknown
 - **Document actual Mermaid verification for the bounded flow projection** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/189_reduceBoundedCfgTraversal.md, docs/production-analysis-progress.md, docs/unified-flow-views.md; validation: focused_boundaries=passed, output_equivalence=passed, semantic=passed, planner=passed, diff_check=passed
@@ -3657,6 +3664,7 @@ flowchart LR
 - `src/kgmaker/process_catalog.py` imports `src/kgmaker/process_triggers.py` (.process_triggers)
 - `src/kgmaker/process_cli.py` imports `src/kgmaker/analysis_model.py` (.analysis_model)
 - `src/kgmaker/process_cli.py` imports `src/kgmaker/architecture_cli.py` (.architecture_cli)
+- `src/kgmaker/process_cli.py` imports `src/kgmaker/process_catalog.py` (.process_catalog)
 - `src/kgmaker/process_cli.py` imports `src/kgmaker/process_model.py` (.process_model)
 - `src/kgmaker/process_cli.py` imports `src/kgmaker/process_paths.py` (.process_paths)
 - `src/kgmaker/process_cli.py` imports `src/kgmaker/process_render.py` (.process_render)
@@ -10065,29 +10073,32 @@ flowchart LR
 - `src/kgmaker/process_catalog.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 58; src/kgmaker/process_catalog.py:58; INFERRED 0.85)
 - `src/kgmaker/process_catalog.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 88; src/kgmaker/process_catalog.py:88; INFERRED 0.85)
 - `src/kgmaker/process_catalog.py` may call `129 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 94; src/kgmaker/process_catalog.py:94; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `28 in `src/kgmaker/architecture_cli.py`` (name match at line 190; src/kgmaker/process_cli.py:190; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `29 in `src/kgmaker/view_store.py`` (name match at line 171; src/kgmaker/process_cli.py:171; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `85 in `src/kgmaker/analysis_model.py`` (name match at line 141; src/kgmaker/process_cli.py:141; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `153 in `src/kgmaker/architecture_cli.py`` (name match at line 79; src/kgmaker/process_cli.py:79; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `147 in `src/kgmaker/architecture_cli.py`` (name match at line 78; src/kgmaker/process_cli.py:78; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `286 in `src/kgmaker/architecture_cli.py`` (name match at line 106; src/kgmaker/process_cli.py:106; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `118 in `src/kgmaker/architecture_cli.py`` (name match at line 77; src/kgmaker/process_cli.py:77; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `372 in `src/kgmaker/domain.py`` (name match at line 116; src/kgmaker/process_cli.py:116; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `372 in `src/kgmaker/domain.py`` (name match at line 180; src/kgmaker/process_cli.py:180; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `81 in `src/kgmaker/extraction_cache.py`` (name match at line 141; src/kgmaker/process_cli.py:141; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `158 in `src/kgmaker/process_render.py`` (name match at line 147; src/kgmaker/process_cli.py:147; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `81 in `src/kgmaker/process_triggers.py`` (name match at line 83; src/kgmaker/process_cli.py:83; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `33 in `src/kgmaker/view_store.py`` (name match at line 125; src/kgmaker/process_cli.py:125; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `33 in `src/kgmaker/view_store.py`` (name match at line 126; src/kgmaker/process_cli.py:126; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `33 in `src/kgmaker/view_store.py`` (name match at line 127; src/kgmaker/process_cli.py:127; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `33 in `src/kgmaker/view_store.py`` (name match at line 134; src/kgmaker/process_cli.py:134; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `125 in `src/kgmaker/view_store.py`` (name match at line 165; src/kgmaker/process_cli.py:165; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `118 in `src/kgmaker/view_store.py`` (name match at line 140; src/kgmaker/process_cli.py:140; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `118 in `src/kgmaker/view_store.py`` (name match at line 156; src/kgmaker/process_cli.py:156; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 115; src/kgmaker/process_cli.py:115; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 179; src/kgmaker/process_cli.py:179; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 210; src/kgmaker/process_cli.py:210; INFERRED 0.85)
-- `src/kgmaker/process_cli.py` may call `646 in `src/kgmaker/workspace.py`` (name match at line 80; src/kgmaker/process_cli.py:80; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `28 in `src/kgmaker/architecture_cli.py`` (name match at line 231; src/kgmaker/process_cli.py:231; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `29 in `src/kgmaker/view_store.py`` (name match at line 212; src/kgmaker/process_cli.py:212; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `85 in `src/kgmaker/analysis_model.py`` (name match at line 182; src/kgmaker/process_cli.py:182; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `153 in `src/kgmaker/architecture_cli.py`` (name match at line 63; src/kgmaker/process_cli.py:63; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `147 in `src/kgmaker/architecture_cli.py`` (name match at line 62; src/kgmaker/process_cli.py:62; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `286 in `src/kgmaker/architecture_cli.py`` (name match at line 88; src/kgmaker/process_cli.py:88; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `118 in `src/kgmaker/architecture_cli.py`` (name match at line 61; src/kgmaker/process_cli.py:61; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `372 in `src/kgmaker/domain.py`` (name match at line 113; src/kgmaker/process_cli.py:113; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `372 in `src/kgmaker/domain.py`` (name match at line 157; src/kgmaker/process_cli.py:157; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `372 in `src/kgmaker/domain.py`` (name match at line 221; src/kgmaker/process_cli.py:221; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `81 in `src/kgmaker/extraction_cache.py`` (name match at line 182; src/kgmaker/process_cli.py:182; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `178 in `src/kgmaker/process_catalog.py`` (name match at line 109; src/kgmaker/process_cli.py:109; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `158 in `src/kgmaker/process_render.py`` (name match at line 188; src/kgmaker/process_cli.py:188; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `81 in `src/kgmaker/process_triggers.py`` (name match at line 67; src/kgmaker/process_cli.py:67; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `33 in `src/kgmaker/view_store.py`` (name match at line 166; src/kgmaker/process_cli.py:166; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `33 in `src/kgmaker/view_store.py`` (name match at line 167; src/kgmaker/process_cli.py:167; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `33 in `src/kgmaker/view_store.py`` (name match at line 168; src/kgmaker/process_cli.py:168; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `33 in `src/kgmaker/view_store.py`` (name match at line 175; src/kgmaker/process_cli.py:175; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `125 in `src/kgmaker/view_store.py`` (name match at line 206; src/kgmaker/process_cli.py:206; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `118 in `src/kgmaker/view_store.py`` (name match at line 181; src/kgmaker/process_cli.py:181; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `118 in `src/kgmaker/view_store.py`` (name match at line 197; src/kgmaker/process_cli.py:197; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 112; src/kgmaker/process_cli.py:112; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 156; src/kgmaker/process_cli.py:156; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 220; src/kgmaker/process_cli.py:220; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 252; src/kgmaker/process_cli.py:252; INFERRED 0.85)
+- `src/kgmaker/process_cli.py` may call `646 in `src/kgmaker/workspace.py`` (name match at line 64; src/kgmaker/process_cli.py:64; INFERRED 0.85)
 - `src/kgmaker/process_model.py` may call `24 in `src/kgmaker/architecture_model.py`` (name match at line 79; src/kgmaker/process_model.py:79; INFERRED 0.85)
 - `src/kgmaker/process_model.py` may call `419 in `src/kgmaker/architecture_model.py`` (name match at line 146; src/kgmaker/process_model.py:146; INFERRED 0.85)
 - `src/kgmaker/process_model.py` may call `238 in `src/kgmaker/schema_replay.py`` (name match at line 128; src/kgmaker/process_model.py:128; INFERRED 0.85)
@@ -12136,13 +12147,13 @@ flowchart LR
 - `src/kgmaker/view_store.py` may call `85 in `src/kgmaker/analysis_model.py`` (name match at line 139; src/kgmaker/view_store.py:139; INFERRED 0.85)
 - `src/kgmaker/view_store.py` may call `372 in `src/kgmaker/domain.py`` (name match at line 188; src/kgmaker/view_store.py:188; INFERRED 0.85)
 - `src/kgmaker/view_store.py` may call `81 in `src/kgmaker/extraction_cache.py`` (name match at line 139; src/kgmaker/view_store.py:139; INFERRED 0.85)
-- `src/kgmaker/view_store.py` may call `132 in `src/kgmaker/process_cli.py`` (name match at line 271; src/kgmaker/view_store.py:271; INFERRED 0.85)
-- `src/kgmaker/view_store.py` may call `132 in `src/kgmaker/process_cli.py`` (name match at line 277; src/kgmaker/view_store.py:277; INFERRED 0.85)
-- `src/kgmaker/view_store.py` may call `132 in `src/kgmaker/process_cli.py`` (name match at line 289; src/kgmaker/view_store.py:289; INFERRED 0.85)
-- `src/kgmaker/view_store.py` may call `132 in `src/kgmaker/process_cli.py`` (name match at line 310; src/kgmaker/view_store.py:310; INFERRED 0.85)
-- `src/kgmaker/view_store.py` may call `153 in `src/kgmaker/process_cli.py`` (name match at line 278; src/kgmaker/view_store.py:278; INFERRED 0.85)
-- `src/kgmaker/view_store.py` may call `153 in `src/kgmaker/process_cli.py`` (name match at line 293; src/kgmaker/view_store.py:293; INFERRED 0.85)
-- `src/kgmaker/view_store.py` may call `162 in `src/kgmaker/process_cli.py`` (name match at line 309; src/kgmaker/view_store.py:309; INFERRED 0.85)
+- `src/kgmaker/view_store.py` may call `173 in `src/kgmaker/process_cli.py`` (name match at line 271; src/kgmaker/view_store.py:271; INFERRED 0.85)
+- `src/kgmaker/view_store.py` may call `173 in `src/kgmaker/process_cli.py`` (name match at line 277; src/kgmaker/view_store.py:277; INFERRED 0.85)
+- `src/kgmaker/view_store.py` may call `173 in `src/kgmaker/process_cli.py`` (name match at line 289; src/kgmaker/view_store.py:289; INFERRED 0.85)
+- `src/kgmaker/view_store.py` may call `173 in `src/kgmaker/process_cli.py`` (name match at line 310; src/kgmaker/view_store.py:310; INFERRED 0.85)
+- `src/kgmaker/view_store.py` may call `194 in `src/kgmaker/process_cli.py`` (name match at line 278; src/kgmaker/view_store.py:278; INFERRED 0.85)
+- `src/kgmaker/view_store.py` may call `194 in `src/kgmaker/process_cli.py`` (name match at line 293; src/kgmaker/view_store.py:293; INFERRED 0.85)
+- `src/kgmaker/view_store.py` may call `203 in `src/kgmaker/process_cli.py`` (name match at line 309; src/kgmaker/view_store.py:309; INFERRED 0.85)
 - `src/kgmaker/view_store.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 80; src/kgmaker/view_store.py:80; INFERRED 0.85)
 - `src/kgmaker/view_store.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 187; src/kgmaker/view_store.py:187; INFERRED 0.85)
 - `src/kgmaker/view_store.py` may call `137 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 32; src/kgmaker/view_store.py:32; INFERRED 0.85)
@@ -13256,7 +13267,7 @@ flowchart LR
 - `src/kgmaker/inspection_cli.py` **uses_messaging** technology `Kafka` in `src/kgmaker/domain.py` — Kafka import, client, annotation, or configuration
 - `src/kgmaker/kafka_code.py` **uses_messaging** technology `Kafka` in `src/kgmaker/domain.py` — Kafka import, client, annotation, or configuration
 - `src/kgmaker/kafka_retry.py` **uses_messaging** technology `Kafka` in `src/kgmaker/domain.py` — Kafka import, client, annotation, or configuration
-- `src/kgmaker/process_cli.py` **uses** file `process_paths.py` in `src/kgmaker/process_paths.py` — Both public render selectors call the existing local technical path builder with the same selected T024 inventory and scope.; src/kgmaker/process_cli.py:97
+- `src/kgmaker/process_cli.py` **uses** file `process_paths.py` in `src/kgmaker/process_paths.py` — Both public render selectors call the existing local technical path builder with the same selected T024 inventory and scope.; src/kgmaker/process_cli.py:143
 - `src/kgmaker/process_render.py` **uses** file `architecture_render.py` in `src/kgmaker/architecture_render.py` — The process renderer imports the existing bounded Mermaid text and JSON comment encoders.; src/kgmaker/process_render.py:9
 - `src/kgmaker/process_triggers.py` **uses_messaging** technology `Kafka` in `src/kgmaker/domain.py` — Kafka import, client, annotation, or configuration
 - `render_report in `src/kgmaker/analysis_report.py`` **uses** function `report_projection` in `src/kgmaker/report_projection.py` — The Markdown report consumes the same deterministic report projection exposed by JSON.; src/kgmaker/analysis_report.py:28

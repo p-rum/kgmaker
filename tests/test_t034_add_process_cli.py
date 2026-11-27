@@ -3,11 +3,14 @@ from copy import deepcopy
 import json
 import os
 import subprocess
+from types import SimpleNamespace
 
 import pytest
 
+from kgmaker import process_cli
 from kgmaker.analysis_model import write_json
 from kgmaker.cli import main
+from kgmaker.process_catalog import MAX_SNAPSHOTS
 from kgmaker.process_model import ProcessDefinition, ProcessView
 from kgmaker.process_triggers import discover_process_triggers
 from kgmaker.workspace import load_workspace, snapshot_workspace, split_id
@@ -24,6 +27,21 @@ def cli(monkeypatch, capsys, *args):
         main()
     out, err = capsys.readouterr()
     return exited.value.code, out, err
+
+
+def test_process_list_rejects_snapshot_limit_before_path_projection(tmp_path, monkeypatch, capsys):
+    trigger = SimpleNamespace(id='trigger:' + '0' * 64)
+    inventory = SimpleNamespace(nodes=[trigger] * (MAX_SNAPSHOTS + 1))
+    monkeypatch.setattr(process_cli, '_capture_current_triggers', lambda args: (None, inventory))
+
+    def unexpected_projection(*args, **kwargs):
+        pytest.fail('an over-limit trigger inventory must fail before path projection')
+
+    monkeypatch.setattr(process_cli, 'build_local_process', unexpected_projection)
+    code, out, err = cli(monkeypatch, capsys, 'process', 'list', '--root', str(tmp_path),
+                         '--workspace', 'workspace.json')
+    assert (code, out, json.loads(err)['code']) == (2, '', 'SNAPSHOT_LIMIT')
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_workspace_entry_and_stored_process_use_one_current_canonical_view(tmp_path, monkeypatch, capsys):
@@ -58,6 +76,7 @@ def test_workspace_entry_and_stored_process_use_one_current_canonical_view(tmp_p
     monkeypatch.setattr('subprocess.Popen', only_readonly_git)
     monkeypatch.setattr('socket.socket', no_network)
     prefix = ('process', 'render', '--root', str(tmp_path), '--workspace', 'workspace.json')
+    listing = ('process', 'list', '--root', str(tmp_path), '--workspace', 'workspace.json', '--format', 'json')
     pins = ('--context-selection', 'contexts.json')
     entry = ('--entry', trigger.id)
     before = files(tmp_path)
@@ -78,6 +97,34 @@ def test_workspace_entry_and_stored_process_use_one_current_canonical_view(tmp_p
     assert {'true', 'false'} <= {edge.relation for edge in view.transitions}
     assert cli(monkeypatch, capsys, *prefix, *entry) == (0, out, '')
     assert cli(monkeypatch, capsys, *prefix, *pins, *entry, '--strict') == (4, out, '')
+    assert files(tmp_path) == before
+
+    code, listed, err = cli(monkeypatch, capsys, *listing, *pins)
+    assert (code, err) == (0, ''), (code, listed, err)
+    catalog = json.loads(listed)
+    assert catalog['schema_version'] == 1 and catalog['scope'] == 'production'
+    assert catalog['inventory_coverage']['status'] == 'PARTIAL'
+    assert catalog['counts'] == {'groups': 2, 'members': 2, 'current': 2, 'historical_snapshots': 0}
+    payment_trigger, = [node for node in inventory.nodes if node.owner_id == 'service:payments']
+    payment_identity = 'process:' + payment_trigger.id.removeprefix('trigger:')
+    assert [row['process_id'] for row in catalog['rows']] == sorted([identity, payment_identity])
+    current, = [member['current'] for row in catalog['rows'] for member in row['members']
+                if member['process_id'] == identity]
+    assert current['process_content_hash'] == view.content_fingerprint
+    assert current['context_ids'] == [orders['context_id']]
+    assert current['lifecycle'] == 'CANDIDATE' and current['technical_status'] == 'PARTIAL'
+    assert current['execution_status'] == current['data_availability'] == 'UNKNOWN'
+    listed_trigger, = current['triggers']
+    assert listed_trigger['id'] == trigger.id and listed_trigger['evidence_refs'] == sorted(trigger.evidence_refs)
+    assert cli(monkeypatch, capsys, *listing, *pins) == (0, listed, '')
+
+    code, empty, err = cli(monkeypatch, capsys, *listing, '--scope', 'test')
+    assert (code, err) == (0, ''), (code, empty, err)
+    empty_catalog = json.loads(empty)
+    assert empty_catalog['scope'] == 'test' and empty_catalog['rows'] == []
+    assert empty_catalog['inventory_coverage']['status'] == 'UNKNOWN'
+    code, invalid, err = cli(monkeypatch, capsys, *listing, '--context-selection', 'wrong-sibling-pin.json')
+    assert (code, invalid, json.loads(err)['code']) == (2, '', 'INVALID_SELECTOR')
     assert files(tmp_path) == before
 
     (tmp_path / 'saved.json').write_text(out, encoding='utf-8')
@@ -135,4 +182,6 @@ def test_workspace_entry_and_stored_process_use_one_current_canonical_view(tmp_p
     before = files(tmp_path)
     code, out, err = cli(monkeypatch, capsys, *prefix, *pins, *entry)
     assert (code, out, json.loads(err)['code']) == (2, '', 'ORIGINAL_INDEX_REQUIRED')
+    list_code, list_out, list_err = cli(monkeypatch, capsys, *listing, *pins)
+    assert (list_code, list_out, json.loads(list_err)['code']) == (2, '', 'ORIGINAL_INDEX_REQUIRED')
     assert files(tmp_path) == before
