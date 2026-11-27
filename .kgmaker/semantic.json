@@ -207,7 +207,7 @@
     "docs/process-paths.md": "f7879a6dcc469fab432060cbb288185fddc1bc964cd1d944053fdfe7d8faff67",
     "docs/process-review-store.md": "78c0b4144c0016ed1bb01a036d242fe8917de511c0d6f7b266727695c4687218",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "9a6c3b5524f95bb251aaad9ae7a2945536b63f04ab3752031fc84a27d6322b9a",
+    "docs/production-analysis-progress.md": "ec05c49856386f938ebba332d630bba7d14d0b2fea38a07e680e9b41c94df665",
     "docs/production-scope.md": "9b66c7f7106b4716dded576f2f2220c84b092692ee433718362c45254086f843",
     "docs/programmatic-queries.md": "4f3a5ea20e58edfc9560b57429ee410b7de1850356065494a6d1fa6d8f86ab8c",
     "docs/project-installation.md": "b4da2d520b28e8106bab079aa432da32e71a8a35ca0c1cc28f0345c1c38621f3",
@@ -313172,9 +313172,9 @@
     },
     {
       "base_commit": "adca1031dede08e294c3fd1234150d27ee6379a6",
-      "head_commit": "c545675028a4eedd4f002f368102cf8a31d1b15d",
-      "worktree_fingerprint": "9e711aa15eb52357b7f17216ca67228fb00f228fe5d6d8c1b83bc7c2bd4dc257",
-      "title": "Integrate current main for mixed compiler input retirement",
+      "head_commit": "d0dfd024fa108f74f82aef49c0a940307230f8a4",
+      "worktree_fingerprint": "d60909c79fdcb6b7f90316959eac15a09a1b2a09ef2ea1a603b02056008580eb",
+      "title": "Correct the mixed compiler input change provenance",
       "changed_files": [
         {
           "path": "README.md",
@@ -313199,7 +313199,7 @@
         {
           "path": "docs/production-analysis-progress.md",
           "status": "M",
-          "sha256": "9a6c3b5524f95bb251aaad9ae7a2945536b63f04ab3752031fc84a27d6322b9a"
+          "sha256": "ec05c49856386f938ebba332d630bba7d14d0b2fea38a07e680e9b41c94df665"
         },
         {
           "path": "docs/stage-content-cache.md",
@@ -314168,7 +314168,7 @@
           "status": "unknown"
         }
       ],
-      "id": "episode:d5559640e12c0db892fcb79f46bfbbe309955b3a7f224e7fdf94cc83378f06e0"
+      "id": "episode:d192764fec23885627a16f51ed1aa50454020b5d497d9cf2ae12c6ee7caa0c47"
     }
   ]
 }
