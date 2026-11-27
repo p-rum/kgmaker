@@ -166,9 +166,11 @@ cesty k souborům. Podporuje odstranění zachycených souborů. `--scope` přij
 proběhne před načtením jeho manifestu.
 
 Po reportu lze samostatně obnovit vybraný modul explicitní JVM inspekcí.
-Pokud nezávislý modul přišel výhradně o dříve zachycený vstup se stále
-deklarovaným jediným vlastníkem, inspekce může jeho starou compiler vrstvu
-vyřadit při stejné atomické publikaci. Report sám stále jen čte.
+Pokud nezávislý modul přišel o dříve zachycený vstup se stále deklarovaným
+jediným vlastníkem, inspekce může jeho starou compiler vrstvu vyřadit i při
+současné úpravě jiného zachyceného vstupu téhož modulu. Pro čtecí report
+zadejte obě cesty, například `kgmaker impact --evidence-only --format json
+edited/src/main/kotlin/Example.kt edited/src/main/kotlin/Caller.kt`.
 [Rozsah Python API a příklad](compiler-inspection.md#obnova-izolovaného-jvm-kontextu).
 
 JSON v1 uvádí SHA-256 jedné uložené generace `graph_sha256`, pole `changed_sources`

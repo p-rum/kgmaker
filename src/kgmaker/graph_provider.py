@@ -279,10 +279,9 @@ def validate_context_snapshot(root: Path, context: dict) -> tuple[dict, ...]:
                 inputs = set(context['compiler_inputs'])
                 changed = {path: value for path, value in current_files.items() if recorded_files.get(path) != value}
                 deleted = recorded_files.keys() - current_files.keys()
-                if (current_files.keys() == recorded_files.keys()
-                        and changed.keys() <= inputs and changed.keys() <= current.files.keys()):
-                    raise _JvmSourceDrift(changed, deleted)
-                if (current_files.keys() < recorded_files.keys() and not changed and deleted <= inputs
+                if (current_files.keys() <= recorded_files.keys()
+                        and changed.keys() <= inputs and changed.keys() <= current.files.keys()
+                        and deleted <= inputs
                         and all(_compiler_input_absent(root, path) for path in deleted)):
                     raise _JvmSourceDrift(changed, deleted)
             raise WorkerError("STALE_INDEX: source/config inputs changed; inspect again", "STALE")
@@ -654,6 +653,8 @@ def _prepare_compiler_context(root: Path, fresh: KnowledgeGraph, selected_contex
             reason = str(error)
             if error.deleted:
                 reason += "; deleted compiler inputs: " + ", ".join(sorted(error.deleted))
+                if error.changed:
+                    reason += "; changed compiler inputs: " + ", ".join(sorted(error.changed))
             published.append(_stale_context(context, reason))
             retired_paths.update(context['source_files'])
             deleted_paths.update(error.deleted)
