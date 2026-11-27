@@ -157,6 +157,18 @@ def render_process_markdown(view: ProcessView) -> str:
         raise ProcessMarkdownError() from None
 
 
+def render_process_artifacts(view: ProcessView) -> tuple[str, dict[str, str]]:
+    """Prepare JSON, Markdown and Mermaid from a single normalized technical view."""
+    document = _normalized(view)
+    _safe_output(document)
+    diagram = _render(document, {})
+    return digest(document), {
+        'json': canonical(document) + '\n',
+        'markdown': _markdown(document, diagram),
+        'mermaid': diagram,
+    }
+
+
 def _captured_locator(proof):
     source = proof.get('source_id')
     checksum = proof.get('content_hash')

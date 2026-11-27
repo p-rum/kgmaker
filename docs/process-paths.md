@@ -179,6 +179,50 @@ UTF-8 byte budget includes the entire report. `ProcessMarkdownError` carries
 `INVALID_PROCESS_MARKDOWN`, `UNSAFE_PROCESS_MARKDOWN` or `PROCESS_MARKDOWN_LIMIT`.
 The caller handles any output file. [Report evidence](changes/206_renderBusinessProcessReport.md).
 
+## Atomic process export (T038)
+
+```bash
+kgmaker process export --root "$PWD" --snapshot process.json --output reports/process
+```
+
+The command reads a supplied schema-1 ProcessView from the coordinator's local
+filesystem. `--root` defaults to the working directory. Input and output paths
+stay within that root. The command rejects symlinks, traversal and output
+paths inside `.git` or `.kgmaker`. Use a dedicated output directory for this view.
+The input limit is 32,000,000 bytes. Each artifact has a 4,000,000 byte limit
+and the existing Mermaid limits apply.
+
+On success stdout and `reports/process/manifest.json` carry the same schema-1
+manifest. It names `view_kind` (`process`), `generation`,
+`view_fingerprint` and `artifacts`. Read the manifest once per export. Its
+`json`, `markdown` and `mermaid` entries each give a `path` relative to the
+output directory and a `sha256` of the artifact bytes. All three paths belong
+to the same `generation-<id>` directory. The process retains earlier generations
+so a reader holding an earlier manifest can finish. Re-exporting the currently
+active content returns the same manifest. A different publication creates a new
+generation and replaces the manifest in a single switch.
+
+`--expected-fingerprint` checks the canonical input view. The publisher
+separately checks whether the active output generation changed, and rechecks
+the supplied input bytes before switching. `--timeout` is a cooperative deadline
+in seconds and defaults to 30. `--cancel-file` names a coordinator-local
+flag outside the output directory. It cancels before the switch when present.
+Exit 3 reports a stale input or competing publication, exit 2 invalid input
+or an unsupported platform, exit 1 a deadline or I/O failure, and exit 130
+cancellation. Errors before the switch preserve the last published manifest.
+Once the switch completes, the stored manifest identifies the published
+generation. An interrupt during the stdout receipt can leave that receipt
+incomplete. The CLI reports `EXPORT_RECEIPT_INTERRUPTED` with exit 1 if it
+catches the interrupt while writing the receipt.
+The publisher requires POSIX descriptor-relative file operations and directory
+locking. The local test evidence covers Linux. [Export evidence](changes/210_publishProcessViewAtomically.md).
+
+The report preserves the supplied technical scope, context, captured evidence,
+coverage and unresolved boundaries. The JSON includes annotations supplied in
+the input. Markdown and Mermaid use the technical renderer. This export reads
+the explicit snapshot and writes the artifact set. Architectural view export
+is a remaining part of T038. [Task specification](tasks/T-038_publish-view-artifacts-atomically.md).
+
 ## Input and evidence boundaries
 
 Pass the matching T024 inventory and provider graph. The function validates the
@@ -420,7 +464,7 @@ print([step.attributes["remote_evidence_refs"] for step in subscriptions])
 
 The example uses the same explicit `remote` snapshot creation shown in the T027
 example above. T028 adds no CLI command; existing `graph view` and `flow render`
-commands retain their contracts. Extended process lifecycle/export CLI belongs to T034/T038.
+commands retain their contracts. [Export a supplied ProcessView](#atomic-process-export-t038).
 
 The projection matches producer `original_ids` to concrete T025 node call-site IDs,
 then matches a consumer's original listener symbol to the selected target trigger.

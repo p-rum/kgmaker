@@ -1,18 +1,23 @@
-"""Read-only public rendering of current local technical processes."""
+"""Current technical process rendering and explicit snapshot artifact publication."""
 import json
+import math
 from pathlib import Path
 import re
 import sys
+import time
 
-from .analysis_model import AnalysisError, canonical
+from .analysis_model import AnalysisError, canonical, decode_json
 from .architecture_cli import (
-    ArchitectureCLIError, SafeParser, _MAX_OUTPUT_CHARS, _fail, _preflight,
+    ArchitectureCLIError, SafeParser, _MAX_INPUT_BYTES, _MAX_OUTPUT_CHARS, _fail, _preflight,
     _read, _readonly_git, _safe_output, _selectors,
 )
 from .process_model import ProcessView
 from .process_paths import ProcessPathError, build_local_process
 from .process_triggers import discover_process_triggers
 from .remote_mapping import SCOPES, _bounded
+from .view_store import (
+    ViewExportError, export_path, export_snapshot_stamp, publish_view_artifacts, read_export_snapshot,
+)
 from .workspace import snapshot_workspace
 
 
@@ -30,11 +35,19 @@ def _configure(parser):
     render.add_argument('--format', choices=('json',), default='json')
     render.add_argument('--expected-fingerprint', help='exact canonical ProcessView SHA-256')
     render.add_argument('--strict', action='store_true', help='emit incomplete JSON with exit status 4')
+    export = actions.add_parser('export', help='publish JSON, Markdown and Mermaid from an explicit ProcessView',
+                                allow_abbrev=False)
+    export.add_argument('--root', type=Path, default=Path.cwd(), help='coordinator path root')
+    export.add_argument('--snapshot', type=Path, required=True, help='explicit ProcessView JSON')
+    export.add_argument('--output', type=Path, required=True, help='artifact directory inside the coordinator')
+    export.add_argument('--expected-fingerprint', help='exact canonical ProcessView SHA-256')
+    export.add_argument('--timeout', type=float, default=30.0, help='cooperative publication deadline in seconds')
+    export.add_argument('--cancel-file', type=Path, help='coordinator-local file that cancels an unpublished export')
     return parser
 
 
 def register(subparsers):
-    _configure(subparsers.add_parser('process', help='read-only local technical process rendering'))
+    _configure(subparsers.add_parser('process', help='local technical process rendering and explicit artifact export'))
 
 
 def _render(args):
@@ -104,6 +117,71 @@ def _render(args):
     return 4 if args.strict and view.technical_status != 'COMPLETE_WITHIN_SELECTED_SCOPE' else 0
 
 
+def _export(args):
+    from .process_render import ProcessMarkdownError, ProcessMermaidError, render_process_artifacts
+
+    if not math.isfinite(args.timeout) or args.timeout <= 0:
+        _fail('INVALID_EXPORT_TIMEOUT')
+    output = export_path(args.root, args.output)
+    snapshot = export_path(args.root, args.snapshot)
+    cancel = None if args.cancel_file is None else export_path(args.root, args.cancel_file)
+    if ((snapshot.parent == output and snapshot.name.casefold() == 'manifest.json')
+            or (cancel is not None and cancel.is_relative_to(output))):
+        _fail('INVALID_EXPORT_PATH')
+    deadline = time.monotonic() + args.timeout
+
+    def checkpoint():
+        if cancel is not None and (args.root / export_path(args.root, cancel)).exists():
+            _fail('CANCELLED', 130)
+        if time.monotonic() >= deadline:
+            _fail('EXPORT_TIMEOUT', 1)
+
+    checkpoint()
+    raw, _ = read_export_snapshot(args.root, snapshot, _MAX_INPUT_BYTES)
+    value = decode_json(raw.decode('utf-8'), 'ProcessView snapshot')
+    _bounded(value)
+    view = ProcessView.from_dict(value)
+
+    def render():
+        try:
+            fingerprint, files = render_process_artifacts(view)
+        except (ProcessMarkdownError, ProcessMermaidError) as error:
+            _fail(error.code)
+        if args.expected_fingerprint is not None and args.expected_fingerprint != fingerprint:
+            _fail('EXPECTED_FINGERPRINT_MISMATCH', 3)
+        return fingerprint, files
+
+    def verify_input():
+        try:
+            current, stamp = read_export_snapshot(args.root, snapshot, _MAX_INPUT_BYTES)
+        except (OSError, ViewExportError):
+            _fail('EXPORT_INPUT_CHANGED', 3)
+        if current != raw:
+            _fail('EXPORT_INPUT_CHANGED', 3)
+        return stamp
+
+    def verify_input_stamp(stamp):
+        try:
+            current = export_snapshot_stamp(args.root, snapshot)
+        except (OSError, ViewExportError):
+            _fail('EXPORT_INPUT_CHANGED', 3)
+        if current != stamp:
+            _fail('EXPORT_INPUT_CHANGED', 3)
+
+    try:
+        manifest = publish_view_artifacts(args.root, output, 'process', render,
+                                         checkpoint=checkpoint, verify_input=verify_input,
+                                         verify_input_stamp=verify_input_stamp)
+    except OSError:
+        _fail('EXPORT_IO_ERROR', 1)
+    try:
+        sys.stdout.write(canonical(manifest) + '\n')
+        sys.stdout.flush()
+    except KeyboardInterrupt:
+        _fail('EXPORT_RECEIPT_INTERRUPTED', 1)
+    return 0
+
+
 def run(argv):
     try:
         args = _configure(SafeParser(prog='kgmaker process')).parse_args(argv)
@@ -112,8 +190,8 @@ def run(argv):
             _fail('INVALID_ROOT')
         if args.expected_fingerprint is not None and re.fullmatch(r'[0-9a-f]{64}', args.expected_fingerprint) is None:
             _fail('INVALID_EXPECTED_FINGERPRINT')
-        return _render(args)
-    except ArchitectureCLIError as error:
+        return {'render': _render, 'export': _export}[args.process_command](args)
+    except (ArchitectureCLIError, ViewExportError) as error:
         code, exit_code = error.code, error.exit_code
     except KeyboardInterrupt:
         code, exit_code = 'CANCELLED', 130
